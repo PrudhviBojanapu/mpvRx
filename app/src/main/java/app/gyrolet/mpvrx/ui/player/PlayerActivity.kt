@@ -4350,6 +4350,9 @@ class PlayerActivity :
           setOrientation()
         }
 
+        // New source or output geometry changes the fill ratio the Glow shader bakes in.
+        viewModel.refreshAmbientStretch()
+
         if (pendingVideoParamRefreshRequiresShaderReload) {
           pendingVideoParamRefreshRequiresShaderReload = false
           withContext(playbackRenderDispatcher) {
@@ -4519,6 +4522,8 @@ class PlayerActivity :
       try {
         if (!MpvConfigOverridePolicy.ownsAny(MpvConfigControlledFeatures.VIDEO_ZOOM)) {
           PlaybackSession.setPropertyDouble("video-zoom", 0.0)
+          // Keep the transform state in sync with mpv: it gates the Ambient stretch eligibility.
+          PlaybackSession.setVideoTransformZoom(0f)
         }
 
         // Load playback state (will skip track restoration if preferred language configured)

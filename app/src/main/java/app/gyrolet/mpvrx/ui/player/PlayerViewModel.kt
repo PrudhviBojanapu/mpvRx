@@ -2188,6 +2188,14 @@ val isBrightnessSliderShown = MutableStateFlow(false)
   @Volatile private var lastCompiledSpec: AmbientGlowShaderSpec? = null
 
   /**
+   * Last [isAmbientGeometryEligible] reading. Lets [onAmbientGeometryChanged] fire only on the
+   * transition, so a continuous pinch-zoom does not rebuild or tear down the shader per frame.
+   *
+   * @Volatile: written on the main thread and on renderPrepDispatcher via the debounced update.
+   */
+  @Volatile private var ambientGeometryEligible = true
+
+  /**
    * Latest device thermal headroom reading ([0f] = at thermal limit, [1f] = cool).
    * Sampled every 10 s by the thermal-monitor coroutine and used to cap the ambient
    * shader sample budget before the SoC enters hard throttling.
@@ -5415,6 +5423,7 @@ val isBrightnessSliderShown = MutableStateFlow(false)
     if (showUpdate) {
       playerUpdate.value = PlayerUpdates.AspectRatio
     }
+    onAmbientGeometryChanged()
   }
 
   fun setCustomAspectRatio(
@@ -5429,6 +5438,7 @@ val isBrightnessSliderShown = MutableStateFlow(false)
     if (showUpdate) {
       playerUpdate.value = PlayerUpdates.AspectRatio
     }
+    onAmbientGeometryChanged()
   }
 
   fun restoreSavedVideoAspect(showUpdate: Boolean = false) {
@@ -6007,6 +6017,7 @@ val isBrightnessSliderShown = MutableStateFlow(false)
       return
     }
     PlaybackSession.setVideoTransformZoom(zoom)
+    onAmbientGeometryChanged()
   }
 
   // Video pan (for pan & zoom feature)
@@ -7108,13 +7119,81 @@ val isBrightnessSliderShown = MutableStateFlow(false)
   private fun isAmbientGlowRuntimeActive(): Boolean =
     isAmbientRuntimeActive() && _ambientStyle.value == AmbientStyle.Glow
 
+  /**
+   * Glow expands the frame past the viewport edges and relies on the shader to remap it back to the
+   * centre picture. That only holds while mpv renders the frame unscaled, so any aspect override,
+   * panscan crop or user zoom makes the baked-in video-scale factors crop the picture instead of
+   * extending it. Stay off until plain Fit without zoom is restored.
+   */
+  private fun isAmbientGeometryEligible(): Boolean =
+    _videoAspect.value == VideoAspect.Fit &&
+      _currentAspectRatio.value <= 0.0 &&
+      PlaybackSession.videoZoom.value == 0f
+
+  /** Real display size, used until mpv publishes osd-width/osd-height. */
+  private fun currentScreenDimensions(): Pair<Int, Int> {
+    val metrics = DisplayMetrics()
+    val windowManager = host?.hostWindowManager
+    if (windowManager != null) {
+      @Suppress("DEPRECATION")
+      windowManager.defaultDisplay.getRealMetrics(metrics)
+    } else {
+      metrics.setTo(appContext.resources.displayMetrics)
+    }
+    return metrics.widthPixels to metrics.heightPixels
+  }
+
+  private fun invalidateAmbientStretch() {
+    lastAmbientScaleX = -1.0
+    lastAmbientScaleY = -1.0
+  }
+
+  /**
+   * Called when Fit mode, a custom aspect ratio or the user zoom changes.
+   *
+   * Zoom is driven by pinch gestures, so only the transition is acted upon: once the shader is torn
+   * down there is nothing left to disable, and re-enabling it mid-gesture would fight the release.
+   */
+  fun onAmbientGeometryChanged() {
+    val eligible = isAmbientGeometryEligible()
+    val flipped = eligible != ambientGeometryEligible
+    ambientGeometryEligible = eligible
+    if (!flipped || !isAmbientGlowRuntimeActive()) return
+
+    if (eligible) {
+      lastCompiledSpec = null
+      invalidateAmbientStretch()
+      scheduleAmbientUpdate(150)
+    } else {
+      disableAmbientShader()
+    }
+  }
+
+  /** Recalculates Glow after mpv published new video or output geometry. */
+  fun refreshAmbientStretch() {
+    if (!isAmbientGlowRuntimeActive()) return
+
+    if (!isAmbientGeometryEligible()) {
+      ambientGeometryEligible = false
+      disableAmbientShader()
+      return
+    }
+
+    ambientGeometryEligible = true
+    invalidateAmbientStretch()
+    // The compiled spec carries the scale factors, so an unchanged geometry reuses the shader
+    // instead of recompiling it on every video-params notification.
+    scheduleAmbientUpdate(150)
+  }
+
   fun toggleAmbientMode() {
     if (MpvConfigOverridePolicy.ownsAny(MpvConfigControlledFeatures.AMBIENT)) return
     _isAmbientEnabled.value = !_isAmbientEnabled.value
     playerPreferences.isAmbientEnabled.set(_isAmbientEnabled.value)
     if (_isAmbientEnabled.value) {
-      if (_ambientStyle.value == AmbientStyle.Glow) {
-        lastAmbientScaleX = -1.0
+      ambientGeometryEligible = isAmbientGeometryEligible()
+      if (_ambientStyle.value == AmbientStyle.Glow && ambientGeometryEligible) {
+        invalidateAmbientStretch()
         scheduleAmbientUpdate(0)
       }
       playerUpdate.value = PlayerUpdates.ShowText(appContext.getString(R.string.player_ambience_on))
@@ -7135,8 +7214,11 @@ val isBrightnessSliderShown = MutableStateFlow(false)
         appContext.getString(R.string.ambient_style_update, appContext.getString(style.titleRes)),
       )
     if (style == AmbientStyle.Glow) {
-      lastAmbientScaleX = -1.0
-      scheduleAmbientUpdate(0)
+      ambientGeometryEligible = isAmbientGeometryEligible()
+      if (ambientGeometryEligible) {
+        invalidateAmbientStretch()
+        scheduleAmbientUpdate(0)
+      }
     } else {
       disableAmbientShader()
     }
@@ -7175,12 +7257,11 @@ val isBrightnessSliderShown = MutableStateFlow(false)
 
   /** Called when the device orientation changes. Refreshes Glow for the new output dimensions. */
   fun onOrientationChanged() {
-    if (!isAmbientGlowRuntimeActive()) return
+    if (!isAmbientGlowRuntimeActive() || !isAmbientGeometryEligible()) return
 
     // The compiled spec is the cache key; scale sentinels alone do not force a rebuild.
     lastCompiledSpec = null
-    lastAmbientScaleX = -1.0
-    lastAmbientScaleY = -1.0
+    invalidateAmbientStretch()
     scheduleAmbientUpdate(200)
   }
 
@@ -7188,8 +7269,7 @@ val isBrightnessSliderShown = MutableStateFlow(false)
   fun prepareAmbientForNewVideo() {
     if (!_isAmbientEnabled.value || MpvConfigOverridePolicy.ownsAny(MpvConfigControlledFeatures.AMBIENT)) return
     disableAmbientShader()
-    lastAmbientScaleX = -1.0
-    lastAmbientScaleY = -1.0
+    invalidateAmbientStretch()
   }
 
   /**
@@ -7199,6 +7279,10 @@ val isBrightnessSliderShown = MutableStateFlow(false)
   fun restartAmbientIfActive() {
     if (!isAmbientGlowRuntimeActive()) return
     disableAmbientShader()
+    if (!isAmbientGeometryEligible()) {
+      ambientGeometryEligible = false
+      return
+    }
     // Small delay to let Anime4K shaders settle.
     scheduleAmbientUpdate(200)
   }
@@ -7368,9 +7452,25 @@ val isBrightnessSliderShown = MutableStateFlow(false)
   private suspend fun updateAmbientStretch(generation: Long) {
     if (!isAmbientGlowRuntimeActive() || generation != ambientUpdateGeneration.get()) return
 
+    // The debounce window can outlive the geometry that scheduled it, so re-check before writing
+    // anything: an ineligible frame must never reach mpv with a stretched video-scale.
+    if (!isAmbientGeometryEligible()) {
+      ambientGeometryEligible = false
+      disableAmbientShader()
+      return
+    }
+
     runCatching {
-      val osdW = PlaybackSession.getPropertyInt("osd-width") ?: 1920
-      val osdH = PlaybackSession.getPropertyInt("osd-height") ?: 1080
+      var osdW = PlaybackSession.getPropertyInt("osd-width") ?: 0
+      var osdH = PlaybackSession.getPropertyInt("osd-height") ?: 0
+
+      // mpv only publishes osd-* once the output is configured, which can be after the first
+      // file load. Fall back to the real display so the initial pass still sizes the glow.
+      if (osdW <= 0 || osdH <= 0) {
+        val (screenW, screenH) = currentScreenDimensions()
+        osdW = screenW
+        osdH = screenH
+      }
 
       // Portrait mode: ambient glow goes on top/bottom (letterbox)
       // Landscape mode: ambient glow goes on left/right (pillarbox)
