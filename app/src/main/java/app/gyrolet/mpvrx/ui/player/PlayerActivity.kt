@@ -2826,7 +2826,9 @@ class PlayerActivity :
    *
    * [startupAssetsReady] is completed as soon as the configs and scripts are on disk, because those
    * are the only files `mpv_initialize` touches. The shader and font copies keep going after it, so
-   * the startup join does not have to wait for them.
+   * the startup join does not have to wait for them. The scripts/ prune has to run before that
+   * signal in both branches: libmpv lists scripts/ during init and would otherwise load a script
+   * the user just disabled.
    */
   private fun syncFromUserMpvDirectory(startupAssetsReady: CompletableDeferred<Unit>? = null) {
     synchronized(USER_MPV_ASSET_LOCK) {
@@ -2839,31 +2841,23 @@ class PlayerActivity :
       } else {
         null
       }
-    val rootChildren = tree?.let(::listTreeFilesSafely)
-
     if (tree != null) {
       Log.d(TAG, "Syncing from user MPV directory: ${tree.uri}")
-      val children = rootChildren.orEmpty()
-      syncConfigFiles(tree, children)
-      syncScripts(tree, children)
-      syncScriptOpts(tree, children)
+      val rootChildren = listTreeFilesSafely(tree)
+      syncConfigFiles(tree, rootChildren)
+      syncScripts(tree, rootChildren)
+      syncScriptOpts(tree, rootChildren)
+      removeDisabledCachedScripts()
+      startupAssetsReady?.complete(Unit)
+      syncShaders(tree, rootChildren)
+      syncFonts(tree, rootChildren)
+      Log.d(TAG, "Full MPV directory sync completed")
     } else {
       // Fallback: use preferences-based config (no user directory set)
       Log.d(TAG, "No MPV directory configured, using preferences fallback")
       copyMPVConfigFromPreferences()
-    }
-    // Prunes scripts/ and wipes script-modules/, so it has to land before the signal below: libmpv
-    // lists scripts/ during init and would otherwise load a script the user just disabled.
-    removeDisabledCachedScripts()
-    // mpv.conf, input.conf and the pruned scripts listing are on disk: the core can start now.
-    // Everything past this point is data libmpv only reads lazily, once a file is actually opened.
-    startupAssetsReady?.complete(Unit)
-
-    if (tree != null) {
-      val children = rootChildren.orEmpty()
-      syncShaders(tree, children)
-      syncFonts(tree, children)
-      Log.d(TAG, "Full MPV directory sync completed")
+      removeDisabledCachedScripts()
+      startupAssetsReady?.complete(Unit)
     }
     }
   }

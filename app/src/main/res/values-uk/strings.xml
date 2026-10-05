@@ -579,7 +579,7 @@
   <string name="player_sheets_filters_warning">Деякі фільтри можуть не працювати на поточному відеодрайвері</string>
   <string name="player_sheets_speed_slider_label">Швидкість</string>
   <string name="player_sheets_speed_make_default">Зробити швидкістю за замовчуванням</string>
-  <string name="player_sheets_decoder_formatted">%s (%s)</string>
+  <string name="player_sheets_decoder_formatted" formatted="false">%s (%s)</string>
   <string name="numeric_chooser_value_too_big">Значення занадто велике</string>
   <string name="numeric_chooser_value_too_small">Значення занадто мале</string>
   <string name="player_sheets_more_title">Більше</string>
@@ -1319,7 +1319,7 @@
   <string name="compressor_target_size_presets_title">Пресет цільового розміру</string>
   <string name="compressor_total_saved">Загалом заощаджено місця: %1$s</string>
   <string name="compressor_volume">Гучність</string>
-  <string name="compressor_volume_hint">100% — оригінальний рівень гучності. Значення понад 100% підсилюють звук.</string>
+  <string name="compressor_volume_hint" formatted="false">100% — оригінальний рівень гучності. Значення понад 100% підсилюють звук.</string>
   <string name="compressor_zero_keeps_original">0 зберігає оригінальне значення.</string>
   <string name="generic_minutes_short">%1$d хв</string>
   <string name="player_horizontal_flip_on">Горизонтальне віддзеркалення: УВІМК</string>
