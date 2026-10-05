@@ -5604,6 +5604,10 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
     val previousItemWasReady = isReady
 
     setIntent(intent)
+    // This Activity is singleTask, so onNewIntent is the same path as a cold onCreate. Reset the
+    // cached aspect first: the new intent may carry no video metadata at all, and a stale value
+    // from the previous file would pick the wrong orientation for this one.
+    launchVideoAspect = null
     applyInitialVideoOrientation(intent)
     applyPlaybackBrightnessPolicy(isAudio = isCurrentMediaKnownAudio())
     if (!beginMediaRequest()) return
@@ -6478,9 +6482,13 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
       when (orientationPref) {
         PlayerOrientation.Free -> ActivityInfo.SCREEN_ORIENTATION_SENSOR
         PlayerOrientation.Video -> {
-          // For video orientation, check if aspect is available
-          val aspect = runCatching { player.getVideoOutAspect() }.getOrNull()
-          Log.d(TAG, "setOrientation - Video mode: aspect=$aspect")
+          // Prefer the launch metadata: it is already known before the first frame, so the window
+          // opens in the right orientation. getVideoOutAspect() is only the fallback for sources
+          // that never carried width/height (network streams, deeplinks, archives).
+          val aspect =
+            launchVideoAspect
+              ?: runCatching { player.getVideoOutAspect() }.getOrNull()
+          Log.d(TAG, "setOrientation - Video mode: aspect=$aspect (fromLaunch=${launchVideoAspect != null})")
           if (aspect == null || !aspect.isFinite() || aspect <= 0.0) {
             // Aspect not available yet - wait for video-params/aspect update
             Log.d(TAG, "setOrientation - Aspect not available, retaining launch orientation")
@@ -6506,6 +6514,15 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
         PlayerOrientation.SensorLandscape -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
       }
   }
+
+  /**
+   * Display aspect of the launching video, rotation already applied, or null when unknown.
+   *
+   * Set by [applyInitialVideoOrientation] from the caller-supplied metadata. The browser and every
+   * playlist now pass width/height/rotation through the launch intent, so a portrait phone video
+   * is recognised as portrait before the first frame instead of after mpv reports the rotation.
+   */
+  private var launchVideoAspect: Double? = null
 
   private fun applyInitialVideoOrientation(sourceIntent: Intent) {
     if (isTelevision) {
@@ -6563,10 +6580,16 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
     }
     if (width <= 0 || height <= 0) return
 
+    // width/height are coded dimensions. A 90 or 270 rotation swaps them, which is exactly why a
+    // portrait phone video reports 1920x1080 here and only reveals itself once mpv loads.
     val normalizedRotation = ((rotation % 360) + 360) % 360
     val swapsDimensions = normalizedRotation == 90 || normalizedRotation == 270
+    val displayWidth = if (swapsDimensions) height else width
+    val displayHeight = if (swapsDimensions) width else height
+    launchVideoAspect = displayWidth.toDouble() / displayHeight.toDouble()
+
     val initialOrientation =
-      if ((width > height) != swapsDimensions) {
+      if (displayWidth > displayHeight) {
         ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
       } else {
         ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT

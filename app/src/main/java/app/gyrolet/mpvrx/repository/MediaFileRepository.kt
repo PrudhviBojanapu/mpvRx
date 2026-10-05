@@ -463,6 +463,7 @@ object MediaFileRepository : KoinComponent {
     var width = 0
     var height = 0
     var fps = 0f
+    var rotation = 0
     var hasEmbeddedSubtitles = false
     var subtitleCodec = ""
 
@@ -473,6 +474,7 @@ object MediaFileRepository : KoinComponent {
       width = metadata.width
       height = metadata.height
       fps = metadata.fps
+      rotation = metadata.rotation
       hasEmbeddedSubtitles = metadata.hasEmbeddedSubtitles
       subtitleCodec = metadata.subtitleCodec
     }
@@ -494,6 +496,7 @@ object MediaFileRepository : KoinComponent {
       bucketDisplayName = bucketDisplayName,
       width = width,
       height = height,
+      rotation = rotation,
       fps = fps,
       resolution = VideoScanUtils.formatResolutionWithFps(width, height, fps),
       hasEmbeddedSubtitles = hasEmbeddedSubtitles,
@@ -526,6 +529,7 @@ object MediaFileRepository : KoinComponent {
     var width = 0
     var height = 0
     var fps = 0f
+    var rotation = 0
 
     metadata?.let {
       if (it.sizeBytes > 0) size = it.sizeBytes
@@ -533,6 +537,7 @@ object MediaFileRepository : KoinComponent {
       width = it.width
       height = it.height
       fps = it.fps
+      rotation = it.rotation
     }
     val hasEmbeddedSubtitles = metadata?.hasEmbeddedSubtitles ?: false
     val subtitleCodec = metadata?.subtitleCodec ?: ""
@@ -554,6 +559,7 @@ object MediaFileRepository : KoinComponent {
       bucketDisplayName = bucketDisplayName,
       width = width,
       height = height,
+      rotation = rotation,
       fps = fps,
       resolution = VideoScanUtils.formatResolutionWithFps(width, height, fps),
       hasEmbeddedSubtitles = hasEmbeddedSubtitles,
