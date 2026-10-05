@@ -138,6 +138,7 @@ import `is`.xyz.mpv.MPVLib
 import `is`.xyz.mpv.MPVNode
 import `is`.xyz.mpv.Utils
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -464,6 +465,16 @@ class PlayerActivity :
   private var deferredFontSyncJob: Job? = null
   private var deferredMpvAssetSyncJob: Job? = null
   private var mpvAssetPreparationJob: Job? = null
+
+  /**
+   * Signals that only the files `mpv_initialize` actually reads are on disk.
+   *
+   * libmpv parses `mpv.conf` and `input.conf` and lists `scripts/` during `MPVLib.init()`, so
+   * [joinMpvAssetPreparation] has to wait for those. It never reads `subfont.ttf` (14.7 MB),
+   * `cacert.pem`, `fonts/` or `shaders/`, so those stay on the unjoined tail of the same job
+   * instead of stalling the main thread before the core can start.
+   */
+  private var mpvStartupAssetsReady = CompletableDeferred<Unit>()
   private var systemBarsAutoHideJob: Job? = null
   private var videoParamRefreshJob: Job? = null
   private var intentSubtitleJob: Job? = null
@@ -2635,14 +2646,10 @@ class PlayerActivity :
       binding.root.post(::updateVideoAmbientPlayerBounds)
     }
 
-    // NOW initialize MPV - it will find and load the scripts we just copied
-    val initError = synchronized(USER_MPV_ASSET_LOCK) {
-      val cleanupFailure = runCatching { removeDisabledCachedScripts() }.exceptionOrNull()
-      if (cleanupFailure != null) {
-        Log.e(TAG, "Could not remove disabled cached scripts", cleanupFailure)
-        cleanupFailure.message ?: getString(R.string.toast_playback_load_failed)
-      } else initializePlayerWithRendererFallback()
-    }
+    // NOW initialize MPV - it will find and load the scripts we just copied.
+    // The scripts/ prune already ran on IO inside the asset job before it signalled readiness, so
+    // this only has to take the lock that keeps the job from touching filesDir mid-init.
+    val initError = synchronized(USER_MPV_ASSET_LOCK) { initializePlayerWithRendererFallback() }
     if (initError != null) return initError
     runCatching { PlaybackSession.setThumbnailJavaVM(applicationContext) }
     mpvInitialized = true
@@ -2659,26 +2666,47 @@ class PlayerActivity :
    * Starts the multi-MB asset copy and the user mpv.conf SAF walk on IO. Called at the top of
    * onCreate so they overlap layout inflation, Compose setup and the notification channel instead
    * of blocking them.
+   *
+   * The job completes in two beats. [mpvStartupAssetsReady] completes once the config files and the
+   * script cache are on disk, which is all `mpv_initialize` reads, so
+   * [joinMpvAssetPreparation] can return while the bundled font/CA copy and the shader/font sync
+   * keep running unjoined.
    */
   private fun startMpvAssetPreparation() {
     mpvAssetPreparationJob?.cancel()
+    val startupAssetsReady = CompletableDeferred<Unit>()
+    mpvStartupAssetsReady = startupAssetsReady
     mpvAssetPreparationJob =
       lifecycleScope.launch(Dispatchers.IO) {
         val startedAt = android.os.SystemClock.elapsedRealtime()
         runCatching {
-          syncBundledAssetsIfNeeded()
-          prepareUserMpvAssetsForStartup()
+          prepareUserMpvAssetsForStartup(startupAssetsReady)
         }.onFailure { e -> Log.e(TAG, "Error copying MPV config and assets", e) }
+        // Never leave the main thread blocked on a failure or an early return above.
+        startupAssetsReady.complete(Unit)
+        // Unjoined tail. libmpv reads none of this during init: subfont.ttf is only opened when
+        // libass renders a glyph, and cacert.pem is read by libav when TLS first negotiates, which
+        // happens on the media load dispatcher well after this point.
+        runCatching {
+          syncBundledAssetsIfNeeded()
+        }.onFailure { e -> Log.e(TAG, "Error copying bundled MPV assets", e) }
         Log.d(TAG, "MPV startup assets prepared in ${android.os.SystemClock.elapsedRealtime() - startedAt} ms")
       }
+    // joinMpvAssetPreparation() blocks the main thread on that deferred, so cancellation has to
+    // release it too. Covers the Activity being destroyed between onCreate and setupMPV().
+    mpvAssetPreparationJob?.invokeOnCompletion { startupAssetsReady.complete(Unit) }
   }
 
-  /** The only point that must wait: MPVLib.init() loads the scripts this produced. */
+  /**
+   * The only point that must wait: `MPVLib.init()` parses the configs and lists the scripts this
+   * produced. Returns as soon as those specific files are on disk rather than waiting for the whole
+   * asset job, which also copies a 14.7 MB font and the shader/font trees.
+   */
   private fun joinMpvAssetPreparation() {
-    runBlocking { mpvAssetPreparationJob?.join() }
+    runBlocking { mpvStartupAssetsReady.await() }
   }
 
-  private fun prepareUserMpvAssetsForStartup() {
+  private fun prepareUserMpvAssetsForStartup(startupAssetsReady: CompletableDeferred<Unit>) {
     ensureConfigCacheForStartup()
     val syncPreferences = assetSyncPreferences
     val currentSelection = currentUserMpvAssetSelection()
@@ -2693,10 +2721,17 @@ class PlayerActivity :
     if (cacheReady && cachedScriptsMatchSelection() && (storedSelection == currentSelection || canAdoptExistingCache)) {
       if (canAdoptExistingCache) rememberUserMpvAssetSelection(syncPreferences)
       Log.d(TAG, "Using cached MPV user assets for startup")
+      // The cache check only compares scripts/ contents, so script-modules/ can still be stale.
+      // Prune before releasing the main thread, because libmpv lists scripts/ during init. The lock
+      // keeps this from interleaving with the deferred user-asset refresh.
+      runCatching {
+        synchronized(USER_MPV_ASSET_LOCK) { removeDisabledCachedScripts() }
+      }.onFailure { e -> Log.e(TAG, "Could not remove disabled cached scripts", e) }
+      startupAssetsReady.complete(Unit)
       return
     }
 
-    syncFromUserMpvDirectory()
+    syncFromUserMpvDirectory(startupAssetsReady)
     rememberUserMpvAssetSelection(syncPreferences)
     deferredUserMpvAssetRefreshStarted.set(true)
   }
@@ -2788,8 +2823,12 @@ class PlayerActivity :
    * Syncs MPV assets from the user's configured MPV directory to internal storage.
    * Handles: mpv.conf, input.conf, selected scripts/, script helper folders, script-opts/,
    * shaders/, and fonts/.
+   *
+   * [startupAssetsReady] is completed as soon as the configs and scripts are on disk, because those
+   * are the only files `mpv_initialize` touches. The shader and font copies keep going after it, so
+   * the startup join does not have to wait for them.
    */
-  private fun syncFromUserMpvDirectory() {
+  private fun syncFromUserMpvDirectory(startupAssetsReady: CompletableDeferred<Unit>? = null) {
     synchronized(USER_MPV_ASSET_LOCK) {
     val mpvConfStorageUri = advancedPreferences.mpvConfStorageUri.get()
 
@@ -2800,22 +2839,32 @@ class PlayerActivity :
       } else {
         null
       }
+    val rootChildren = tree?.let(::listTreeFilesSafely)
 
     if (tree != null) {
       Log.d(TAG, "Syncing from user MPV directory: ${tree.uri}")
-      val rootChildren = listTreeFilesSafely(tree)
-      syncConfigFiles(tree, rootChildren)
-      syncScripts(tree, rootChildren)
-      syncScriptOpts(tree, rootChildren)
-      syncShaders(tree, rootChildren)
-      syncFonts(tree, rootChildren)
-      Log.d(TAG, "Full MPV directory sync completed")
+      val children = rootChildren.orEmpty()
+      syncConfigFiles(tree, children)
+      syncScripts(tree, children)
+      syncScriptOpts(tree, children)
     } else {
       // Fallback: use preferences-based config (no user directory set)
       Log.d(TAG, "No MPV directory configured, using preferences fallback")
       copyMPVConfigFromPreferences()
     }
+    // Prunes scripts/ and wipes script-modules/, so it has to land before the signal below: libmpv
+    // lists scripts/ during init and would otherwise load a script the user just disabled.
     removeDisabledCachedScripts()
+    // mpv.conf, input.conf and the pruned scripts listing are on disk: the core can start now.
+    // Everything past this point is data libmpv only reads lazily, once a file is actually opened.
+    startupAssetsReady?.complete(Unit)
+
+    if (tree != null) {
+      val children = rootChildren.orEmpty()
+      syncShaders(tree, children)
+      syncFonts(tree, children)
+      Log.d(TAG, "Full MPV directory sync completed")
+    }
     }
   }
 

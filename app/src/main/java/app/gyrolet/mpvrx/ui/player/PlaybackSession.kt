@@ -109,6 +109,10 @@ object PlaybackSession : MPVLib.EventObserver {
   private const val AMBIENT_SHADER_PREFIX = "ambient_"
   private const val AMBIENT_SHADER_SUFFIX = ".glsl"
   private const val AMBIENT_SCALE_EPSILON = 0.000001
+
+  /** Guards against unbounded growth if a core is created but never reaches `mpv_initialize`. */
+  private const val MAX_DEFERRED_CORE_COMMANDS = 64
+
   private val TIMELINE_PROPERTIES =
     setOf(
       "time-pos",
@@ -167,6 +171,20 @@ object PlaybackSession : MPVLib.EventObserver {
   private val _videoPanY = MutableStateFlow(0f)
   private val streamSequence = AtomicLong()
   private val observedProperties = mutableSetOf<Pair<String, Int>>()
+
+  /**
+   * Commands issued before `mpv_initialize` has run, replayed in order the moment it has.
+   *
+   * libmpv rejects `mpv_command` on an uninitialized handle with `MPV_ERROR_UNINITIALIZED`
+   * (mpv `player/client.c`), and the JNI shim discards that return code, so every command sent
+   * between `MPVLib.create()` and `MPVLib.init()` used to vanish without a trace. That window is
+   * exactly where `initOptions()` installs the HDR-Toys and Anime4K `glsl-shaders` appends, which
+   * is why those shaders only appeared on a later core. Option and property writes are unaffected:
+   * `mpv_set_property` degrades to `mpv_set_option` while uninitialized, so only commands need this.
+   *
+   * Guarded by [nativeLock].
+   */
+  private val deferredCoreCommands = ArrayDeque<Array<String>>()
   private val seekAudioGuardHandler = Handler(Looper.getMainLooper())
   private val playbackTransitionAudioGuardHandler = Handler(Looper.getMainLooper())
 
@@ -356,6 +374,7 @@ object PlaybackSession : MPVLib.EventObserver {
         clearSeekAudioGuardLocked(restoreMute = false)
         clearPlaybackTransitionAudioGuardLocked(restoreMute = false)
         resetAmbientShaderTrackingLocked()
+        clearDeferredCoreCommandsLocked()
         updateState { it.copy(phase = PlaybackPhase.INITIALIZING, error = null) }
         try {
           // Adopts the core [prewarmNativeCore] already created instead of calling
@@ -375,6 +394,9 @@ object PlaybackSession : MPVLib.EventObserver {
           // Runtime properties do not exist between MPVLib.create() and MPVLib.init(). Keep option
           // writes available in that window, but permit property reads only from this point on.
           nativeCoreReady = true
+          // libmpv only accepts mpv_command once initialized, so replay whatever initOptions()
+          // parked before the core was torn down below.
+          flushDeferredCoreCommandsLocked()
           // Preserve the effective default after mpv.conf has been parsed. Per-media request
           // headers may temporarily override it, but must not leak into the next item.
           defaultUserAgent = MPVLib.getPropertyString("user-agent")
@@ -416,6 +438,7 @@ object PlaybackSession : MPVLib.EventObserver {
           clearSeekAudioGuardLocked(restoreMute = false)
           clearPlaybackTransitionAudioGuardLocked(restoreMute = false)
           resetAmbientShaderTrackingLocked()
+          clearDeferredCoreCommandsLocked()
           updateState {
             it.copy(
               phase = PlaybackPhase.ERROR,
@@ -710,6 +733,7 @@ object PlaybackSession : MPVLib.EventObserver {
     observers.clear()
     observedProperties.clear()
     resetAmbientShaderTrackingLocked()
+    clearDeferredCoreCommandsLocked()
     _videoZoom.value = 0f
     _videoPanX.value = 0f
     _videoPanY.value = 0f
@@ -1107,8 +1131,44 @@ object PlaybackSession : MPVLib.EventObserver {
     withCore(Unit) {
       val preparedCommand = prepareSeekCommandLocked(command)
       if (handleAmbientShaderCommandLocked(preparedCommand)) return@withCore
-      MPVLib.command(*preparedCommand)
+      runCoreCommandLocked(preparedCommand)
     }
+  }
+
+  /**
+   * Runs a command that libmpv will accept, or parks it until the core is initialized.
+   *
+   * Must be called with [nativeLock] held. The parking branch is what makes shader and OSD setup
+   * issued from `initOptions()` survive: those run before `MPVLib.init()`, where `mpv_command`
+   * would otherwise fail silently.
+   */
+  private fun runCoreCommandLocked(command: Array<out String>) {
+    if (!nativeCoreReady) {
+      if (deferredCoreCommands.size >= MAX_DEFERRED_CORE_COMMANDS) {
+        Log.w(TAG, "Dropping deferred MPV command, queue is full: ${command.joinToString(" ")}")
+        deferredCoreCommands.removeFirst()
+      }
+      deferredCoreCommands.addLast(command.map { it }.toTypedArray())
+      return
+    }
+    MPVLib.command(*command)
+  }
+
+  /** Replays everything parked by [runCoreCommandLocked]. Requires [nativeCoreReady]. */
+  private fun flushDeferredCoreCommandsLocked() {
+    if (deferredCoreCommands.isEmpty()) return
+    val pending = deferredCoreCommands.toList()
+    deferredCoreCommands.clear()
+    pending.forEach { command ->
+      runCatching { MPVLib.command(*command) }
+        .onFailure { error -> Log.e(TAG, "Failed to run deferred MPV command", error) }
+    }
+  }
+
+  private fun clearDeferredCoreCommandsLocked() {
+    if (deferredCoreCommands.isEmpty()) return
+    Log.w(TAG, "Discarding ${deferredCoreCommands.size} deferred MPV command(s) for a core that never initialized")
+    deferredCoreCommands.clear()
   }
 
   /** Executes a media-specific command only while its load generation is still current. */
@@ -1744,6 +1804,7 @@ object PlaybackSession : MPVLib.EventObserver {
             clearSeekAudioGuardLocked(restoreMute = false)
             clearPlaybackTransitionAudioGuardLocked(restoreMute = false)
             resetAmbientShaderTrackingLocked()
+            clearDeferredCoreCommandsLocked()
             initialized = false
             nativeCoreReady = false
             clearTimelinePropertiesLocked()
