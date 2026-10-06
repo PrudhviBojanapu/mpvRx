@@ -113,8 +113,9 @@ object YtdlpSettingsScreen : Screen {
           title = {
             Text(
               text = stringResource(R.string.ui_yt_dlp_streaming),
-              style = MaterialTheme.typography.titleLarge,
+              style = MaterialTheme.typography.headlineSmall,
               fontWeight = FontWeight.Bold,
+              color = MaterialTheme.colorScheme.onSurface,
             )
           },
           navigationIcon = {

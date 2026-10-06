@@ -14,6 +14,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -116,8 +117,8 @@ object MediaServersPreferencesScreen : Screen {
             Text(
               text = stringResource(R.string.pref_media_servers_title),
               style = MaterialTheme.typography.headlineSmall,
-              fontWeight = FontWeight.ExtraBold,
-              color = MaterialTheme.colorScheme.primary,
+              fontWeight = FontWeight.Bold,
+              color = MaterialTheme.colorScheme.onSurface,
             )
           },
           navigationIcon = {
@@ -126,7 +127,7 @@ object MediaServersPreferencesScreen : Screen {
                 Icon(
                   Icons.RoundedFilled.ArrowBack,
                   contentDescription = null,
-                  tint = MaterialTheme.colorScheme.secondary,
+                  tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
               }
             }
@@ -145,6 +146,8 @@ object MediaServersPreferencesScreen : Screen {
               .fillMaxSize()
               .padding(padding)
               .then(settingsHighlight),
+          contentPadding = PaddingValues(bottom = 36.dp),
+          verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
           // --- JELLYFIN SECTION ---
           item {
@@ -163,7 +166,7 @@ object MediaServersPreferencesScreen : Screen {
                   summary = {
                     Text(
                       text = stringResource(R.string.pref_jellyfin_add_server_desc),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                   },
                   icon = {
@@ -218,7 +221,7 @@ object MediaServersPreferencesScreen : Screen {
                       Text(
                         text = if (server.username.isNotBlank()) "${server.username} • ${server.serverUrl}" else server.serverUrl,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                       )
@@ -307,7 +310,7 @@ object MediaServersPreferencesScreen : Screen {
                   summary = {
                     Text(
                       text = stringResource(R.string.pref_jellyfin_add_another_server_desc),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                   },
                   icon = {
@@ -371,7 +374,7 @@ object MediaServersPreferencesScreen : Screen {
                     Text(
                       text = seerrUiState.serverUrl,
                       style = MaterialTheme.typography.bodyMedium,
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                       maxLines = 1,
                       overflow = TextOverflow.Ellipsis,
                     )
@@ -439,7 +442,7 @@ object MediaServersPreferencesScreen : Screen {
                   summary = {
                     Text(
                       text = stringResource(R.string.pref_seerr_add_server_desc),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                   },
                   icon = {
@@ -473,7 +476,7 @@ object MediaServersPreferencesScreen : Screen {
                   summary = {
                     Text(
                       text = stringResource(R.string.pref_navidrome_add_server_desc),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                   },
                   icon = {
@@ -528,7 +531,7 @@ object MediaServersPreferencesScreen : Screen {
                       Text(
                         text = if (server.username.isNotBlank()) "${server.username} • ${server.serverUrl}" else server.serverUrl,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                       )
@@ -618,7 +621,7 @@ object MediaServersPreferencesScreen : Screen {
                   summary = {
                     Text(
                       text = stringResource(R.string.pref_navidrome_add_another_server_desc),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                   },
                   icon = {
@@ -654,7 +657,7 @@ object MediaServersPreferencesScreen : Screen {
                   summary = {
                     Text(
                       text = stringResource(R.string.pref_audiobookshelf_add_server_desc),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                   },
                   icon = {
@@ -719,7 +722,7 @@ object MediaServersPreferencesScreen : Screen {
                         Text(
                           text = server.serverUrl,
                           style = MaterialTheme.typography.bodySmall,
-                          color = MaterialTheme.colorScheme.outline,
+                          color = MaterialTheme.colorScheme.onSurfaceVariant,
                           maxLines = 1,
                           overflow = TextOverflow.Ellipsis,
                         )
@@ -810,7 +813,7 @@ object MediaServersPreferencesScreen : Screen {
                   summary = {
                     Text(
                       text = stringResource(R.string.pref_audiobookshelf_add_another_server_desc),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                   },
                   icon = {

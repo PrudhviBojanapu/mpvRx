@@ -56,8 +56,8 @@ object NetworkConfigurationPreferencesScreen : Screen {
             Text(
               text = stringResource(R.string.ui_network),
               style = MaterialTheme.typography.headlineSmall,
-              fontWeight = FontWeight.ExtraBold,
-              color = MaterialTheme.colorScheme.primary,
+              fontWeight = FontWeight.Bold,
+              color = MaterialTheme.colorScheme.onSurface,
             )
           },
           navigationIcon = {
@@ -76,6 +76,8 @@ object NetworkConfigurationPreferencesScreen : Screen {
         LazyColumn(
           state = settingsListState,
           modifier = Modifier.fillMaxSize().padding(padding).then(settingsHighlight),
+          contentPadding = PaddingValues(bottom = 32.dp),
+          verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
           item {
             PreferenceSectionHeader(title = stringResource(R.string.pref_section_p2p_streaming))
