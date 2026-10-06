@@ -128,6 +128,7 @@ import app.gyrolet.mpvrx.ui.browser.LocalNavigationBarHeight
 import app.gyrolet.mpvrx.ui.browser.cards.PlaylistCard
 import app.gyrolet.mpvrx.ui.browser.components.BrowserTopBar
 import app.gyrolet.mpvrx.ui.browser.components.rememberSwipePlaybackInfo
+import app.gyrolet.mpvrx.ui.browser.dialogs.DeleteConfirmationDialog
 import app.gyrolet.mpvrx.ui.browser.networkstreaming.NetworkStreamingScreen
 import app.gyrolet.mpvrx.ui.browser.playlist.PlaylistDetailScreen
 import app.gyrolet.mpvrx.ui.browser.playlist.PlaylistScreen
@@ -229,6 +230,7 @@ object ProfileScreen : Screen {
     val snapshots = remember(snapshotLibrary.allCaptures) { snapshotLibrary.allCaptures.sortedByDescending { it.capturedAt } }
 
     var activeVideoItem by remember { mutableStateOf<RecentlyPlayedItem.VideoItem?>(null) }
+    var playlistToDelete by remember { mutableStateOf<app.gyrolet.mpvrx.database.entities.PlaylistEntity?>(null) }
     var showProfileDialog by rememberSaveable { mutableStateOf(false) }
     val isRefreshing = remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
@@ -418,6 +420,12 @@ object ProfileScreen : Screen {
                           onThumbClick = { backStack.navigateTo(PlaylistDetailScreen(item.playlist.id)) },
                           modifier = Modifier.width(SHELF_VIDEO_CARD_WIDTH),
                           isGridMode = true,
+                          onDeleteClick =
+                            if (playlistViewModel.isProtectedPlaylist(item.playlist)) {
+                              null
+                            } else {
+                              { playlistToDelete = item.playlist }
+                            },
                         )
                       }
                     }
@@ -454,6 +462,12 @@ object ProfileScreen : Screen {
                     onThumbClick = { backStack.navigateTo(PlaylistDetailScreen(entry.playlist.id)) },
                     modifier = Modifier.width(SHELF_VIDEO_CARD_WIDTH),
                     isGridMode = true,
+                    onDeleteClick =
+                      if (playlistViewModel.isProtectedPlaylist(entry.playlist)) {
+                        null
+                      } else {
+                        { playlistToDelete = entry.playlist }
+                      },
                   )
                 }
               }
@@ -538,6 +552,24 @@ object ProfileScreen : Screen {
             }
           }
         },
+      )
+    }
+
+    playlistToDelete?.let { target ->
+      DeleteConfirmationDialog(
+        isOpen = true,
+        onDismiss = { playlistToDelete = null },
+        onConfirm = {
+          playlistToDelete = null
+          scope.launch {
+            playlistViewModel.deletePlaylist(target)
+            playlistViewModel.refresh()
+            recentsViewModel.refresh()
+          }
+        },
+        itemCount = 1,
+        itemType = "playlist",
+        itemNames = listOf(target.name),
       )
     }
   }
