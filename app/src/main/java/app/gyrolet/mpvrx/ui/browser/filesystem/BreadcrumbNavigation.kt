@@ -67,7 +67,7 @@ fun BreadcrumbNavigation(
       ) {
         Text(
           text = component.name,
-          style = MaterialTheme.typography.bodyMedium,
+          style = if (index == breadcrumbs.lastIndex) MaterialTheme.typography.labelLarge else MaterialTheme.typography.bodyMedium,
           color =
             if (index == breadcrumbs.lastIndex) {
               MaterialTheme.colorScheme.primary

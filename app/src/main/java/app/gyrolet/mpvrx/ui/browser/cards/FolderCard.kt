@@ -216,9 +216,9 @@ fun FolderCard(
   fun PinnedFolderBadge(modifier: Modifier = Modifier) {
     Surface(
       shape = AppShapeScale.full,
-      color = MaterialTheme.colorScheme.primary.copy(alpha = 0.94f),
-      contentColor = MaterialTheme.colorScheme.onPrimary,
-      shadowElevation = 3.dp,
+      color = MaterialTheme.colorScheme.secondaryContainer,
+      contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+      shadowElevation = 0.dp,
       modifier = modifier.rotate(-18f),
     ) {
       Icon(
@@ -318,7 +318,7 @@ fun FolderCard(
                   Modifier
                     .align(Alignment.TopEnd)
                     .padding(6.dp)
-                      .cardOverlay(containerColor = Color(0xFFD32F2F))
+                      .cardOverlay(containerColor = MaterialTheme.colorScheme.errorContainer)
                     .padding(horizontal = 6.dp, vertical = 2.dp),
               ) {
                 Text(
@@ -327,7 +327,7 @@ fun FolderCard(
                     MaterialTheme.typography.labelSmall.copy(
                       fontWeight = FontWeight.Bold,
                     ),
-                  color = Color.White,
+                  color = MaterialTheme.colorScheme.onErrorContainer,
                 )
               }
             }
@@ -355,7 +355,7 @@ fun FolderCard(
                 Text(
                   text = formatDuration(folder.totalDuration),
                   style = MaterialTheme.typography.labelSmall,
-                  color = Color.White,
+                  color = MaterialTheme.colorScheme.onErrorContainer,
                 )
               }
             }
@@ -451,7 +451,7 @@ fun FolderCard(
                   Modifier
                     .align(Alignment.TopEnd)
                     .padding(4.dp)
-                      .cardOverlay(containerColor = Color(0xFFD32F2F))
+                      .cardOverlay(containerColor = MaterialTheme.colorScheme.errorContainer)
                     .padding(horizontal = 6.dp, vertical = 2.dp),
               ) {
                 Text(
@@ -460,7 +460,7 @@ fun FolderCard(
                     MaterialTheme.typography.labelSmall.copy(
                       fontWeight = FontWeight.Bold,
                     ),
-                  color = Color.White,
+                  color = MaterialTheme.colorScheme.onErrorContainer,
                 )
               }
             }

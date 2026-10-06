@@ -172,9 +172,9 @@ private fun VideoTopStartBadges(
     if (isPinned) {
       Surface(
         shape = AppShapeScale.full,
-        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.94f),
-        contentColor = MaterialTheme.colorScheme.onPrimary,
-        shadowElevation = 3.dp,
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        shadowElevation = 0.dp,
         modifier = Modifier.rotate(-18f),
       ) {
         Icon(
@@ -188,13 +188,13 @@ private fun VideoTopStartBadges(
       Box(
         modifier =
           Modifier
-            .cardOverlay(containerColor = Color(0xFFD32F2F))
+            .cardOverlay(containerColor = MaterialTheme.colorScheme.errorContainer)
             .padding(horizontal = 8.dp, vertical = 3.dp),
       ) {
         Text(
           text = stringResource(R.string.video_label_new),
           style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-          color = Color.White,
+          color = MaterialTheme.colorScheme.onErrorContainer,
         )
       }
     }

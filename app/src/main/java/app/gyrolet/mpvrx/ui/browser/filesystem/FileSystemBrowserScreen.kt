@@ -539,8 +539,8 @@ fun FileSystemBrowserScreen(path: String? = null) {
                 )
               }
             },
-            shape = RoundedCornerShape(28.dp),
-            tonalElevation = 6.dp,
+            shape = MaterialTheme.shapes.extraLarge,
+            tonalElevation = 1.dp,
           )
         } else {
           BrowserTopBar(
