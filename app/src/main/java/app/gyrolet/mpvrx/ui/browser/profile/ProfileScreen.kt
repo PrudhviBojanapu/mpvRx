@@ -962,7 +962,7 @@ private fun ShelfCard(
   frame: @Composable androidx.compose.foundation.layout.BoxScope.() -> Unit,
 ) {
   val cardWidth = if (isAudio) SHELF_AUDIO_CARD_WIDTH else SHELF_VIDEO_CARD_WIDTH
-  val cardShape = if (isAudio) RoundedCornerShape(16.dp) else RoundedCornerShape(14.dp)
+  val cardShape = if (isAudio) MaterialTheme.shapes.large else RoundedCornerShape(14.dp)
   val aspectRatio = if (isAudio) 1f else (16f / 9f)
 
   Column(

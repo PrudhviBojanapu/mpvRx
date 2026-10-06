@@ -297,8 +297,8 @@ object PlaylistScreen : Screen {
                 Icon(Icons.RoundedFilled.Close, contentDescription = stringResource(R.string.generic_cancel))
               }
             },
-            shape = RoundedCornerShape(28.dp),
-            tonalElevation = 6.dp,
+            shape = MaterialTheme.shapes.extraLarge,
+            tonalElevation = 1.dp,
           )
         } else {
           BrowserTopBar(
