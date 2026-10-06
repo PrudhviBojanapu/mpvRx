@@ -254,7 +254,7 @@ fun SeerrDetailSheet(
           Box(
             modifier = Modifier
               .fillMaxSize()
-              .background(MaterialTheme.colorScheme.surfaceVariant),
+              .background(MaterialTheme.colorScheme.surfaceContainerLow),
           )
         }
 
@@ -832,7 +832,7 @@ fun SeerrDetailSheet(
                     modifier = Modifier
                       .size(54.dp)
                       .clip(CircleShape)
-                      .background(MaterialTheme.colorScheme.surfaceVariant),
+                      .background(MaterialTheme.colorScheme.surfaceContainerLow),
                     contentAlignment = Alignment.Center,
                   ) {
                     Text(

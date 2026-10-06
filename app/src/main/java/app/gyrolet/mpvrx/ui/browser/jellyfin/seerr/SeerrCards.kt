@@ -94,7 +94,7 @@ fun SeerrMediaCard(
         Box(
           modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceVariant),
+            .background(MaterialTheme.colorScheme.surfaceContainerLow),
           contentAlignment = Alignment.Center,
         ) {
           Icon(

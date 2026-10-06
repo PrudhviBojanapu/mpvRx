@@ -224,7 +224,7 @@ fun JellyfinPersonSheet(
       if (!overview.isNullOrBlank()) {
         var isBioExpanded by remember { mutableStateOf(false) }
         Surface(
-          shape = RoundedCornerShape(16.dp),
+          shape = MaterialTheme.shapes.large,
           color = MaterialTheme.colorScheme.surfaceContainerLow,
           modifier = Modifier.fillMaxWidth(),
         ) {
@@ -337,7 +337,7 @@ fun JellyfinPersonSheet(
           }
         } else if (filteredMedia.isEmpty()) {
           Surface(
-            shape = RoundedCornerShape(16.dp),
+            shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surfaceContainerLow,
             modifier = Modifier.fillMaxWidth(),
           ) {

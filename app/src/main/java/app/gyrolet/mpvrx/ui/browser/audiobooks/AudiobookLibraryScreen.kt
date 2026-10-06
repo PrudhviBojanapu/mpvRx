@@ -314,7 +314,7 @@ fun AudiobookLibraryContent(
               var isSourceDropdownOpen by remember { mutableStateOf(false) }
               Box {
                 Surface(
-                  shape = RoundedCornerShape(16.dp),
+                  shape = MaterialTheme.shapes.large,
                   color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.8f),
                   modifier = Modifier
                     .padding(horizontal = 4.dp, vertical = 6.dp)
@@ -1240,7 +1240,7 @@ private fun AudiobookOnlineSearchDialog(
                       Text(
                         text = stringResource(R.string.audiobook_narrated_by, result.narrator),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                       )

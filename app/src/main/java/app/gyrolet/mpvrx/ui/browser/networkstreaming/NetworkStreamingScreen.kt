@@ -358,8 +358,8 @@ object NetworkStreamingScreen : Screen {
                   )
                 }
               },
-              shape = RoundedCornerShape(28.dp),
-              tonalElevation = 6.dp,
+              shape = MaterialTheme.shapes.extraLarge,
+              tonalElevation = 1.dp,
             )
           } else {
             Box {
@@ -410,7 +410,7 @@ object NetworkStreamingScreen : Screen {
             selectedTabIndex = pagerState.currentPage.coerceIn(0, (NetworkTab.entries.size - 1).coerceAtLeast(0)),
             edgePadding = 8.dp,
             containerColor = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             divider = {},
           ) {
             val navigateTab = rememberTabNavigation(pagerState)
@@ -420,7 +420,9 @@ object NetworkStreamingScreen : Screen {
                 onClick = {
                   navigateTab(index)
                 },
-                text = {
+                selectedContentColor = MaterialTheme.colorScheme.primary,
+              unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+              text = {
                   Text(
                     text = stringResource(tab.titleResId),
                     style = MaterialTheme.typography.titleMedium,
@@ -433,7 +435,6 @@ object NetworkStreamingScreen : Screen {
               )
             }
           }
-          HorizontalDivider()
         }
       },
       floatingActionButton = {
@@ -1109,7 +1110,7 @@ private fun StreamLinkSection(
         CardDefaults.cardColors(
           containerColor = MaterialTheme.colorScheme.surfaceContainer,
         ),
-      shape = RoundedCornerShape(16.dp),
+      shape = MaterialTheme.shapes.large,
     ) {
       Row(
         modifier =

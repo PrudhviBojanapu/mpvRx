@@ -266,12 +266,11 @@ fun NavidromeContent(
                   overflow = TextOverflow.Ellipsis,
                 )
               },
-              selectedContentColor = MaterialTheme.colorScheme.onSurface,
+              selectedContentColor = MaterialTheme.colorScheme.primary,
               unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             )
           }
         }
-        HorizontalDivider()
       }
     }
 

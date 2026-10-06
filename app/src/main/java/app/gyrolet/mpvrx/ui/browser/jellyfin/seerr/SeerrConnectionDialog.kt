@@ -205,7 +205,7 @@ fun SeerrConnectionDialog(
       // If connected, show active account profile card
       if (isConnected && currentUser != null) {
         Card(
-          shape = RoundedCornerShape(16.dp),
+          shape = MaterialTheme.shapes.large,
           colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
           modifier = Modifier.fillMaxWidth(),
         ) {

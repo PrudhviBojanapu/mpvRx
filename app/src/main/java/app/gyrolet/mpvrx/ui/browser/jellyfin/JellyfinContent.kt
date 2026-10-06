@@ -985,8 +985,8 @@ fun JellyfinContent(
                 )
               }
             },
-            shape = RoundedCornerShape(28.dp),
-            tonalElevation = 6.dp,
+            shape = MaterialTheme.shapes.extraLarge,
+              tonalElevation = 1.dp,
           )
 
           // Category Filter Chips
@@ -1097,7 +1097,7 @@ fun JellyfinContent(
                   overflow = TextOverflow.Ellipsis,
                 )
               },
-              selectedContentColor = MaterialTheme.colorScheme.onSurface,
+              selectedContentColor = MaterialTheme.colorScheme.primary,
               unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             )
           }

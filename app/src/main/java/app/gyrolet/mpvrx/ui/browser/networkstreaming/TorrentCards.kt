@@ -614,14 +614,14 @@ fun TorrentPosterCard(
     modifier =
       modifier
         .width(135.dp)
-        .clip(RoundedCornerShape(16.dp))
-        .tvFocusHighlight(RoundedCornerShape(16.dp), focusedScale = 1.03f)
+        .clip(MaterialTheme.shapes.large)
+        .tvFocusHighlight(MaterialTheme.shapes.large, focusedScale = 1.03f)
         .tvContextMenu(onLongClick)
         .combinedClickable(
           onClick = onClick,
           onLongClick = onLongClick,
         ),
-    shape = RoundedCornerShape(16.dp),
+    shape = MaterialTheme.shapes.large,
     colors = CardDefaults.cardColors(containerColor = Color.Transparent),
   ) {
     Column(
@@ -634,8 +634,8 @@ fun TorrentPosterCard(
           Modifier
             .fillMaxWidth()
             .aspectRatio(2f / 3f)
-            .shadow(6.dp, RoundedCornerShape(16.dp))
-            .clip(RoundedCornerShape(16.dp))
+            .shadow(6.dp, MaterialTheme.shapes.large)
+            .clip(MaterialTheme.shapes.large)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh),
       ) {
         if (!posterUrl.isNullOrBlank()) {

@@ -1987,7 +1987,7 @@ fun JellyfinListItemCard(
           Text(
             text = item.overview,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.outline,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
           )
