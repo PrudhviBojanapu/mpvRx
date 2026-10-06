@@ -592,7 +592,7 @@ fun PlaylistTrackListItem(
       Modifier.border(
         width = 1.5.dp,
         color = accentColor.copy(alpha = 0.6f),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
       )
     } else {
       Modifier
@@ -605,7 +605,7 @@ fun PlaylistTrackListItem(
         .padding(
           horizontal = MaterialTheme.spacing.medium,
           vertical = MaterialTheme.spacing.extraSmall,
-        ).clip(RoundedCornerShape(12.dp))
+        ).clip(MaterialTheme.shapes.medium)
         .then(borderModifier)
         .clickable(onClick = onClick),
     color =
@@ -614,7 +614,7 @@ fun PlaylistTrackListItem(
       } else {
         Color.Transparent
       },
-    shape = RoundedCornerShape(12.dp),
+    shape = MaterialTheme.shapes.medium,
   ) {
     Row(
       modifier =
@@ -634,7 +634,7 @@ fun PlaylistTrackListItem(
               } else {
                 Modifier.width(100.dp).height(56.dp)
               },
-            ).clip(RoundedCornerShape(8.dp))
+            ).clip(MaterialTheme.shapes.small)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh),
         contentAlignment = Alignment.Center,
       ) {
@@ -664,7 +664,7 @@ fun PlaylistTrackListItem(
               .padding(6.dp)
               .background(
                 color = Color.Black.copy(alpha = 0.7f),
-                shape = RoundedCornerShape(6.dp),
+                shape = MaterialTheme.shapes.small,
               ).padding(horizontal = 8.dp, vertical = 4.dp),
         ) {
           Text(
@@ -779,7 +779,7 @@ fun PlaylistTrackListItem(
           val isPlaybackActive = paused != true
           Surface(
             color = accentColor.copy(alpha = 0.15f),
-            shape = RoundedCornerShape(16.dp),
+            shape = MaterialTheme.shapes.large,
           ) {
             Box(
               modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
@@ -822,7 +822,7 @@ fun PlaylistTrackGridItem(
       Modifier.border(
         width = 1.5.dp,
         color = accentColor.copy(alpha = 0.6f),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
       )
     } else {
       Modifier
@@ -833,7 +833,7 @@ fun PlaylistTrackGridItem(
     modifier =
       modifier
         .width(200.dp)
-        .clip(RoundedCornerShape(12.dp))
+        .clip(MaterialTheme.shapes.medium)
         .then(borderModifier)
         .clickable(onClick = onClick),
     color =
@@ -842,7 +842,7 @@ fun PlaylistTrackGridItem(
       } else {
         MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f)
       },
-    shape = RoundedCornerShape(12.dp),
+    shape = MaterialTheme.shapes.medium,
   ) {
     Column(
       modifier = Modifier.padding(MaterialTheme.spacing.smaller),
@@ -859,7 +859,7 @@ fun PlaylistTrackGridItem(
               } else {
                 Modifier.height(112.dp)
               },
-            ).clip(RoundedCornerShape(8.dp))
+            ).clip(MaterialTheme.shapes.small)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh),
         contentAlignment = Alignment.Center,
       ) {
@@ -889,7 +889,7 @@ fun PlaylistTrackGridItem(
               .padding(6.dp)
               .background(
                 color = Color.Black.copy(alpha = 0.7f),
-                shape = RoundedCornerShape(6.dp),
+                shape = MaterialTheme.shapes.small,
               ).padding(horizontal = 8.dp, vertical = 4.dp),
         ) {
           Text(

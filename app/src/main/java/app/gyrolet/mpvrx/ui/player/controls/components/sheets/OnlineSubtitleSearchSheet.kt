@@ -278,7 +278,7 @@ fun OnlineSubtitleSearchSheet(
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             keyboardActions = KeyboardActions(onSearch = { runSearch() }),
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             colors =
               TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
@@ -322,7 +322,7 @@ fun OnlineSubtitleSearchSheet(
               Text(
                 text = "Found ${mediaSearchResults.size}",
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.outline,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier =
                   Modifier
                     .padding(bottom = MaterialTheme.spacing.small)
@@ -439,7 +439,7 @@ fun OnlineSubtitleRow(
       if (subtitle.isHashMatch) {
         MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
       } else {
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.3f)
       },
   ) {
     Row(
@@ -543,7 +543,7 @@ fun OnlineSubtitleRow(
             Text(
               text = source,
               style = MaterialTheme.typography.labelSmall,
-              color = MaterialTheme.colorScheme.outline,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
               maxLines = 1,
               overflow = TextOverflow.Ellipsis,
               modifier = Modifier.weight(1f),
@@ -560,7 +560,7 @@ fun OnlineSubtitleRow(
             Text(
               text = format.uppercase(),
               style = MaterialTheme.typography.labelSmall,
-              color = MaterialTheme.colorScheme.outline,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
               fontWeight = FontWeight.Bold,
             )
           }
@@ -626,7 +626,7 @@ private fun SubdlEpisodeDropdown(
           .height(32.dp)
           .widthIn(min = 74.dp),
       contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-      shape = RoundedCornerShape(8.dp),
+      shape = MaterialTheme.shapes.small,
     ) {
       Text(
         text = "Ep $selectedEpisode",
@@ -644,7 +644,7 @@ private fun SubdlEpisodeDropdown(
       expanded = expanded,
       onDismissRequest = { expanded = false },
       modifier = Modifier.heightIn(max = 300.dp),
-      shape = RoundedCornerShape(12.dp),
+      shape = MaterialTheme.shapes.medium,
       containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
       episodes.forEach { episode ->
@@ -682,10 +682,10 @@ fun TmdbMediaCard(
         .border(
           width = 1.dp,
           color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-          shape = RoundedCornerShape(8.dp),
+          shape = MaterialTheme.shapes.small,
         ),
-    shape = RoundedCornerShape(8.dp),
-    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+    shape = MaterialTheme.shapes.small,
+    color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.3f),
   ) {
     Box {
       // Poster image
@@ -696,7 +696,7 @@ fun TmdbMediaCard(
           modifier =
             Modifier
               .matchParentSize()
-              .clip(RoundedCornerShape(8.dp)),
+              .clip(MaterialTheme.shapes.small),
           contentScale = ContentScale.Crop,
           alpha = 0.9f,
         )
@@ -786,7 +786,7 @@ fun TmdbResultRow(
             .width(48.dp)
             .height(72.dp)
             .background(
-              color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+              color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.5f),
               shape = RoundedCornerShape(4.dp),
             ),
         contentAlignment = Alignment.Center,
@@ -810,7 +810,7 @@ fun TmdbResultRow(
             .width(48.dp)
             .height(72.dp)
             .background(
-              color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+              color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.5f),
               shape = RoundedCornerShape(4.dp),
             ),
         contentAlignment = Alignment.Center,
@@ -896,7 +896,7 @@ private fun SeriesSelectionControls(
         expanded = seasonDropdownExpanded.value,
         onDismissRequest = { seasonDropdownExpanded.value = false },
         modifier = Modifier.heightIn(max = 300.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
       ) {
         tvShow.seasons.forEach { season ->
@@ -945,7 +945,7 @@ private fun SeriesSelectionControls(
         expanded = episodeDropdownExpanded.value,
         onDismissRequest = { episodeDropdownExpanded.value = false },
         modifier = Modifier.heightIn(max = 300.dp).widthIn(min = 200.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
       ) {
         episodes.forEach { episode ->

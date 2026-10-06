@@ -278,8 +278,7 @@ data class ControlLayoutEditorScreen(
                     .fillMaxWidth()
                     .height(120.dp),
                 shape =
-                  androidx.compose.foundation.shape
-                    .MaterialTheme.shapes.extraLarge,
+                  MaterialTheme.shapes.extraLarge,
                 color = MaterialTheme.colorScheme.surfaceContainerLow,
               ) {
                 androidx.compose.foundation.layout.Column(
@@ -349,8 +348,7 @@ data class ControlLayoutEditorScreen(
                         },
                       ),
                   shape =
-                    androidx.compose.foundation.shape
-                      .MaterialTheme.shapes.extraLarge,
+                    MaterialTheme.shapes.extraLarge,
                   // Match chip border radius
                   shadowElevation = elevation.dp,
                   color = Color.Transparent,
@@ -377,8 +375,7 @@ data class ControlLayoutEditorScreen(
             androidx.compose.material3.Card(
               modifier = Modifier.fillMaxWidth(),
               shape =
-                androidx.compose.foundation.shape
-                  .MaterialTheme.shapes.extraLarge,
+                MaterialTheme.shapes.extraLarge,
               colors =
                 androidx.compose.material3.CardDefaults.cardColors(
                   containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -451,8 +448,7 @@ private fun IconsLegend() {
         .fillMaxWidth()
         .padding(top = 24.dp, bottom = 8.dp),
     shape =
-      androidx.compose.foundation.shape
-        .MaterialTheme.shapes.extraLarge,
+      MaterialTheme.shapes.extraLarge,
     colors =
       androidx.compose.material3.CardDefaults.cardColors(
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,

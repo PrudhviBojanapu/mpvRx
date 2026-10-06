@@ -212,7 +212,7 @@ fun AudioTrackCard(
 ) {
   val haptics = rememberAppHaptics()
   val reducedMotion = AppMotion.playerReducedMotion()
-  val shape = RoundedCornerShape(8.dp)
+  val shape = MaterialTheme.shapes.small
   val containerColor by animateColorAsState(
     targetValue =
       if (isSelected) {
@@ -280,7 +280,7 @@ fun AudioTrackRow(
 ) {
   val haptics = rememberAppHaptics()
   val reducedMotion = AppMotion.playerReducedMotion()
-  val shape = RoundedCornerShape(8.dp)
+  val shape = MaterialTheme.shapes.small
   val containerColor by animateColorAsState(
     targetValue =
       if (isSelected) {

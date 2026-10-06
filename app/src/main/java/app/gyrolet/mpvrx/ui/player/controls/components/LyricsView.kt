@@ -406,7 +406,7 @@ fun LyricsView(
                       if (lineBlur > 0.dp) {
                         Modifier.blur(
                           lineBlur,
-                          edgeTreatment = BlurredEdgeTreatment(RoundedCornerShape(8.dp)),
+                          edgeTreatment = BlurredEdgeTreatment(MaterialTheme.shapes.small),
                         )
                       } else {
                         Modifier
@@ -418,7 +418,7 @@ fun LyricsView(
                       scaleY = lineScale
                       transformOrigin = TransformOrigin(0.5f, 0.5f)
                     }
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(MaterialTheme.shapes.small)
                     .clickable {
                       onTap?.invoke()
                       if (!isLyricsFullscreen) {
@@ -594,8 +594,8 @@ fun LyricsView(
           // Translate button on Left (40.dp square with rounded corners)
           Surface(
             onClick = { showTranslateDialog = true },
-            shape = RoundedCornerShape(12.dp),
-            color = if (state.isTranslationActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+            shape = MaterialTheme.shapes.medium,
+            color = if (state.isTranslationActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
             modifier = Modifier.size(40.dp),
           ) {
             Box(contentAlignment = Alignment.Center) {
@@ -636,8 +636,8 @@ fun LyricsView(
                 shrinkHorizontally(shrinkTowards = Alignment.End, animationSpec = tween(180)),
             ) {
               Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f),
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.65f),
                 modifier = Modifier
                   .fillMaxWidth()
                   .height(40.dp),
@@ -677,7 +677,7 @@ fun LyricsView(
                   // Collapse close button
                   Box(
                     modifier = Modifier
-                      .clip(RoundedCornerShape(8.dp))
+                      .clip(MaterialTheme.shapes.small)
                       .clickable { isSyncExpanded = false }
                       .padding(horizontal = 6.dp, vertical = 6.dp),
                     contentAlignment = Alignment.Center,
@@ -703,8 +703,8 @@ fun LyricsView(
             ) {
               Surface(
                 onClick = { isSyncExpanded = true },
-                shape = RoundedCornerShape(12.dp),
-                color = if (state.syncOffsetMs != 0) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                shape = MaterialTheme.shapes.medium,
+                color = if (state.syncOffsetMs != 0) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
                 modifier = Modifier.size(40.dp),
               ) {
                 Box(contentAlignment = Alignment.Center) {

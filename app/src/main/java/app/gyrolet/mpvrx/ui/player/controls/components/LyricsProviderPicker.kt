@@ -98,7 +98,7 @@ fun LyricsSourceLine(
     modifier =
       modifier
         .fillMaxWidth()
-        .clip(RoundedCornerShape(8.dp))
+        .clip(MaterialTheme.shapes.small)
         .clickable(onClick = onOpenSheet)
         .padding(horizontal = 4.dp, vertical = 4.dp),
     verticalAlignment = Alignment.CenterVertically,

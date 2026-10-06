@@ -153,7 +153,7 @@ fun YtdlpPanel(
             }
           },
           enabled = !isRunning,
-          shape = RoundedCornerShape(16.dp),
+          shape = MaterialTheme.shapes.large,
           modifier = Modifier.fillMaxWidth(),
         ) {
           Icon(Icons.RoundedFilled.CloudDownload, null, modifier = Modifier.size(18.dp))
@@ -166,7 +166,7 @@ fun YtdlpPanel(
             runOperation { YtdlpManager.runUpdateToNightly(context) {} }
           },
           enabled = !isRunning && hasYtdlp,
-          shape = RoundedCornerShape(16.dp),
+          shape = MaterialTheme.shapes.large,
           modifier = Modifier.fillMaxWidth(),
           border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         ) {
@@ -232,7 +232,7 @@ fun YtdlpPanel(
             }
 
             Surface(
-              shape = RoundedCornerShape(12.dp),
+              shape = MaterialTheme.shapes.medium,
               color = MaterialTheme.colorScheme.secondaryContainer,
               modifier = Modifier.padding(start = 4.dp),
             ) {

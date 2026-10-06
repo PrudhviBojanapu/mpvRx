@@ -230,7 +230,7 @@ fun LyricsSheet(
         modifier = Modifier
           .fillMaxWidth()
           .height(340.dp)
-          .clip(RoundedCornerShape(16.dp))
+          .clip(MaterialTheme.shapes.large)
           .background(MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.7f))
           .padding(horizontal = 16.dp, vertical = 12.dp),
         contentAlignment = Alignment.Center,
@@ -274,7 +274,7 @@ fun LyricsSheet(
                 Column(
                   modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(MaterialTheme.shapes.small)
                     .clickable {
                       val targetSeconds = line.time / 1000f
                       PlaybackSession.command("seek", targetSeconds.toString(), "absolute+exact")

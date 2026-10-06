@@ -325,7 +325,7 @@ fun SubtitlesSheet(
                 Text(
                   androidx.compose.ui.res
                     .stringResource(app.gyrolet.mpvrx.R.string.ui_no_languages_found),
-                  color = MaterialTheme.colorScheme.outline,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
                   modifier = Modifier.padding(MaterialTheme.spacing.medium),
                 )
               }
@@ -504,7 +504,7 @@ fun SubtitlesSheet(
             }
             is SubtitleItem.Off -> {
               val haptics = rememberAppHaptics()
-              val shape = RoundedCornerShape(8.dp)
+              val shape = MaterialTheme.shapes.small
               Surface(
                 modifier =
                   Modifier
@@ -585,7 +585,7 @@ fun SubtitleTrackRow(
 ) {
   val isTelevision = DeviceFormFactor.isTelevision(LocalContext.current)
   val haptics = rememberAppHaptics()
-  val shape = RoundedCornerShape(8.dp)
+  val shape = MaterialTheme.shapes.small
   val containerColor by animateColorAsState(
     targetValue =
       if (isSelected) {

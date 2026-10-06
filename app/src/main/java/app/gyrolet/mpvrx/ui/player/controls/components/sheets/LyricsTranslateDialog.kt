@@ -115,13 +115,13 @@ fun LyricsTranslateDialog(
         Surface(
           modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(MaterialTheme.shapes.medium)
             .clickable {
               viewModel.showOriginalLyrics()
               onDismiss()
             },
-          color = if (!state.isTranslationActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-          shape = RoundedCornerShape(12.dp),
+          color = if (!state.isTranslationActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
+          shape = MaterialTheme.shapes.medium,
         ) {
           Row(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
@@ -142,7 +142,7 @@ fun LyricsTranslateDialog(
               Text(
                 text = stringResource(R.string.lyrics_translation_off_summary),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.outline,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
               )
             }
           }
@@ -218,7 +218,7 @@ fun LyricsTranslateDialog(
             Row(
               modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
+                .clip(MaterialTheme.shapes.small)
                 .clickable {
                   audioPreferences.lyricsTargetLanguage.set(lang.code)
                   viewModel.translateLyrics(lang.code)

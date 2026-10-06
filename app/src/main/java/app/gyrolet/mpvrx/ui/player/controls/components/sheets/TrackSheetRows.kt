@@ -68,7 +68,7 @@ fun TrackBadgeFlow(
           else -> MaterialTheme.colorScheme.onSurfaceVariant
         }
       Surface(
-        shape = RoundedCornerShape(6.dp),
+        shape = MaterialTheme.shapes.small,
         color = containerColor,
         contentColor = contentColor,
       ) {

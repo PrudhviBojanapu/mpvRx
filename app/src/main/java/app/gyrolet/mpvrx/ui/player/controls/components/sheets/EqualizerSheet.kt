@@ -189,7 +189,7 @@ fun EqualizerSheet(
         checked = state.isEnabled,
         onCheckedChange = onEnabledChanged,
         modifier = Modifier.tvInitialFocus(initialFocusRequester)
-          .tvFocusHighlight(RoundedCornerShape(12.dp), focusedScale = 1.04f),
+          .tvFocusHighlight(MaterialTheme.shapes.medium, focusedScale = 1.04f),
       )
     }
     Column(
@@ -457,7 +457,7 @@ private fun TonePad(
         .fillMaxWidth()
         .height(190.dp)
         .padding(horizontal = 12.dp, vertical = 14.dp)
-        .clip(RoundedCornerShape(16.dp))
+        .clip(MaterialTheme.shapes.large)
         .background(surfaceColor.copy(alpha = if (enabled) 0.55f else 0.25f))
         .pointerInput(enabled) {
           if (!enabled) return@pointerInput
