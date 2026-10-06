@@ -77,7 +77,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.TransformOrigin
@@ -755,11 +754,11 @@ internal fun ExpressivePillNavigationBar(
     }
   }
 
-  val surfaceColor = MaterialTheme.colorScheme.surfaceContainerHigh
+  val surfaceColor = MaterialTheme.colorScheme.surfaceContainer
   val accentColor = MaterialTheme.colorScheme.primary
-  val mutedColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f)
-  val selectedSurface = accentColor.copy(alpha = 0.15f)
-  val accentBrush = Brush.linearGradient(listOf(accentColor, MaterialTheme.colorScheme.secondary))
+  val mutedColor = MaterialTheme.colorScheme.onSurfaceVariant
+  val selectedSurface = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.92f)
+  val selectedContentColor = MaterialTheme.colorScheme.onSecondaryContainer
 
   val tabRow: @Composable (Boolean) -> Unit = { active ->
       Row(
@@ -769,7 +768,7 @@ internal fun ExpressivePillNavigationBar(
         visibleTabs.forEachIndexed { index, tab ->
           key(tab) {
             val label = labels[index]
-            val contentColor = if (active) accentColor else mutedColor
+            val contentColor = if (active) selectedContentColor else mutedColor
 
             Box(
               modifier =
@@ -787,9 +786,8 @@ internal fun ExpressivePillNavigationBar(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
               ) {
-                Box(Modifier.size(iconSize).graphicsLayer { translationY = 2.dp.toPx() * labelFraction }
-                  .then(if (active && tab != MainScreen.MainTab.PROFILE) Modifier.navigationAccentMask(accentBrush) else Modifier)) {
-                  MainTabIcon(tab, if (active && tab != MainScreen.MainTab.PROFILE) Color.White else contentColor, null, iconSize)
+                Box(Modifier.size(iconSize).graphicsLayer { translationY = 2.dp.toPx() * labelFraction }) {
+                  MainTabIcon(tab, contentColor, null, iconSize)
                 }
                 Box(Modifier.height(labelHeight * labelFraction).fillMaxWidth().clipToBounds().graphicsLayer { alpha = labelFraction }) {
                 Text(
@@ -878,8 +876,8 @@ internal fun ExpressivePillNavigationBar(
           modifier = Modifier.matchParentSize(),
           shape = CircleShape,
           style = LiquidGlassStyle.Navigation,
-          glassColor = surfaceColor.copy(alpha = 0.24f),
-          fallbackColor = surfaceColor.copy(alpha = 0.82f),
+          glassColor = surfaceColor.copy(alpha = 0.32f),
+          fallbackColor = surfaceColor.copy(alpha = 0.94f),
           contentColor = MaterialTheme.colorScheme.onSurface,
           glowStrength = glowStrength,
         ) {
