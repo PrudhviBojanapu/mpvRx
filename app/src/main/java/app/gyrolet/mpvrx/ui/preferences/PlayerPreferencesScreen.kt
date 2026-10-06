@@ -16,6 +16,7 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -105,8 +106,8 @@ object PlayerPreferencesScreen : Screen {
             Text(
               text = stringResource(id = R.string.pref_player),
               style = MaterialTheme.typography.headlineSmall,
-              fontWeight = FontWeight.ExtraBold,
-              color = MaterialTheme.colorScheme.primary,
+              fontWeight = FontWeight.Bold,
+              color = MaterialTheme.colorScheme.onSurface,
             )
           },
           navigationIcon = {
@@ -115,7 +116,7 @@ object PlayerPreferencesScreen : Screen {
                 Icon(
                   Icons.RoundedFilled.ArrowBack,
                   contentDescription = null,
-                  tint = MaterialTheme.colorScheme.secondary,
+                  tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
               }
             }
@@ -133,6 +134,8 @@ object PlayerPreferencesScreen : Screen {
               .fillMaxSize()
               .padding(padding)
               .then(settingsHighlight),
+          contentPadding = PaddingValues(bottom = 36.dp),
+          verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
           // ── General ───────────────────────────────────────────────────────
           item {
@@ -167,7 +170,7 @@ object PlayerPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(resumePlaybackMode.summaryRes),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -183,7 +186,7 @@ object PlayerPreferencesScreen : Screen {
                   summary = {
                     Text(
                       stringResource(R.string.pref_player_resume_min_duration_summary, minimumDuration),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                   },
                   valueRange = 0f..3600f,
@@ -249,7 +252,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                         R.string.pref_video_background_playback_summary
                       },
                     ),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -280,7 +283,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     stringResource(R.string.pref_player_external_display_projection_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -305,7 +308,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     text = selectedNotificationStyle.displayName,
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -325,7 +328,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                     } else {
                       stringResource(R.string.pref_autoplay_next_video_summary_disabled)
                     },
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -345,7 +348,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                     } else {
                       stringResource(R.string.pref_playlist_mode_summary_disabled)
                     },
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -371,7 +374,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     stringResource(R.string.pref_auto_pip_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -388,7 +391,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     stringResource(R.string.pref_auto_pip_home_only_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -414,7 +417,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     stringResource(R.string.pref_enable_video_mini_player_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -434,7 +437,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                     } else {
                       stringResource(R.string.pref_player_keep_screen_on_when_paused_summary_disabled)
                     },
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -454,7 +457,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                     } else {
                       stringResource(R.string.pref_player_autoplay_after_screen_unlock_summary_disabled)
                     },
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -494,7 +497,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                   Text(
                     androidx.compose.ui.res
                       .stringResource(app.gyrolet.mpvrx.R.string.ui_show_media_info_in_system),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -528,7 +531,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     stringResource(R.string.pref_player_web_stream_links_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -568,7 +571,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     stringResource(R.string.pref_player_show_buffered_range_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -584,7 +587,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     stringResource(R.string.pref_player_show_chapter_indicators_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -612,7 +615,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     "${stringResource(R.string.pref_player_custom_skip_duration_summary)} ($customSkipDuration s)",
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
                 onSliderValueChange = { preferences.customSkipDuration.set(it.roundToInt()) },
@@ -630,7 +633,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     stringResource(R.string.pref_online_skip_markers_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -649,7 +652,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                   summary = {
                     Text(
                       stringResource(R.string.pref_marker_provider_summary),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                   },
                 )
@@ -666,7 +669,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     stringResource(R.string.pref_chapter_detect_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -682,7 +685,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                   summary = {
                     Text(
                       stringResource(R.string.pref_custom_intro_keywords_summary),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                   },
                 )
@@ -699,7 +702,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                     summary = {
                       Text(
                         customIntroKeywords.ifBlank { "Not set" },
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                       )
                     },
                     textField = { value, onValueChange, _ ->
@@ -732,7 +735,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                   summary = {
                     Text(
                       stringResource(R.string.pref_custom_outro_keywords_summary),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                   },
                 )
@@ -749,7 +752,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                     summary = {
                       Text(
                         customOutroKeywords.ifBlank { "Not set" },
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                       )
                     },
                     textField = { value, onValueChange, _ ->
@@ -784,7 +787,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     stringResource(R.string.pref_auto_skip_intro_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -800,7 +803,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     stringResource(R.string.pref_auto_skip_outro_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -820,7 +823,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     stringResource(R.string.pref_player_controls_drawer_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -846,7 +849,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     stringResource(R.string.pref_nav_bar_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -862,7 +865,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     stringResource(R.string.pref_player_safe_area_window_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -929,7 +932,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     "${screenshotFormat.title} .${screenshotFormat.extension}",
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -1024,7 +1027,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                       androidx.compose.ui.res.stringResource(
                         app.gyrolet.mpvrx.R.string.ui_uses_mpv_native_lossless_output_android_fallback_uses_lossless_o,
                       ),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                   },
                 )
@@ -1045,7 +1048,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     stringResource(R.string.pref_volume_overlay_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -1061,7 +1064,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     stringResource(R.string.pref_brightness_overlay_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -1077,7 +1080,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     stringResource(R.string.pref_hold_speed_overlay_pref_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -1093,7 +1096,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     stringResource(R.string.pref_aspect_ratio_overlay_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -1109,7 +1112,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     stringResource(R.string.pref_zoom_overlay_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -1125,7 +1128,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     stringResource(R.string.pref_repeat_shuffle_overlay_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -1141,7 +1144,7 @@ val savePositionOnQuit by preferences.savePositionOnQuit.collectAsState()
                 summary = {
                   Text(
                     stringResource(R.string.pref_action_feedback_overlay_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -1157,7 +1160,7 @@ SwitchPreference(
   summary = {
     Text(
       stringResource(R.string.pref_resume_indicator_overlay_summary),
-      color = MaterialTheme.colorScheme.outline,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
   },
 )
@@ -1173,7 +1176,7 @@ val showProviderStatusOverlay by preferences.showProviderStatusOverlay.collectAs
                 summary = {
                   Text(
                     stringResource(R.string.pref_provider_status_overlay_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
