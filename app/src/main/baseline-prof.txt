@@ -48,3 +48,14 @@ Lapp/gyrolet/mpvrx/ui/player/Ambient**;
 HSPLapp/gyrolet/mpvrx/ui/player/Ambient**;->**(**)**
 Lapp/gyrolet/mpvrx/ui/player/controls/components/sheets/Ambient**;
 HSPLapp/gyrolet/mpvrx/ui/player/controls/components/sheets/Ambient**;->**(**)**
+
+# Liquid Glass & Kyant Backdrop optical refraction engine
+Lcom/kyant/backdrop/**;
+HSPLcom/kyant/backdrop/**;->**(**)**
+Lcom/kyant/shapes/**;
+HSPLcom/kyant/shapes/**;->**(**)**
+Lapp/gyrolet/mpvrx/ui/liquidglass/**;
+HSPLapp/gyrolet/mpvrx/ui/liquidglass/**;->**(**)**
+Lapp/gyrolet/mpvrx/presentation/components/LiquidGlassSurfaceKt;
+HSPLapp/gyrolet/mpvrx/presentation/components/LiquidGlassSurfaceKt;->**(**)**
+
