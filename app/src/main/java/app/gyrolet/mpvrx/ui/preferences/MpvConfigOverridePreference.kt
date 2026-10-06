@@ -50,7 +50,7 @@ internal fun MpvConfigOverridePreference(
               selectedOptions.size,
             )
           },
-        color = MaterialTheme.colorScheme.outline,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
     },
     onClick = { backStack.navigateTo(MpvConfOwnershipScreen) },

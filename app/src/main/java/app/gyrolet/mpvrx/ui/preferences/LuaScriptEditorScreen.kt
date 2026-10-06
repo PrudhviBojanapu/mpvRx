@@ -371,8 +371,8 @@ data class LuaScriptEditorScreen(
               },
               textStyle =
                 MaterialTheme.typography.headlineSmall.copy(
-                  fontWeight = FontWeight.ExtraBold,
-                  color = MaterialTheme.colorScheme.primary,
+                  fontWeight = FontWeight.Bold,
+                  color = MaterialTheme.colorScheme.onSurface,
                 ),
               cursorBrush =
                 androidx.compose.ui.graphics
@@ -438,7 +438,7 @@ data class LuaScriptEditorScreen(
               contentDescription =
                 androidx.compose.ui.res
                   .stringResource(app.gyrolet.mpvrx.R.string.back),
-              tint = MaterialTheme.colorScheme.secondary,
+              tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
           }
         },
@@ -470,7 +470,7 @@ data class LuaScriptEditorScreen(
                   .size(40.dp),
               colors =
                 IconButtonDefaults.iconButtonColors(
-                  containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                  containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                   contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 ),
               shape = RoundedCornerShape(8.dp),

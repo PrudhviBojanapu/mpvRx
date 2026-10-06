@@ -188,7 +188,7 @@ internal fun GoogleFontsSheet(
             Text(
               text = stringResource(R.string.app_font_no_downloaded),
               style = MaterialTheme.typography.bodySmall,
-              color = MaterialTheme.colorScheme.outline,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
               modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp),
             )
           }
@@ -255,7 +255,7 @@ internal fun GoogleFontsSheet(
             item(key = "empty") {
               Text(
                 text = stringResource(R.string.ui_no_results_found),
-                color = MaterialTheme.colorScheme.outline,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 28.dp),
               )
             }
@@ -364,7 +364,7 @@ private fun AppFontRow(
           Text(
             text = subtitle,
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.outline,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
           )

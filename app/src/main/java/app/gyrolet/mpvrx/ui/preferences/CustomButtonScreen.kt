@@ -266,8 +266,8 @@ object CustomButtonScreen : Screen {
                     app.gyrolet.mpvrx.R.string.pref_custom_lua_title,
                   ),
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
               )
               Text(
                 text =
@@ -287,7 +287,7 @@ object CustomButtonScreen : Screen {
                   androidx.compose.ui.res.stringResource(
                     app.gyrolet.mpvrx.R.string.back,
                   ),
-                tint = MaterialTheme.colorScheme.secondary,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
               )
             }
           },
@@ -975,7 +975,7 @@ fun HorizontalDividerWithLabel(label: String) {
     Text(
       text = " $label ",
       style = MaterialTheme.typography.labelSmall,
-      color = MaterialTheme.colorScheme.outline,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     androidx.compose.material3.HorizontalDivider(
       modifier = Modifier.weight(1f),
@@ -1140,7 +1140,7 @@ fun ImportSelectionScreen(
                 androidx.compose.ui.res.stringResource(
                   app.gyrolet.mpvrx.R.string.generic_cancel,
                 ),
-              tint = MaterialTheme.colorScheme.secondary,
+              tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
           }
         },
@@ -1154,7 +1154,7 @@ fun ImportSelectionScreen(
                 .size(40.dp),
             colors =
               IconButtonDefaults.iconButtonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
               ),
             shape = RoundedCornerShape(8.dp),

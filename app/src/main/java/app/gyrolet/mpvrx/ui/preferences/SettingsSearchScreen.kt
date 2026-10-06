@@ -128,7 +128,7 @@ object SettingsSearchScreen : Screen {
               Icon(
                 Icons.RoundedFilled.ArrowBack,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.secondary,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
               )
             }
           },
@@ -151,7 +151,7 @@ object SettingsSearchScreen : Screen {
           placeholder = {
             Text(
               text = stringResource(R.string.settings_search_hint),
-              color = MaterialTheme.colorScheme.outline,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
           },
           leadingIcon = {

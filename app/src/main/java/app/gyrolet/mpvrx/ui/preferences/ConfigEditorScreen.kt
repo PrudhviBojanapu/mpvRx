@@ -209,8 +209,8 @@ data class ConfigEditorScreen(
             Text(
               text = screenTitle,
               style = MaterialTheme.typography.headlineSmall,
-              fontWeight = FontWeight.ExtraBold,
-              color = MaterialTheme.colorScheme.primary,
+              fontWeight = FontWeight.Bold,
+              color = MaterialTheme.colorScheme.onSurface,
             )
             if (hasUnsavedChanges) {
               Text(
@@ -235,7 +235,7 @@ data class ConfigEditorScreen(
               contentDescription =
                 androidx.compose.ui.res
                   .stringResource(app.gyrolet.mpvrx.R.string.back),
-              tint = MaterialTheme.colorScheme.secondary,
+              tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
           }
         },

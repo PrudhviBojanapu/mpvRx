@@ -129,7 +129,7 @@ internal fun WallpaperPreferenceCard(
         Text(
           text = stringResource(R.string.pref_appearance_custom_wallpaper_summary),
           style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.outline,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
       }
       Icon(

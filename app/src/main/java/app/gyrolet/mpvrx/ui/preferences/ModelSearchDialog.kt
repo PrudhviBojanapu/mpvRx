@@ -86,7 +86,7 @@ fun ModelSearchDialog(
             sortedFiltered.size,
           ),
           style = MaterialTheme.typography.labelSmall,
-          color = MaterialTheme.colorScheme.outline,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.padding(top = 10.dp, bottom = 4.dp),
         )
       }
@@ -100,7 +100,7 @@ fun ModelSearchDialog(
             },
           ),
           style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.outline,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
         )
       } else {
@@ -163,7 +163,7 @@ private fun ModelSearchItem(
         Text(
           text = model.id,
           style = MaterialTheme.typography.labelSmall,
-          color = MaterialTheme.colorScheme.outline,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
           maxLines = 1,
           overflow = TextOverflow.Ellipsis,
         )

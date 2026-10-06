@@ -151,8 +151,8 @@ object AboutScreen : Screen {
               modifier = Modifier.settingsSearchTarget(R.string.pref_about_title),
               text = stringResource(id = R.string.pref_about_title),
               style = MaterialTheme.typography.headlineSmall,
-              fontWeight = FontWeight.ExtraBold,
-              color = MaterialTheme.colorScheme.primary,
+              fontWeight = FontWeight.Bold,
+              color = MaterialTheme.colorScheme.onSurface,
             )
           },
           navigationIcon = {
@@ -161,7 +161,7 @@ object AboutScreen : Screen {
                 Icon(
                   imageVector = Icons.RoundedFilled.ArrowBack,
                   contentDescription = null,
-                  tint = MaterialTheme.colorScheme.secondary,
+                  tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
               }
             }
@@ -755,8 +755,8 @@ object LibrariesScreen : Screen {
             Text(
               text = stringResource(id = R.string.pref_about_oss_libraries),
               style = MaterialTheme.typography.headlineSmall,
-              fontWeight = FontWeight.ExtraBold,
-              color = MaterialTheme.colorScheme.primary,
+              fontWeight = FontWeight.Bold,
+              color = MaterialTheme.colorScheme.onSurface,
             )
           },
           navigationIcon = {
@@ -806,7 +806,7 @@ object LibrariesScreen : Screen {
                 },
             colors =
               CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.45f),
               ),
             shape = RoundedCornerShape(18.dp),
           ) {
