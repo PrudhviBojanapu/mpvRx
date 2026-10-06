@@ -12,6 +12,7 @@ package app.gyrolet.mpvrx.ui.preferences
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -121,8 +122,8 @@ object PlayerControlsPreferencesScreen : Screen {
             Text(
               text = stringResource(id = R.string.pref_layout_title),
               style = MaterialTheme.typography.headlineSmall,
-              fontWeight = FontWeight.ExtraBold,
-              color = MaterialTheme.colorScheme.primary,
+              fontWeight = FontWeight.Bold,
+              color = MaterialTheme.colorScheme.onSurface,
             )
           },
           navigationIcon = {
@@ -131,7 +132,7 @@ object PlayerControlsPreferencesScreen : Screen {
                 Icon(
                   Icons.RoundedFilled.ArrowBack,
                   contentDescription = null,
-                  tint = MaterialTheme.colorScheme.secondary,
+                  tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
               }
             }
@@ -149,6 +150,8 @@ object PlayerControlsPreferencesScreen : Screen {
               .fillMaxSize()
               .padding(padding)
               .then(settingsHighlight),
+          contentPadding = PaddingValues(bottom = 36.dp),
+          verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
           // Landscape Controls Section
           item {
@@ -487,7 +490,7 @@ object PlayerControlsPreferencesScreen : Screen {
         Text(
           stringResource(R.string.pref_none),
           style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.outline,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
       } else {
         buttons.forEach { button ->

@@ -192,7 +192,14 @@ data class ControlLayoutEditorScreen(
     Scaffold(
       topBar = {
         TopAppBar(
-          title = { Text(text = title) },
+          title = {
+            Text(
+              text = title,
+              style = MaterialTheme.typography.headlineSmall,
+              fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+              color = MaterialTheme.colorScheme.onSurface,
+            )
+          },
           navigationIcon = {
             IconButton(onClick = { backstack.popSafely() }) {
               AppSymbolIcon(
@@ -241,9 +248,9 @@ data class ControlLayoutEditorScreen(
           columns = GridCells.Adaptive(minSize = 72.dp),
           contentPadding =
             androidx.compose.foundation.layout
-              .PaddingValues(16.dp),
-          verticalArrangement = Arrangement.spacedBy(4.dp),
-          horizontalArrangement = Arrangement.spacedBy(4.dp),
+              .PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+          verticalArrangement = Arrangement.spacedBy(8.dp),
+          horizontalArrangement = Arrangement.spacedBy(8.dp),
           modifier =
             Modifier
               .fillMaxSize()
@@ -272,13 +279,8 @@ data class ControlLayoutEditorScreen(
                     .height(120.dp),
                 shape =
                   androidx.compose.foundation.shape
-                    .RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                border =
-                  BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outlineVariant,
-                  ),
+                    .MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
               ) {
                 androidx.compose.foundation.layout.Column(
                   modifier = Modifier.fillMaxSize(),
@@ -348,7 +350,7 @@ data class ControlLayoutEditorScreen(
                       ),
                   shape =
                     androidx.compose.foundation.shape
-                      .RoundedCornerShape(24.dp),
+                      .MaterialTheme.shapes.extraLarge,
                   // Match chip border radius
                   shadowElevation = elevation.dp,
                   color = Color.Transparent,
@@ -358,7 +360,7 @@ data class ControlLayoutEditorScreen(
                     enabled = true,
                     onClick = { selectedButtons = selectedButtons - button },
                     badgeIcon = Icons.RoundedFilled.RemoveCircle,
-                    badgeColor = Color(0xFFEF5350),
+                    badgeColor = MaterialTheme.colorScheme.error,
                   )
                 }
               }
@@ -376,10 +378,10 @@ data class ControlLayoutEditorScreen(
               modifier = Modifier.fillMaxWidth(),
               shape =
                 androidx.compose.foundation.shape
-                  .RoundedCornerShape(16.dp),
+                  .MaterialTheme.shapes.extraLarge,
               colors =
                 androidx.compose.material3.CardDefaults.cardColors(
-                  containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                  containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                 ),
             ) {
               FlowRow(
@@ -450,7 +452,7 @@ private fun IconsLegend() {
         .padding(top = 24.dp, bottom = 8.dp),
     shape =
       androidx.compose.foundation.shape
-        .RoundedCornerShape(16.dp),
+        .MaterialTheme.shapes.extraLarge,
     colors =
       androidx.compose.material3.CardDefaults.cardColors(
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,

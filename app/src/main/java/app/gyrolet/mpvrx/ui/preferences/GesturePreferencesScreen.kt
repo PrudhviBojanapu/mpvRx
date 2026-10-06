@@ -9,7 +9,9 @@
 
 package app.gyrolet.mpvrx.ui.preferences
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -82,8 +84,8 @@ object GesturePreferencesScreen : Screen {
             Text(
               text = stringResource(R.string.pref_gesture),
               style = MaterialTheme.typography.headlineSmall,
-              fontWeight = FontWeight.ExtraBold,
-              color = MaterialTheme.colorScheme.primary,
+              fontWeight = FontWeight.Bold,
+              color = MaterialTheme.colorScheme.onSurface,
             )
           },
           navigationIcon = {
@@ -92,7 +94,7 @@ object GesturePreferencesScreen : Screen {
                 Icon(
                   Icons.RoundedFilled.ArrowBack,
                   contentDescription = null,
-                  tint = MaterialTheme.colorScheme.secondary,
+                  tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
               }
             }
@@ -110,6 +112,8 @@ object GesturePreferencesScreen : Screen {
               .fillMaxSize()
               .padding(padding)
               .then(settingsHighlight),
+          contentPadding = PaddingValues(bottom = 36.dp),
+          verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
           // ── Swipe & Speed ──────────────────────────────────────────────
           item {
@@ -260,7 +264,7 @@ object GesturePreferencesScreen : Screen {
                     }
                   Text(
                     stringResource(R.string.pref_swipe_sensitivity_summary, pct, level),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
                 onSliderValueChange = { playerPreferences.horizontalSwipeSensitivity.set(it.toFixed(3)) },
@@ -284,7 +288,7 @@ object GesturePreferencesScreen : Screen {
                     } else {
                       stringResource(R.string.pref_hold_speed_summary_format, holdSpeedSliderValue)
                     },
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
                 onSliderValueChange = { playerPreferences.holdForMultipleSpeed.set(snapHoldSpeedBoost(it).toFixed(2)) },
@@ -332,7 +336,7 @@ object GesturePreferencesScreen : Screen {
                       } else {
                         "${doubleTapSeekDuration}s"
                       },
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -393,7 +397,7 @@ object GesturePreferencesScreen : Screen {
                 summary = {
                   Text(
                     text = stringResource(R.string.pref_double_tap_seek_area_width_summary, doubleTapSeekAreaWidth),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -411,7 +415,7 @@ object GesturePreferencesScreen : Screen {
                 summary = {
                   Text(
                     text = stringResource(leftDoubleTap.titleRes),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -441,7 +445,7 @@ object GesturePreferencesScreen : Screen {
                 summary = {
                   Text(
                     text = stringResource(centerDoubleTap.titleRes),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -459,7 +463,7 @@ object GesturePreferencesScreen : Screen {
                 summary = {
                   Text(
                     text = stringResource(rightDoubleTap.titleRes),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -479,7 +483,7 @@ object GesturePreferencesScreen : Screen {
                 summary = {
                   Text(
                     text = stringResource(id = R.string.pref_gesture_use_single_tap_for_center_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -496,7 +500,7 @@ object GesturePreferencesScreen : Screen {
                 summary = {
                   Text(
                     text = stringResource(R.string.pref_gesture_center_vertical_subtitle_position_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -530,7 +534,7 @@ object GesturePreferencesScreen : Screen {
 
                   Text(
                     text = annotatedString,
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -567,7 +571,7 @@ object GesturePreferencesScreen : Screen {
                           mediaPreviousGesture.titleRes
                         },
                       ),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -589,7 +593,7 @@ object GesturePreferencesScreen : Screen {
                 summary = {
                   Text(
                     text = stringResource(mediaPlayGesture.titleRes),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -619,7 +623,7 @@ object GesturePreferencesScreen : Screen {
                           mediaNextGesture.titleRes
                         },
                       ),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -653,7 +657,7 @@ object GesturePreferencesScreen : Screen {
 
                   Text(
                     text = annotatedString,
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )

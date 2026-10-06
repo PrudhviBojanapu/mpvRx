@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -109,7 +110,12 @@ object VideoSwipePreferencesScreen : Screen {
     ) { padding ->
       val (listState, highlight) =
         rememberSettingsSearchList(VideoSwipePreferencesScreen, MaterialTheme.colorScheme.primary)
-      LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(padding).then(highlight)) {
+      LazyColumn(
+        state = listState,
+        modifier = Modifier.fillMaxSize().padding(padding).then(highlight),
+        contentPadding = PaddingValues(bottom = 32.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+      ) {
         item {
           SwipeDirectionPreference(
             right = true,
@@ -119,7 +125,7 @@ object VideoSwipePreferencesScreen : Screen {
             modifier = Modifier.settingsSearchTarget(R.string.pref_video_swipe_right),
             onChange = { editingRight = true },
           )
-          HorizontalDivider()
+          HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.42f))
         }
         item {
           SwipeDirectionPreference(
@@ -194,7 +200,7 @@ private fun SwipeDirectionPreference(
     zoneSteps,
     listOf(BrowserPreferences.DEFAULT_VIDEO_SWIPE_ZONE_PERCENT.toFloat()),
   )
-  Column(modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 20.dp)) {
+  Column(modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp)) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
       Column(Modifier.weight(1f)) {
         Text(
@@ -254,7 +260,7 @@ private fun SwipeActionPreview(right: Boolean, action: VideoSwipeAction, zonePer
     label = "swipePreviewColor",
   )
   val zoneColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.20f)
-  Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))) {
+  Column(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.extraLarge)) {
     Text(
       text = stringResource(R.string.pref_video_swipe_zone_percent, zonePercent),
       modifier = Modifier.fillMaxWidth()
@@ -293,7 +299,7 @@ private fun SwipeActionPreview(right: Boolean, action: VideoSwipeAction, zonePer
         horizontalArrangement = Arrangement.spacedBy(16.dp),
       ) {
         Box(
-          Modifier.size(48.dp).background(MaterialTheme.colorScheme.surfaceContainerHighest, RoundedCornerShape(6.dp)),
+          Modifier.size(48.dp).background(MaterialTheme.colorScheme.surfaceContainerHighest, MaterialTheme.shapes.medium),
           contentAlignment = Alignment.Center,
         ) {
           Icon(Icons.RoundedFilled.PlayArrow, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
