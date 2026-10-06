@@ -1397,12 +1397,12 @@ is PlayerUpdates.FrameInfo -> {
                 alpha = 0.96f,
               )
             Surface(
-              shape = RoundedCornerShape(999.dp),
+              shape = CircleShape,
               color = segmentSurfaceColor,
               border = BorderStroke(1.5.dp, segmentBorderColor),
               modifier =
                 Modifier
-                  .clip(RoundedCornerShape(999.dp))
+                  .clip(CircleShape)
                   .clickable {
                     resetControlsTimestamp = System.currentTimeMillis()
                     viewModel.skipActiveSegment()

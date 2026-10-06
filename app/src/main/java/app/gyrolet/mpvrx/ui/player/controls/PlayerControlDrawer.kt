@@ -235,11 +235,11 @@ private fun PlayerControlPanel(
   DraggablePanel(
     modifier = Modifier.fillMaxSize(),
     header = { PlayerControlPanelHeader(onDismissRequest) },
-    shape = RoundedCornerShape(24.dp),
-    containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.94f),
+    shape = MaterialTheme.shapes.extraLarge,
+    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.96f),
     tonalElevation = 2.dp,
-    shadowElevation = 10.dp,
-    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+    shadowElevation = 6.dp,
+    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
   ) {
     CompositionLocalProvider(
       LocalHidePlayerButtonsBackground provides true,
@@ -335,9 +335,9 @@ private fun PlayerControlTile(
     animateColorAsState(
       targetValue =
         if (active) {
-          MaterialTheme.colorScheme.primaryContainer
+          MaterialTheme.colorScheme.secondaryContainer
         } else {
-          MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.78f)
+          MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.88f)
         },
       animationSpec = tween(durationMillis = 180),
       label = "PlayerControlTileContainer",
@@ -346,7 +346,7 @@ private fun PlayerControlTile(
     animateColorAsState(
       targetValue =
         if (active) {
-          MaterialTheme.colorScheme.onPrimaryContainer
+          MaterialTheme.colorScheme.onSecondaryContainer
         } else {
           MaterialTheme.colorScheme.onSurfaceVariant
         },
@@ -357,9 +357,9 @@ private fun PlayerControlTile(
   Surface(
     modifier =
       modifier
-        .tvFocusHighlight(RoundedCornerShape(18.dp), focusedScale = 1.02f)
+        .tvFocusHighlight(MaterialTheme.shapes.largeIncreased, focusedScale = 1.02f)
         .height(104.dp),
-    shape = RoundedCornerShape(18.dp),
+    shape = MaterialTheme.shapes.largeIncreased,
     color = containerColor,
     contentColor = contentColor,
     tonalElevation = if (active) 2.dp else 0.dp,

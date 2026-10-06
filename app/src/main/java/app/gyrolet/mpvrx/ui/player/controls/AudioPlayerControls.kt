@@ -1713,7 +1713,7 @@ fun AudioPlayerControls(
                       ) {
                         MaterialTheme.colorScheme.primaryContainer
                       } else {
-                        MaterialTheme.colorScheme.surfaceVariant
+                        MaterialTheme.colorScheme.surfaceContainerLow
                       },
                     modifier = Modifier.height(30.dp).clip(CircleShape).clickable(onClick = { viewModel.setLoopA() }),
                   ) {
@@ -1734,7 +1734,7 @@ fun AudioPlayerControls(
                   }
                   Surface(
                     shape = CircleShape,
-                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
                     modifier =
                       Modifier.size(30.dp).clip(CircleShape).clickable(onClick = {
                         viewModel.clearABLoop()
@@ -1758,7 +1758,7 @@ fun AudioPlayerControls(
                       ) {
                         MaterialTheme.colorScheme.primaryContainer
                       } else {
-                        MaterialTheme.colorScheme.surfaceVariant
+                        MaterialTheme.colorScheme.surfaceContainerLow
                       },
                     modifier = Modifier.height(30.dp).clip(CircleShape).clickable(onClick = { viewModel.setLoopB() }),
                   ) {
@@ -2593,9 +2593,9 @@ fun AudioPlayerControls(
               },
             )
             .padding(end = controlsSidePadding)
-            .clip(RoundedCornerShape(24.dp)),
+            .clip(MaterialTheme.shapes.extraLarge),
           color = Color.Transparent,
-          shape = RoundedCornerShape(24.dp),
+          shape = MaterialTheme.shapes.extraLarge,
         ) {
           DualPaneSidePanel(
             viewModel = viewModel,
@@ -2725,9 +2725,9 @@ private fun DualPaneSidePanel(
           )
         },
         colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
-          containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f),
-          selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-          selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+          containerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.82f),
+          selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+          selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer,
         ),
       )
       androidx.compose.material3.FilterChip(
@@ -2735,9 +2735,9 @@ private fun DualPaneSidePanel(
         onClick = { onTabSelected(1) },
         label = { Text(stringResource(R.string.player_lyrics_title), fontWeight = FontWeight.Bold) },
         colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
-          containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f),
-          selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-          selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+          containerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.82f),
+          selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+          selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer,
         ),
       )
     }
@@ -2802,7 +2802,7 @@ private fun UpNextPlaylistContent(
           color = MaterialTheme.colorScheme.onSurface,
         )
         Surface(
-          shape = RoundedCornerShape(50),
+          shape = CircleShape,
           color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
         ) {
           Text(
@@ -2836,16 +2836,16 @@ private fun UpNextPlaylistContent(
             val chapter = chapters[index]
             val isSelected = currentChapterIndex == index
             val bgColor = if (isSelected) {
-              MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
+              MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.72f)
             } else {
-              MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f)
+              MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.82f)
             }
             Surface(
               modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
+                .clip(MaterialTheme.shapes.large)
                 .clickable { viewModel.seekToPlaybackChapter(chapter) },
-              shape = RoundedCornerShape(12.dp),
+              shape = MaterialTheme.shapes.large,
               color = bgColor,
             ) {
               Row(
@@ -2928,7 +2928,7 @@ private fun UpNextPlaylistContent(
         color = MaterialTheme.colorScheme.onSurface,
       )
       Surface(
-        shape = RoundedCornerShape(50),
+        shape = CircleShape,
         color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
       ) {
         Text(
@@ -3008,9 +3008,9 @@ private fun UpNextPlaylistItemRow(
   reorderFeedback: ReorderFeedback? = null,
 ) {
   val bgColor = if (isPlaying) {
-    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
+    MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.72f)
   } else {
-    MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f)
+    MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.82f)
   }
 
   val itemCoverArt =
@@ -3022,7 +3022,7 @@ private fun UpNextPlaylistItemRow(
   Surface(
     onClick = onClick,
     modifier = Modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(16.dp),
+    shape = MaterialTheme.shapes.largeIncreased,
     color = bgColor,
     shadowElevation = dragElevation(isDragging, app.gyrolet.mpvrx.ui.theme.AppMotion.playerReducedMotion()),
   ) {
@@ -3051,8 +3051,8 @@ private fun UpNextPlaylistItemRow(
 
       Surface(
         modifier = Modifier.size(44.dp),
-        shape = RoundedCornerShape(10.dp),
-        color = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+        shape = MaterialTheme.shapes.medium,
+        color = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerLow,
       ) {
         val itemImageBitmap = remember(itemCoverArt) { itemCoverArt?.asImageBitmap() }
         val hasRemoteImage = item.tvgLogo.isNotBlank() && (item.tvgLogo.startsWith("http://", ignoreCase = true) || item.tvgLogo.startsWith("https://", ignoreCase = true))

@@ -53,14 +53,14 @@ private fun playerButtonColorScheme(
 
 @Composable
 internal fun playerButtonContainerColor(): Color =
-  playerButtonColorScheme().surfaceContainer.copy(alpha = 0.55f)
+  playerButtonColorScheme().surfaceContainerHigh.copy(alpha = 0.78f)
 
 @Composable
 internal fun playerButtonContentColor(): Color = playerButtonColorScheme().onSurface
 
 @Composable
 internal fun playerButtonBorderColor(): Color =
-  playerButtonColorScheme().outlineVariant.copy(alpha = 0.4f)
+  playerButtonColorScheme().outlineVariant.copy(alpha = 0.32f)
 
 @Suppress("ModifierClickableOrder")
 @OptIn(ExperimentalFoundationApi::class)
@@ -121,7 +121,7 @@ fun ControlsButton(
       modifier =
         Modifier
           .padding(MaterialTheme.spacing.small)
-          .size(20.dp),
+          .size(22.dp),
     )
   }
 }

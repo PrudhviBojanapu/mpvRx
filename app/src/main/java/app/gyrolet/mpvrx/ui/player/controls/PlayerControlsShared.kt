@@ -190,9 +190,7 @@ fun RenderPlayerButton(
           if (hideBackground) {
             Color.Transparent
           } else {
-            MaterialTheme.colorScheme.surfaceContainer.copy(
-              alpha = 0.55f,
-            )
+            MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.78f)
           },
         contentColor = if (hideBackground) controlColor else MaterialTheme.colorScheme.onSurface,
         tonalElevation = 0.dp,
@@ -203,7 +201,7 @@ fun RenderPlayerButton(
           } else {
             BorderStroke(
               1.dp,
-              MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+              MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.32f),
             )
           },
         modifier =
@@ -273,9 +271,7 @@ fun RenderPlayerButton(
             if (hideBackground) {
               Color.Transparent
             } else {
-              MaterialTheme.colorScheme.surfaceContainer.copy(
-                alpha = 0.55f,
-              )
+              MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.78f)
             },
           contentColor =
             if (configOwned) disabledColor else if (hideBackground) controlColor else MaterialTheme.colorScheme.onSurface,
@@ -287,7 +283,7 @@ fun RenderPlayerButton(
             } else {
               BorderStroke(
                 1.dp,
-                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.32f),
               )
             },
           modifier =
@@ -355,9 +351,7 @@ fun RenderPlayerButton(
             if (hideBackground) {
               Color.Transparent
             } else {
-              MaterialTheme.colorScheme.surfaceContainer.copy(
-                alpha = 0.55f,
-              )
+              MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.78f)
             },
           contentColor =
             if (configOwned) {
@@ -375,7 +369,7 @@ fun RenderPlayerButton(
             } else {
               BorderStroke(
                 1.dp,
-                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.32f),
               )
             },
           modifier =
@@ -456,14 +450,14 @@ fun RenderPlayerButton(
         if (expanded) {
           Surface(
             shape = MaterialTheme.shapes.extraLarge,
-            color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.55f),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.78f),
             border =
               if (hideBackground) {
                 null
               } else {
                 BorderStroke(
                   1.dp,
-                  MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                  MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.32f),
                 )
               },
             modifier = Modifier.height(buttonSize),
@@ -503,8 +497,8 @@ fun RenderPlayerButton(
               if (isSnapshotLoading) {
                 Surface(
                   shape = CircleShape,
-                  color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.55f),
-                  border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+                  color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.78f),
+                  border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.32f)),
                   modifier = Modifier.size(buttonSize - 4.dp),
                 ) {
                   Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
@@ -519,8 +513,8 @@ fun RenderPlayerButton(
                 @OptIn(ExperimentalFoundationApi::class)
                 Surface(
                   shape = CircleShape,
-                  color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.55f),
-                  border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+                  color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.78f),
+                  border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.32f)),
                   modifier =
                     Modifier
                       .size(buttonSize - 4.dp)
@@ -606,9 +600,7 @@ fun RenderPlayerButton(
             if (hideBackground) {
               Color.Transparent
             } else {
-              MaterialTheme.colorScheme.surfaceContainer.copy(
-                alpha = 0.55f,
-              )
+              MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.78f)
             },
           contentColor = if (hideBackground) controlColor else MaterialTheme.colorScheme.onSurface,
           tonalElevation = 0.dp,
@@ -619,7 +611,7 @@ fun RenderPlayerButton(
             } else {
               BorderStroke(
                 1.dp,
-                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.32f),
               )
             },
           modifier =
@@ -934,9 +926,7 @@ fun RenderPlayerButton(
           if (hideBackground) {
             Color.Transparent
           } else {
-            MaterialTheme.colorScheme.surfaceContainer.copy(
-              alpha = 0.55f,
-            )
+            MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.78f)
           },
         contentColor = vFlipColor,
         border =
@@ -945,7 +935,7 @@ fun RenderPlayerButton(
           } else {
             BorderStroke(
               1.dp,
-              MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+              MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.32f),
             )
           },
         modifier =
@@ -995,14 +985,14 @@ fun RenderPlayerButton(
         if (expanded) {
           Surface(
             shape = MaterialTheme.shapes.extraLarge,
-            color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.55f),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.78f),
             border =
               if (hideBackground) {
                 null
               } else {
                 BorderStroke(
                   1.dp,
-                  MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                  MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.32f),
                 )
               },
             modifier = Modifier.height(buttonSize),
@@ -1041,8 +1031,8 @@ fun RenderPlayerButton(
               // Clear/Close Button - always has background
               Surface(
                 shape = CircleShape,
-                color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.55f),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.78f),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.32f)),
                 modifier =
                   Modifier
                     .size(buttonSize - 4.dp)
@@ -1100,9 +1090,7 @@ fun RenderPlayerButton(
               if (hideBackground) {
                 Color.Transparent
               } else {
-                MaterialTheme.colorScheme.surfaceContainer.copy(
-                  alpha = 0.55f,
-                )
+                MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.78f)
               },
             border =
               if (hideBackground) {
@@ -1110,7 +1098,7 @@ fun RenderPlayerButton(
               } else {
                 BorderStroke(
                   1.dp,
-                  MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                  MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.32f),
                 )
               },
             modifier =
@@ -1181,9 +1169,7 @@ fun RenderPlayerButton(
           if (hideBackground) {
             Color.Transparent
           } else {
-            MaterialTheme.colorScheme.surfaceContainer.copy(
-              alpha = 0.55f,
-            )
+            MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.78f)
           },
         contentColor =
           if (isAmbientEnabled) {
@@ -1197,7 +1183,7 @@ fun RenderPlayerButton(
           } else {
             BorderStroke(
               1.dp,
-              MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+              MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.32f),
             )
           },
         modifier =
@@ -1249,9 +1235,7 @@ fun RenderPlayerButton(
           if (hideBackground) {
             Color.Transparent
           } else {
-            MaterialTheme.colorScheme.surfaceContainer.copy(
-              alpha = 0.55f,
-            )
+            MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.78f)
           },
         contentColor =
           if (isPostProcessingEnabled) {
@@ -1265,7 +1249,7 @@ fun RenderPlayerButton(
           } else {
             BorderStroke(
               1.dp,
-              MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+              MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.32f),
             )
           },
         modifier =
@@ -1335,9 +1319,7 @@ fun RenderPlayerButton(
             if (hideBackground) {
               Color.Transparent
             } else {
-              MaterialTheme.colorScheme.surfaceContainer.copy(
-                alpha = 0.55f,
-              )
+              MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.78f)
             },
           contentColor = if (hideBackground) controlColor else MaterialTheme.colorScheme.onSurface,
           border =
@@ -1346,7 +1328,7 @@ fun RenderPlayerButton(
             } else {
               BorderStroke(
                 1.dp,
-                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.32f),
               )
             },
           modifier =

@@ -924,6 +924,7 @@ private fun NormalSeekbar(
   modifier: Modifier = Modifier,
 ) {
   val primaryColor = MaterialTheme.colorScheme.primary
+  val loopColor = MaterialTheme.colorScheme.tertiary
   val (readAheadAlpha, emptyAlpha) = rememberSeekbarTrackAlphas()
   val trackHeight by animateDpAsState(
     targetValue = if (isScrubbing) 6.dp else 4.dp,
@@ -1033,7 +1034,6 @@ private fun NormalSeekbar(
 
     // 5. A-B Loop indicators
     if (loopStart != null || loopEnd != null) {
-      val loopColor = Color(0xFFFFB300)
       val markerW = 2.dp.toPx()
       if (loopStart != null && duration > 0f) {
         val px = (loopStart / duration).coerceIn(0f, 1f) * totalWidth
@@ -1073,8 +1073,9 @@ private fun SquigglySeekbar(
   modifier: Modifier = Modifier,
 ) {
   val primaryColor = MaterialTheme.colorScheme.primary
+  val loopColor = MaterialTheme.colorScheme.tertiary
   val (readAheadAlpha, emptyAlpha) = rememberSeekbarTrackAlphas()
-  val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
+  val surfaceVariant = MaterialTheme.colorScheme.surfaceContainerHighest
 
   val isInteracting = isScrubbing
   val thumbVisibilityState = animateFloatAsState(
@@ -1425,7 +1426,6 @@ private fun SquigglySeekbar(
 
     // A-B Loop Indicators for SquigglySeekbar
     if (loopStart != null || loopEnd != null) {
-      val loopColor = Color(0xFFFFB300)
       val markerWidth = 2.dp.toPx()
 
       if (loopStart != null && duration > 0f) {
@@ -1474,6 +1474,7 @@ private fun SlimSeekbar(
   modifier: Modifier = Modifier,
 ) {
   val primaryColor = MaterialTheme.colorScheme.primary
+  val loopColor = MaterialTheme.colorScheme.tertiary
   val (readAheadAlpha, emptyAlpha) = rememberSeekbarTrackAlphas()
 
   // Height breathes like other seekbars:
@@ -1550,7 +1551,6 @@ private fun SlimSeekbar(
 
     // A-B loop markers
     if (loopStart != null || loopEnd != null) {
-      val loopColor = Color(0xFFFFB300)
       val markerW = 2.dp.toPx()
       if (loopStart != null && duration > 0f) {
         val px = (loopStart / duration).coerceIn(0f, 1f) * totalWidth
@@ -1839,6 +1839,7 @@ fun StandardSeekbar(
   modifier: Modifier = Modifier,
 ) {
   val primaryColor = MaterialTheme.colorScheme.primary
+  val loopColor = MaterialTheme.colorScheme.tertiary
   val (readAheadAlpha, emptyAlpha) = rememberSeekbarTrackAlphas()
   val isPressed by interactionSource.collectIsPressedAsState()
   val isDragged by interactionSource.collectIsDraggedAsState()
@@ -1933,7 +1934,6 @@ fun StandardSeekbar(
     )
 
     if ((loopStart != null || loopEnd != null) && safeDuration > 0f) {
-      val loopColor = Color(0xFFFFB300)
       val markerWidth = 2.dp.toPx()
       val trackTop = centerY - trackHeight / 2f
       val trackBottom = centerY + trackHeight / 2f

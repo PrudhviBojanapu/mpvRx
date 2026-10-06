@@ -52,7 +52,7 @@ fun VerticalSlider(
   modifier: Modifier = Modifier,
   overflowValue: Float? = null,
   overflowRange: ClosedFloatingPointRange<Float>? = null,
-  colorStart: Color = MaterialTheme.colorScheme.primaryContainer,
+  colorStart: Color = MaterialTheme.colorScheme.secondaryContainer,
   colorEnd: Color = MaterialTheme.colorScheme.primary,
 ) {
   val coercedValue = value.coerceIn(range)
@@ -101,7 +101,7 @@ fun VerticalSlider(
   modifier: Modifier = Modifier,
   overflowValue: Int? = null,
   overflowRange: ClosedRange<Int>? = null,
-  colorStart: Color = MaterialTheme.colorScheme.primaryContainer,
+  colorStart: Color = MaterialTheme.colorScheme.secondaryContainer,
   colorEnd: Color = MaterialTheme.colorScheme.primary,
 ) {
   val coercedValue = value.coerceIn(range)
@@ -176,7 +176,7 @@ fun BrightnessSlider(
         positiveRange,
         overflowValue = (-coercedBrightness).coerceIn(0f, negativeRange.endInclusive),
         overflowRange = negativeRange,
-        colorStart = MaterialTheme.colorScheme.primaryContainer,
+        colorStart = MaterialTheme.colorScheme.secondaryContainer,
         colorEnd = MaterialTheme.colorScheme.primary,
       )
       Icon(
@@ -232,7 +232,7 @@ fun VolumeSlider(
         if (displayAsPercentage) 0..100 else range,
         overflowValue = boostVolume,
         overflowRange = boostRange,
-        colorStart = MaterialTheme.colorScheme.primaryContainer,
+        colorStart = MaterialTheme.colorScheme.secondaryContainer,
         colorEnd = MaterialTheme.colorScheme.primary,
       )
       Icon(
