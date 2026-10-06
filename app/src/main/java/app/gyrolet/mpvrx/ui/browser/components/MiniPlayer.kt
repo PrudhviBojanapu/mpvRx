@@ -266,7 +266,7 @@ private fun MiniPlayerContent(
       )
     }
   }
-  val miniPlayerShape = RoundedCornerShape(20.dp)
+  val miniPlayerShape = MaterialTheme.shapes.largeIncreased
 
   LiquidGlassSurface(
     modifier = Modifier
@@ -491,7 +491,7 @@ private fun MiniPlayerContent(
             .size(48.dp)
             .playerArtworkAnchor(PlayerArtworkDestination.MINI, currentItem?.stableId, coverArt, 10.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
+            .background(MaterialTheme.colorScheme.surfaceContainerLow),
           contentAlignment = Alignment.Center,
         ) {
           val artworkImageBitmap = remember(coverArt) { coverArt?.asImageBitmap() }

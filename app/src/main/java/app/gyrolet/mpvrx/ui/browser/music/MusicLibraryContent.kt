@@ -480,8 +480,8 @@ fun MusicLibraryContent(
                 }
               }
             },
-            shape = RoundedCornerShape(28.dp),
-            tonalElevation = 6.dp,
+            shape = MaterialTheme.shapes.extraLarge,
+            tonalElevation = 1.dp,
           )
         } else {
           Box {
@@ -585,7 +585,7 @@ fun MusicLibraryContent(
         PrimaryScrollableTabRow(
           selectedTabIndex = pagerState.currentPage.coerceIn(0, (visibleTabs.size - 1).coerceAtLeast(0)),
           containerColor = Color.Transparent,
-          contentColor = MaterialTheme.colorScheme.primary,
+          contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
           edgePadding = 8.dp,
           divider = {}
         ) {
@@ -593,6 +593,8 @@ fun MusicLibraryContent(
             Tab(
               selected = pagerState.currentPage == index,
               onClick = { musicViewModel.setTab(tab) },
+              selectedContentColor = MaterialTheme.colorScheme.primary,
+              unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
               text = {
                 Text(
                   text = stringResource(tab.titleRes),
@@ -606,7 +608,6 @@ fun MusicLibraryContent(
             )
           }
         }
-        HorizontalDivider()
       }
     },
     floatingActionButton = {
@@ -891,7 +892,7 @@ fun MusicLibraryContent(
                   modifier = Modifier
                     .size(56.dp)
                     .clip(AppShapeScale.medium)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow),
                   contentAlignment = Alignment.Center
                 ) {
                   LocalAlbumArtImage(uri = song.albumArtUri, contentDescription = null, modifier = Modifier.fillMaxSize(), audioSong = song)
@@ -1015,7 +1016,7 @@ fun MusicLibraryContent(
                   modifier = Modifier
                     .size(56.dp)
                     .clip(AppShapeScale.medium)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow),
                   contentAlignment = Alignment.Center
                 ) {
                   LocalAlbumArtImage(uri = album.albumArtUri, contentDescription = null, modifier = Modifier.fillMaxSize(), audioSong = album.artworkSong)
@@ -1511,7 +1512,7 @@ private fun SongGridCard(
           .fillMaxWidth()
           .aspectRatio(1f)
           .clip(AppShapeScale.medium)
-          .background(MaterialTheme.colorScheme.surfaceVariant),
+          .background(MaterialTheme.colorScheme.surfaceContainerLow),
         contentAlignment = Alignment.Center
       ) {
         LocalAlbumArtImage(
@@ -1691,7 +1692,7 @@ private fun AlbumGridCard(
       .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     shape = AppShapeScale.large,
     colors = CardDefaults.cardColors(
-      containerColor = animatedSelectionColor(isSelected, MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f))
+      containerColor = animatedSelectionColor(isSelected, MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.78f))
     )
   ) {
     Column(
@@ -1704,7 +1705,7 @@ private fun AlbumGridCard(
           .fillMaxWidth()
           .aspectRatio(1f)
           .clip(AppShapeScale.medium)
-          .background(MaterialTheme.colorScheme.surfaceVariant),
+          .background(MaterialTheme.colorScheme.surfaceContainerLow),
         contentAlignment = Alignment.Center
       ) {
         LocalAlbumArtImage(
@@ -1771,7 +1772,7 @@ private fun AlbumListCard(
       .semantics { selected = isSelected }
       .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     shape = AppShapeScale.large,
-    color = animatedSelectionColor(isSelected, MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f))
+    color = animatedSelectionColor(isSelected, MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.78f))
   ) {
     Row(
       modifier = Modifier
@@ -1783,7 +1784,7 @@ private fun AlbumListCard(
         modifier = Modifier
           .size(coverArtSizeDp.dp)
           .clip(AppShapeScale.medium)
-          .background(MaterialTheme.colorScheme.surfaceVariant),
+          .background(MaterialTheme.colorScheme.surfaceContainerLow),
         contentAlignment = Alignment.Center
       ) {
         LocalAlbumArtImage(
@@ -1907,7 +1908,7 @@ private fun ArtistGridCard(
       .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     shape = AppShapeScale.large,
     colors = CardDefaults.cardColors(
-      containerColor = animatedSelectionColor(isSelected, MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f))
+      containerColor = animatedSelectionColor(isSelected, MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.78f))
     )
   ) {
     Column(
@@ -1969,7 +1970,7 @@ private fun ArtistListCard(
       .semantics { selected = isSelected }
       .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     shape = AppShapeScale.large,
-    color = animatedSelectionColor(isSelected, MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f))
+    color = animatedSelectionColor(isSelected, MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.78f))
   ) {
     Row(
       modifier = Modifier
@@ -2020,7 +2021,7 @@ private fun PlaylistArtCollage(
     modifier = modifier
       .aspectRatio(1f)
       .clip(AppShapeScale.medium)
-      .background(MaterialTheme.colorScheme.surfaceVariant),
+      .background(MaterialTheme.colorScheme.surfaceContainerLow),
     contentAlignment = Alignment.Center
   ) {
     when (collageSongs.size) {
@@ -2443,7 +2444,7 @@ private fun AlbumDetailSheet(
           modifier = Modifier
             .size(64.dp)
             .clip(AppShapeScale.medium)
-            .background(MaterialTheme.colorScheme.surfaceVariant),
+            .background(MaterialTheme.colorScheme.surfaceContainerLow),
           contentAlignment = Alignment.Center
         ) {
           LocalAlbumArtImage(

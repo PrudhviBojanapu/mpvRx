@@ -126,8 +126,8 @@ fun SharedMusicTrackListItem(
     colors = CardDefaults.cardColors(
       containerColor = animatedSelectionColor(
         selected = isSelected,
-        selectedColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
-        unselectedColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = if (isPlaying) 0.35f else 0f),
+        selectedColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.78f),
+        unselectedColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = if (isPlaying) 0.48f else 0f),
       ),
       contentColor = MaterialTheme.colorScheme.onSurface,
     ),
@@ -143,7 +143,7 @@ fun SharedMusicTrackListItem(
         modifier = Modifier
           .size(itemArtSize)
           .clip(if (isCircular) CircleShape else AppShapeScale.medium)
-          .background(MaterialTheme.colorScheme.surfaceVariant),
+          .background(MaterialTheme.colorScheme.surfaceContainerLow),
         contentAlignment = Alignment.Center,
       ) {
         when {
@@ -285,8 +285,8 @@ fun SharedMusicGridCard(
     shape = AppShapeScale.large,
     colors = CardDefaults.cardColors(
       containerColor = when {
-        isSelected -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
-        isPlaying -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+        isSelected -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.78f)
+        isPlaying -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.48f)
         else -> Color.Transparent
       }
     )
@@ -302,7 +302,7 @@ fun SharedMusicGridCard(
           .fillMaxWidth()
           .aspectRatio(1f)
           .clip(if (isCircular) CircleShape else AppShapeScale.medium)
-          .background(MaterialTheme.colorScheme.surfaceVariant),
+          .background(MaterialTheme.colorScheme.surfaceContainerLow),
         contentAlignment = Alignment.Center,
       ) {
         when {
@@ -604,7 +604,7 @@ fun SharedMusicDetailHeader(
         modifier = Modifier
           .size(64.dp)
           .clip(if (isCircular) CircleShape else RoundedCornerShape(8.dp))
-          .background(MaterialTheme.colorScheme.surfaceVariant),
+          .background(MaterialTheme.colorScheme.surfaceContainerLow),
         contentAlignment = Alignment.Center,
       ) {
         if (!artworkUrl.isNullOrBlank()) {
