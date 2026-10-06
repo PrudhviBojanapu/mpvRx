@@ -16,6 +16,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -211,8 +212,8 @@ object AppearancePreferencesScreen : Screen {
             Text(
               text = stringResource(R.string.pref_appearance_title),
               style = MaterialTheme.typography.headlineSmall,
-              fontWeight = FontWeight.ExtraBold,
-              color = MaterialTheme.colorScheme.primary,
+              fontWeight = FontWeight.Bold,
+              color = MaterialTheme.colorScheme.onSurface,
             )
           },
           navigationIcon = {
@@ -221,7 +222,7 @@ object AppearancePreferencesScreen : Screen {
                 Icon(
                   Icons.RoundedFilled.ArrowBack,
                   contentDescription = null,
-                  tint = MaterialTheme.colorScheme.secondary,
+                  tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
               }
             }
@@ -239,6 +240,8 @@ object AppearancePreferencesScreen : Screen {
               .fillMaxSize()
               .padding(padding)
               .then(settingsHighlight),
+          contentPadding = PaddingValues(bottom = 32.dp),
+          verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
           item {
             PreferenceSectionHeader(
@@ -270,7 +273,7 @@ object AppearancePreferencesScreen : Screen {
                   Text(
                     text = "${stringResource(darkMode.titleRes)} · $selectedThemeLabel",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 }
                 Icon(
@@ -379,7 +382,7 @@ object AppearancePreferencesScreen : Screen {
                           stringResource(
                             id = R.string.pref_appearance_amoled_mode_summary,
                           ),
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                       )
                     },
                     enabled = darkMode != DarkMode.Light,
@@ -404,7 +407,7 @@ object AppearancePreferencesScreen : Screen {
                               R.string.pref_appearance_liquid_glass_summary_unavailable
                             },
                           ),
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                       )
                     },
                     enabled = liquidGlassSupported,
@@ -437,7 +440,7 @@ object AppearancePreferencesScreen : Screen {
                     summary = {
                       Text(
                         text = stringResource(R.string.pref_appearance_app_font_summary, activeFontName),
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                       )
                     },
                     onClick = { isAppFontSheetOpen = true },
@@ -461,7 +464,7 @@ object AppearancePreferencesScreen : Screen {
                           R.string.pref_appearance_ui_scale_summary,
                           ((pendingAppUiScale ?: appUiScale) * 100).roundToInt(),
                         ),
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                       )
                     },
                     onSliderValueChange = { pendingAppUiScale = it },
@@ -496,7 +499,7 @@ object AppearancePreferencesScreen : Screen {
                       stringResource(
                         id = R.string.pref_appearance_unlimited_name_lines_summary,
                       ),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -522,7 +525,7 @@ object AppearancePreferencesScreen : Screen {
                       stringResource(
                         id = R.string.pref_appearance_show_unplayed_old_video_label_summary,
                       ),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -552,7 +555,7 @@ object AppearancePreferencesScreen : Screen {
                           unplayedOldVideoDays,
                         )
                       },
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
                 onSliderValueChange = { preferences.unplayedOldVideoDays.set(it.roundToInt()) },
@@ -573,7 +576,7 @@ object AppearancePreferencesScreen : Screen {
                 summary = {
                   Text(
                     text = stringResource(R.string.pref_appearance_auto_scroll_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -593,7 +596,7 @@ object AppearancePreferencesScreen : Screen {
                       R.string.pref_tree_flatten_depth_summary,
                       treeFlattenDepth.displayName,
                     ),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -618,7 +621,7 @@ object AppearancePreferencesScreen : Screen {
                       androidx.compose.ui.res.stringResource(
                         app.gyrolet.mpvrx.R.string.ui_enable_dual_pane_layout_on_tablets_in_folder_view,
                       ),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -645,7 +648,7 @@ object AppearancePreferencesScreen : Screen {
                       } else {
                         "Only media files (audio/video) are deleted"
                       },
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -676,7 +679,7 @@ object AppearancePreferencesScreen : Screen {
                       stringResource(
                         id = R.string.pref_appearance_show_video_thumbnails_summary,
                       ),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -706,7 +709,7 @@ object AppearancePreferencesScreen : Screen {
                           "${thumbnailMode.displayName} (${thumbnailFramePosition.roundToInt()}%)"
                         else -> thumbnailMode.displayName
                       },
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
                 enabled = showVideoThumbnails,
@@ -741,7 +744,7 @@ object AppearancePreferencesScreen : Screen {
                         id = R.string.pref_appearance_thumbnail_quality_summary,
                         thumbnailQuality.maxSizePx,
                       ),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
                 enabled = showVideoThumbnails,
@@ -769,7 +772,7 @@ object AppearancePreferencesScreen : Screen {
                           id = R.string.pref_appearance_thumbnail_position_summary,
                           thumbnailFramePosition.roundToInt(),
                         ),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                   },
                   enabled = showVideoThumbnails,
@@ -794,7 +797,7 @@ object AppearancePreferencesScreen : Screen {
                       stringResource(
                         id = R.string.pref_gesture_tap_thumbnail_to_select_summary,
                       ),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
                 enabled = showVideoThumbnails,
@@ -821,7 +824,7 @@ object AppearancePreferencesScreen : Screen {
                       stringResource(
                         id = R.string.pref_appearance_show_network_thumbnails_summary,
                       ),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
                 enabled = showVideoThumbnails,
@@ -850,7 +853,7 @@ object AppearancePreferencesScreen : Screen {
                 summary = {
                   Text(
                     text = stringResource(id = R.string.pref_nav_music_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -865,7 +868,7 @@ object AppearancePreferencesScreen : Screen {
                 summary = {
                   Text(
                     text = stringResource(id = R.string.pref_nav_profile_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -880,7 +883,7 @@ object AppearancePreferencesScreen : Screen {
                 summary = {
                   Text(
                     text = stringResource(id = R.string.pref_nav_network_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -895,7 +898,7 @@ object AppearancePreferencesScreen : Screen {
                 summary = {
                   Text(
                     text = stringResource(id = R.string.pref_nav_jellyfin_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -911,7 +914,7 @@ object AppearancePreferencesScreen : Screen {
                 summary = {
                   Text(
                     text = stringResource(id = R.string.pref_quick_play_fab_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -928,7 +931,7 @@ object AppearancePreferencesScreen : Screen {
                 summary = {
                   Text(
                     text = stringResource(id = R.string.pref_quick_play_fab_direct_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -953,7 +956,7 @@ object AppearancePreferencesScreen : Screen {
                 summary = {
                   Text(
                     controlsAnimStyle.displayName,
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -971,7 +974,7 @@ object AppearancePreferencesScreen : Screen {
                 summary = {
                   Text(
                     videoOpenAnim.displayName,
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -989,7 +992,7 @@ object AppearancePreferencesScreen : Screen {
                 summary = {
                   Text(
                     appNavStyle.displayName,
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )

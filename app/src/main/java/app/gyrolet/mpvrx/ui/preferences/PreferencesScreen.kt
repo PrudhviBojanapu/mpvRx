@@ -103,7 +103,7 @@ object PreferencesScreen : Screen {
       val detailBackstack = rememberNavBackStack(AppearancePreferencesScreen) as NavBackStack<Screen>
       val selectedScreen = detailBackstack.first()
       Row(modifier = Modifier.fillMaxSize()) {
-        Box(modifier = Modifier.weight(0.4f).tvFocusGroup()) {
+        Box(modifier = Modifier.weight(0.36f).tvFocusGroup()) {
           SettingsPane(
             sections = sections,
             selectedScreen = selectedScreen,
@@ -123,7 +123,7 @@ object PreferencesScreen : Screen {
           color = colorScheme.outlineVariant.copy(alpha = 0.5f),
           thickness = 1.dp,
         )
-        Box(modifier = Modifier.weight(0.6f).tvFocusGroup()) {
+        Box(modifier = Modifier.weight(0.64f).tvFocusGroup()) {
           CompositionLocalProvider(LocalBackStack provides detailBackstack) {
             ScreenNavDisplay(
               backStack = detailBackstack,
@@ -193,7 +193,7 @@ object PreferencesScreen : Screen {
             onClick = { backstack.navigateTo(SettingsSearchScreen) },
             modifier =
               Modifier
-                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 18.dp)
+                .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 12.dp)
                 .tvInitialFocus(initialFocusRequester),
           )
         }
@@ -395,13 +395,13 @@ private fun SettingsSearchEntry(
     modifier =
       modifier
         .fillMaxWidth()
-        .tvFocusHighlight(MaterialTheme.shapes.extraExtraLarge, focusedScale = 1.02f)
-        .clip(MaterialTheme.shapes.extraExtraLarge)
+        .tvFocusHighlight(MaterialTheme.shapes.extraLarge, focusedScale = 1.015f)
+        .clip(MaterialTheme.shapes.extraLarge)
         .clickable(onClick = onClick),
-    shape = MaterialTheme.shapes.extraExtraLarge,
-    color = MaterialTheme.colorScheme.secondaryContainer,
-    tonalElevation = 1.dp,
-    shadowElevation = 1.dp,
+    shape = MaterialTheme.shapes.extraLarge,
+    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+    tonalElevation = 0.dp,
+    shadowElevation = 0.dp,
   ) {
     Row(
       modifier =
@@ -413,23 +413,23 @@ private fun SettingsSearchEntry(
       Icon(
         imageVector = Icons.RoundedFilled.Search,
         contentDescription = null,
-        modifier = Modifier.size(28.dp),
-        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+        modifier = Modifier.size(24.dp),
+        tint = MaterialTheme.colorScheme.primary,
       )
       Spacer(modifier = Modifier.width(14.dp))
       Column(modifier = Modifier.weight(1f)) {
         Text(
           text = stringResource(R.string.settings_search_hint),
           style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.Bold,
-          color = MaterialTheme.colorScheme.onSecondaryContainer,
+          fontWeight = FontWeight.SemiBold,
+          color = MaterialTheme.colorScheme.onSurface,
         )
       }
       Icon(
         imageVector = Icons.RoundedFilled.ChevronRight,
         contentDescription = null,
         modifier = Modifier.size(24.dp),
-        tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.72f),
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
       )
     }
   }
@@ -447,14 +447,14 @@ private fun SettingsSectionBlock(
     modifier =
       Modifier
         .fillMaxWidth()
-        .padding(top = 10.dp, bottom = 14.dp),
+        .padding(top = 14.dp, bottom = 8.dp),
   ) {
     Column(
       modifier = Modifier.padding(horizontal = 24.dp),
     ) {
       Text(
         text = section.title,
-        style = emphasizedTypography.titleLarge,
+        style = emphasizedTypography.titleMedium,
         color = MaterialTheme.colorScheme.onSurface,
       )
     }
@@ -477,26 +477,19 @@ private fun SettingsDestinationGroup(
   onItemClick: (SettingsDestination) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  Surface(
-    modifier = modifier.fillMaxWidth(),
-    shape = MaterialTheme.shapes.extraLargeIncreased,
-    color = MaterialTheme.colorScheme.surfaceContainerLow,
-    tonalElevation = 1.dp,
-  ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-      section.items.forEachIndexed { index, item ->
-        SettingsDestinationRow(
-          item = item,
-          tint = section.tint,
-          isSelected = selectedScreen == item.screen,
-          onClick = { onItemClick(item) },
+  Column(modifier = modifier.fillMaxWidth()) {
+    section.items.forEachIndexed { index, item ->
+      SettingsDestinationRow(
+        item = item,
+        tint = section.tint,
+        isSelected = selectedScreen == item.screen,
+        onClick = { onItemClick(item) },
+      )
+      if (index < section.items.lastIndex) {
+        HorizontalDivider(
+          modifier = Modifier.padding(start = 68.dp, end = 12.dp),
+          color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.36f),
         )
-        if (index < section.items.lastIndex) {
-          HorizontalDivider(
-            modifier = Modifier.padding(start = 14.dp, end = 18.dp),
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
-          )
-        }
       }
     }
   }
@@ -511,7 +504,7 @@ private fun SettingsDestinationRow(
 ) {
   val rowBgColor =
     if (isSelected) {
-      MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+      MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.72f)
     } else {
       Color.Transparent
     }
@@ -519,25 +512,26 @@ private fun SettingsDestinationRow(
     modifier =
       Modifier
         .fillMaxWidth()
-        .tvFocusHighlight(MaterialTheme.shapes.medium, focusedScale = 1.01f)
+        .tvFocusHighlight(MaterialTheme.shapes.large, focusedScale = 1.01f)
+        .clip(MaterialTheme.shapes.large)
         .background(rowBgColor)
         .clickable(onClick = onClick)
-        .padding(horizontal = 14.dp, vertical = 13.dp),
+        .padding(horizontal = 12.dp, vertical = 12.dp),
     verticalAlignment = Alignment.CenterVertically,
   ) {
     Surface(
-      shape = MaterialTheme.shapes.largeIncreased,
-      color = tint.copy(alpha = 0.18f),
+      shape = MaterialTheme.shapes.large,
+      color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
       Box(
-        modifier = Modifier.size(48.dp),
+        modifier = Modifier.size(44.dp),
         contentAlignment = Alignment.Center,
       ) {
         Icon(
           imageVector = item.icon,
           contentDescription = null,
-          modifier = Modifier.size(26.dp),
-          tint = tint,
+          modifier = Modifier.size(24.dp),
+          tint = if (isSelected) MaterialTheme.colorScheme.primary else tint,
         )
       }
     }
