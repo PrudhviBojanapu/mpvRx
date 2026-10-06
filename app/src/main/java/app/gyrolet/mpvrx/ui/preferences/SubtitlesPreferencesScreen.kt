@@ -19,6 +19,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -173,8 +174,8 @@ object SubtitlesPreferencesScreen : Screen {
             Text(
               text = stringResource(R.string.pref_subtitles),
               style = MaterialTheme.typography.headlineSmall,
-              fontWeight = FontWeight.ExtraBold,
-              color = MaterialTheme.colorScheme.primary,
+              fontWeight = FontWeight.Bold,
+              color = MaterialTheme.colorScheme.onSurface,
             )
           },
           navigationIcon = {
@@ -185,7 +186,7 @@ object SubtitlesPreferencesScreen : Screen {
                 Icon(
                   Icons.RoundedFilled.ArrowBack,
                   contentDescription = null,
-                  tint = MaterialTheme.colorScheme.secondary,
+                  tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
               }
             }
@@ -325,6 +326,8 @@ object SubtitlesPreferencesScreen : Screen {
               .fillMaxSize()
               .padding(padding)
               .then(settingsHighlight),
+          contentPadding = PaddingValues(bottom = 36.dp),
+          verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
           // === GENERAL SECTION ===
           item {
@@ -354,12 +357,12 @@ object SubtitlesPreferencesScreen : Screen {
                   if (preferredLanguages.isNotBlank()) {
                     Text(
                       preferredLanguages,
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                   } else {
                     Text(
                       stringResource(R.string.not_set_video_default),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                   }
                 },
@@ -389,7 +392,7 @@ object SubtitlesPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(R.string.pref_subtitles_autoload_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -408,7 +411,7 @@ object SubtitlesPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(R.string.player_sheets_sub_override_ass_subtitle),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -429,7 +432,7 @@ object SubtitlesPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(R.string.player_sheets_sub_scale_by_window_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -446,7 +449,7 @@ object SubtitlesPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(R.string.pref_subtitles_secondary_pinch_zoom_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -476,7 +479,7 @@ object SubtitlesPreferencesScreen : Screen {
                     }
                   Text(
                     text = folderSummary,
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                   )
@@ -525,7 +528,7 @@ object SubtitlesPreferencesScreen : Screen {
                   Column {
                     Text(
                       stringResource(R.string.pref_subtitles_font_summary, fontLabel),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
                       if (availableFonts.isEmpty()) {
@@ -533,7 +536,7 @@ object SubtitlesPreferencesScreen : Screen {
                       } else {
                         stringResource(R.string.fonts_loaded, availableFonts.size)
                       },
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                       style = MaterialTheme.typography.bodySmall,
                     )
                   }
@@ -548,7 +551,7 @@ object SubtitlesPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(R.string.reload_fonts_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
                 icon = {
@@ -615,7 +618,7 @@ object SubtitlesPreferencesScreen : Screen {
                 summary = {
                   Text(
                     onlineSubtitleSearchMode.displayName,
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -635,7 +638,7 @@ object SubtitlesPreferencesScreen : Screen {
                     }
                   Text(
                     text = summaryText,
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
                 values = subtitleHubSourceValues,

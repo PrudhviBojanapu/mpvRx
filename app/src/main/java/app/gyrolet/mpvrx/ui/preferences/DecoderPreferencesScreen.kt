@@ -16,6 +16,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -100,8 +101,8 @@ object DecoderPreferencesScreen : Screen {
             Text(
               text = stringResource(R.string.pref_decoder),
               style = MaterialTheme.typography.headlineSmall,
-              fontWeight = FontWeight.ExtraBold,
-              color = MaterialTheme.colorScheme.primary,
+              fontWeight = FontWeight.Bold,
+              color = MaterialTheme.colorScheme.onSurface,
             )
           },
           navigationIcon = {
@@ -110,7 +111,7 @@ object DecoderPreferencesScreen : Screen {
                 Icon(
                   Icons.RoundedFilled.ArrowBack,
                   contentDescription = null,
-                  tint = MaterialTheme.colorScheme.secondary,
+                  tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
               }
             }
@@ -128,6 +129,8 @@ object DecoderPreferencesScreen : Screen {
               .fillMaxSize()
               .padding(padding)
               .then(settingsHighlight),
+          contentPadding = PaddingValues(bottom = 36.dp),
+          verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
           item {
             PreferenceSectionHeader(
@@ -150,7 +153,7 @@ object DecoderPreferencesScreen : Screen {
                 summary = {
                   Text(
                     currentProfile.displayName,
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -189,7 +192,7 @@ object DecoderPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(R.string.pref_decoder_gpu_next_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -295,7 +298,7 @@ object DecoderPreferencesScreen : Screen {
                 summary = {
                   Text(
                     debanding.name,
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -314,7 +317,7 @@ object DecoderPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(R.string.pref_decoder_yuv420p_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -340,7 +343,7 @@ object DecoderPreferencesScreen : Screen {
                   Column {
                     Text(
                       stringResource(R.string.pref_anime4k_summary),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
                       text =
@@ -412,7 +415,7 @@ object DecoderPreferencesScreen : Screen {
                           summary = {
                             Text(
                               stringResource(R.string.pref_anime4k_in_4k_summary),
-                              color = MaterialTheme.colorScheme.outline,
+                              color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                           },
                         )
@@ -429,7 +432,7 @@ object DecoderPreferencesScreen : Screen {
                           summary = {
                             Text(
                               stringResource(anime4kQuality.titleRes),
-                              color = MaterialTheme.colorScheme.outline,
+                              color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                           },
                         )
@@ -444,7 +447,7 @@ object DecoderPreferencesScreen : Screen {
                           summary = {
                             Text(
                               stringResource(R.string.pref_anime4k_darken_summary),
-                              color = MaterialTheme.colorScheme.outline,
+                              color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                           },
                         )
@@ -459,7 +462,7 @@ object DecoderPreferencesScreen : Screen {
                           summary = {
                             Text(
                               stringResource(R.string.pref_anime4k_thin_summary),
-                              color = MaterialTheme.colorScheme.outline,
+                              color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                           },
                         )
@@ -474,7 +477,7 @@ object DecoderPreferencesScreen : Screen {
                           summary = {
                             Text(
                               stringResource(R.string.pref_anime4k_deblur_summary),
-                              color = MaterialTheme.colorScheme.outline,
+                              color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                           },
                         )

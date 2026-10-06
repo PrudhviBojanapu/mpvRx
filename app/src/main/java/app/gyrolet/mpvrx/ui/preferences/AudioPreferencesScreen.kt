@@ -17,7 +17,9 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -107,8 +109,8 @@ object AudioPreferencesScreen : Screen {
             Text(
               text = stringResource(R.string.pref_audio),
               style = MaterialTheme.typography.headlineSmall,
-              fontWeight = FontWeight.ExtraBold,
-              color = MaterialTheme.colorScheme.primary,
+              fontWeight = FontWeight.Bold,
+              color = MaterialTheme.colorScheme.onSurface,
             )
           },
           navigationIcon = {
@@ -117,7 +119,7 @@ object AudioPreferencesScreen : Screen {
                 Icon(
                   Icons.RoundedFilled.ArrowBack,
                   contentDescription = null,
-                  tint = MaterialTheme.colorScheme.secondary,
+                  tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
               }
             }
@@ -135,6 +137,8 @@ object AudioPreferencesScreen : Screen {
               .fillMaxSize()
               .padding(padding)
               .then(settingsHighlight),
+          contentPadding = PaddingValues(bottom = 36.dp),
+          verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
           item {
             PreferenceSectionHeader(
@@ -169,7 +173,7 @@ object AudioPreferencesScreen : Screen {
                     androidx.compose.ui.res.stringResource(
                       app.gyrolet.mpvrx.R.string.ui_show_audio_files_in_the_browser,
                     ),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -203,7 +207,7 @@ object AudioPreferencesScreen : Screen {
                 )
                 Text(
                   minimumDurationLabel,
-                  color = MaterialTheme.colorScheme.outline,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
                   style = MaterialTheme.typography.bodyMedium,
                 )
                 Slider(
@@ -229,7 +233,7 @@ object AudioPreferencesScreen : Screen {
                         minimumDurationLabel.removeSuffix(" and longer")
                       }
                     } – no limit",
-                  color = MaterialTheme.colorScheme.outline,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
                   style = MaterialTheme.typography.bodySmall,
                 )
               }
@@ -258,7 +262,7 @@ object AudioPreferencesScreen : Screen {
                 )
                 Text(
                   text = musicTabsSummary,
-                  color = MaterialTheme.colorScheme.outline,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
                   style = MaterialTheme.typography.bodyMedium,
                 )
               }
@@ -291,7 +295,7 @@ object AudioPreferencesScreen : Screen {
                         MusicSourceProvider.NAVIDROME -> stringResource(R.string.music_source_navidrome)
                         MusicSourceProvider.AUDIOBOOKS -> stringResource(R.string.audiobooks_title)
                       },
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -316,7 +320,7 @@ object AudioPreferencesScreen : Screen {
                   Column {
                     Text(
                       stringResource(audioVisualizerStyle.title),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     if (audioVisualizerStyle == AudioVisualizerStyle.Galaxy ||
                       audioVisualizerStyle == AudioVisualizerStyle.Cuboid
@@ -364,7 +368,7 @@ object AudioPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(audioOrientation.titleRes),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -379,7 +383,7 @@ object AudioPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(R.string.pref_audio_ambient_mode_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -394,7 +398,7 @@ object AudioPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(R.string.pref_audio_wavy_seekbar_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -425,12 +429,12 @@ object AudioPreferencesScreen : Screen {
                   if (preferredLanguages.isNotBlank()) {
                     Text(
                       preferredLanguages,
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                   } else {
                     Text(
                       stringResource(R.string.not_set_video_default),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                   }
                 },
@@ -457,7 +461,7 @@ object AudioPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(R.string.pref_audio_pitch_correction_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -473,7 +477,7 @@ object AudioPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(R.string.pref_audio_volume_normalization_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -489,7 +493,7 @@ object AudioPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(R.string.pref_audio_drc_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -513,7 +517,7 @@ object AudioPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(R.string.pref_audio_background_playback_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -528,7 +532,7 @@ object AudioPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(R.string.pref_audio_mini_player_track_switching_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -547,7 +551,7 @@ object AudioPreferencesScreen : Screen {
                     } else {
                       stringResource(R.string.pref_autoplay_next_audio_summary_disabled)
                     },
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -565,7 +569,7 @@ object AudioPreferencesScreen : Screen {
                 summary = {
                   Text(
                     text = stringResource(audioChannel.title),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -586,7 +590,7 @@ object AudioPreferencesScreen : Screen {
                     } else {
                       volumeBoostCap.toString()
                     },
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
                 onSliderValueChange = { preferences.volumeBoostCap.set(it.toInt()) },
@@ -611,7 +615,7 @@ object AudioPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(R.string.pref_lyrics_auto_translate_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -628,7 +632,7 @@ object AudioPreferencesScreen : Screen {
                 summary = {
                   Text(
                     text = LyricsLanguageOptions.getDisplayName(lyricsTargetLanguage),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -645,7 +649,7 @@ object AudioPreferencesScreen : Screen {
                 summary = {
                   Text(
                     text = stringResource(lyricsDisplayMode.title),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -661,7 +665,7 @@ object AudioPreferencesScreen : Screen {
                 summary = {
                   Text(
                     text = paxsenixApiKey.ifBlank { stringResource(R.string.pref_paxsenix_api_key_summary) },
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
                 textField = { value, onValueChange, _ ->
@@ -698,7 +702,7 @@ object AudioPreferencesScreen : Screen {
             Text(
               text = "Toggle tabs or use arrows to rearrange order:",
               style = MaterialTheme.typography.bodyMedium,
-              color = MaterialTheme.colorScheme.outline,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
               modifier = Modifier.padding(bottom = 8.dp),
             )
             currentOrderedTabs.forEachIndexed { index, tab ->
