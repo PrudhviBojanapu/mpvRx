@@ -632,7 +632,7 @@ object MainScreen : Screen {
               val containerWidth = maxWidth
               val density = LocalDensity.current
               val horizontalMargin by animateDpAsState(
-                targetValue = 58.dp - 30.dp * (if (isTablet) 0f else NavigationBarState.navLabelVisibility),
+                targetValue = 58.dp - 30.dp * NavigationBarState.navLabelVisibility,
                 animationSpec = if (navStyle == NavigationAnimStyle.None) snap() else tween(300, easing = NavigationBarEasing),
                 label = "navigation_margin",
               )
@@ -736,7 +736,7 @@ internal fun ExpressivePillNavigationBar(
   val iconSize = if (compactIcons) 24.dp else MainNavigationIconSize
   val labelHeight = if (compactIcons) 14.dp else 16.dp
   val labelFraction by animateFloatAsState(
-    targetValue = if (compactIcons) 0f else NavigationBarState.navLabelVisibility,
+    targetValue = NavigationBarState.navLabelVisibility,
     animationSpec = if (reducedMotion) snap() else tween(300, easing = NavigationBarEasing),
     label = "navigation_labels",
   )

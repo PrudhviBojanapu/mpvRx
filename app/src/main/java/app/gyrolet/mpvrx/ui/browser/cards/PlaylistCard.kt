@@ -128,6 +128,7 @@ fun PlaylistCard(
     with(density) {
       (if (isGridMode) 480.dp else 160.dp).roundToPx()
     }
+  val isAudio = playlist.isAudio
   val thumbnailHeightPx =
     if (isGridMode) {
       (thumbnailWidthPx * 9 / 16).coerceAtLeast(1)
@@ -166,7 +167,6 @@ fun PlaylistCard(
               Uri.parse(path).let {
                 if (it.scheme.isNullOrBlank()) Uri.fromFile(File(path)) else it
               }
-            val isAudio = FileTypeUtils.isAudioFile(File(path))
             val suppliedArtwork = EmbeddedArtworkResolver.decodeArtworkUri(context, item.tvgLogo)
             val media =
               Video(
