@@ -1,10 +1,5 @@
 /*
  * SPDX-License-Identifier: AGPL-3.0-or-later
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
  */
 
 package app.gyrolet.mpvrx.ui.preferences.components
@@ -15,9 +10,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
@@ -41,6 +38,13 @@ fun SwitchPreference(
   modifier: Modifier = Modifier,
 ) {
   val haptics = rememberAppHaptics()
+  val titleColor =
+    if (enabled) MaterialTheme.colorScheme.onSurface
+    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+  val summaryColor =
+    if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
+    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+
   Row(
     modifier =
       modifier
@@ -52,15 +56,15 @@ fun SwitchPreference(
             haptics.selection(checked)
           }
         }
-        .padding(horizontal = 16.dp, vertical = 12.dp),
+        .padding(horizontal = 16.dp, vertical = 14.dp),
     verticalAlignment = Alignment.CenterVertically,
   ) {
     if (icon != null) {
       Box(
-        modifier = Modifier.padding(end = 16.dp),
+        modifier = Modifier.padding(end = 12.dp),
         contentAlignment = Alignment.Center,
       ) {
-        icon()
+        CompositionLocalProvider(LocalContentColor provides titleColor) { icon() }
       }
     }
 
@@ -70,12 +74,16 @@ fun SwitchPreference(
           .weight(1f)
           .padding(end = 16.dp),
     ) {
-      ProvideTextStyle(value = titleStyle) {
-        title()
+      CompositionLocalProvider(LocalContentColor provides titleColor) {
+        ProvideTextStyle(value = titleStyle.copy(color = titleColor)) {
+          title()
+        }
       }
       if (summary != null) {
-        ProvideTextStyle(value = summaryStyle.copy(color = MaterialTheme.colorScheme.outline)) {
-          summary()
+        CompositionLocalProvider(LocalContentColor provides summaryColor) {
+          ProvideTextStyle(value = summaryStyle.copy(color = summaryColor)) {
+            summary()
+          }
         }
       }
     }

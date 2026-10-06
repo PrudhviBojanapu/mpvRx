@@ -1,24 +1,20 @@
 /*
  * SPDX-License-Identifier: AGPL-3.0-or-later
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
  */
 
 package app.gyrolet.mpvrx.ui.preferences.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -28,14 +24,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.gyrolet.mpvrx.ui.components.IconSwitch
 import app.gyrolet.mpvrx.ui.icons.AppIcon
 import app.gyrolet.mpvrx.ui.icons.Icon
-import app.gyrolet.mpvrx.ui.icons.Icons
+import app.gyrolet.mpvrx.ui.player.controls.components.tvFocusHighlight
 
+/**
+ * Semantic settings row shared by settings surfaces that do not use compose-preference.
+ *
+ * Rows deliberately stay visually calm. A tonal container is opt-in through [containerColor] so
+ * routine settings are not converted into a wall of cards.
+ */
 @Composable
 fun SettingsClickableItem(
   title: String,
@@ -47,27 +50,21 @@ fun SettingsClickableItem(
   isFirstItem: Boolean = false,
   isLastItem: Boolean = false,
   trailing: @Composable (() -> Unit)? = null,
+  containerColor: Color = Color.Transparent,
 ) {
-  val shape =
-    RoundedCornerShape(
-      topStart = if (isFirstItem) 16.dp else 0.dp,
-      topEnd = if (isFirstItem) 16.dp else 0.dp,
-      bottomStart = if (isLastItem) 16.dp else 0.dp,
-      bottomEnd = if (isLastItem) 16.dp else 0.dp,
-    )
+  val interactionSource = remember { MutableInteractionSource() }
 
   Surface(
     modifier =
       modifier
         .fillMaxWidth()
+        .tvFocusHighlight(MaterialTheme.shapes.medium, enabled = enabled, focusedScale = 1.01f)
         .clickable(
           enabled = enabled,
+          interactionSource = interactionSource,
           onClick = onClick,
-          interactionSource = remember { MutableInteractionSource() },
-          indication = null,
         ),
-    shape = shape,
-    color = MaterialTheme.colorScheme.surfaceContainerLow,
+    color = containerColor,
   ) {
     Row(
       modifier =
@@ -77,13 +74,20 @@ fun SettingsClickableItem(
       verticalAlignment = Alignment.CenterVertically,
     ) {
       if (icon != null) {
-        Icon(
-          imageVector = icon,
-          contentDescription = null,
-          modifier = Modifier.size(24.dp),
-          tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(modifier = Modifier.width(16.dp))
+        Box(
+          modifier = Modifier.size(40.dp),
+          contentAlignment = Alignment.Center,
+        ) {
+          Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(24.dp),
+            tint =
+              if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
+              else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+          )
+        }
+        Spacer(modifier = Modifier.width(12.dp))
       }
 
       Column(modifier = Modifier.weight(1f)) {
@@ -91,26 +95,48 @@ fun SettingsClickableItem(
           text = title,
           style = MaterialTheme.typography.titleMedium,
           fontWeight = FontWeight.SemiBold,
-          color = MaterialTheme.colorScheme.onSurface,
-          maxLines = 1,
+          color =
+            if (enabled) MaterialTheme.colorScheme.onSurface
+            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+          maxLines = 2,
           overflow = TextOverflow.Ellipsis,
         )
-        if (description != null) {
+        if (!description.isNullOrBlank()) {
           Text(
             text = description,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 2,
+            color =
+              if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
+              else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
+            maxLines = 3,
             overflow = TextOverflow.Ellipsis,
           )
         }
       }
 
       if (trailing != null) {
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(12.dp))
         trailing()
       }
     }
+  }
+}
+
+/** Containment is reserved for a meaningful unit such as a server/account/preview group. */
+@Composable
+fun SettingsGroup(
+  modifier: Modifier = Modifier,
+  content: @Composable ColumnScope.() -> Unit,
+) {
+  Surface(
+    modifier = modifier.fillMaxWidth(),
+    shape = MaterialTheme.shapes.extraLarge,
+    color = MaterialTheme.colorScheme.surfaceContainerLow,
+  ) {
+    Column(
+      modifier = Modifier.padding(vertical = 4.dp),
+      content = content,
+    )
   }
 }
 
@@ -121,9 +147,10 @@ fun SettingsSectionHeader(
 ) {
   Text(
     text = title,
-    modifier = modifier.padding(start = 12.dp, top = 20.dp, bottom = 10.dp),
-    color = MaterialTheme.colorScheme.primary,
-    style = MaterialTheme.typography.labelLarge,
+    modifier = modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp),
+    color = MaterialTheme.colorScheme.onSurface,
+    style = MaterialTheme.typography.titleMedium,
+    fontWeight = FontWeight.Bold,
   )
 }
 
@@ -161,7 +188,7 @@ fun SettingsSwitchItem(
 @Composable
 fun SettingsDivider(modifier: Modifier = Modifier) {
   HorizontalDivider(
-    modifier = modifier.padding(horizontal = 16.dp),
-    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+    modifier = modifier.padding(start = 16.dp, end = 16.dp),
+    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.42f),
   )
 }

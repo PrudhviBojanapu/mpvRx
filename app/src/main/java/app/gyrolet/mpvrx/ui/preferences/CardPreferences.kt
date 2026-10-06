@@ -1,122 +1,73 @@
 /*
  * SPDX-License-Identifier: AGPL-3.0-or-later
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
  */
 
 package app.gyrolet.mpvrx.ui.preferences
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.gyrolet.mpvrx.ui.theme.LocalEmphasizedTypography
 
 /**
- * A card container for grouping related preferences, mimicking modern Android settings UI.
+ * Calm settings grouping for Material 3 Expressive.
+ *
+ * The old implementation wrapped every preference section in a large rounded card. Settings are
+ * dense, routine content, so spacing and typography now carry most of the hierarchy. Individual
+ * screens can still use a real Card/Surface for previews, accounts, warnings, or other content
+ * that genuinely benefits from containment.
  */
 @Composable
 fun PreferenceCard(
   modifier: Modifier = Modifier,
   content: @Composable ColumnScope.() -> Unit,
 ) {
-  Card(
+  Column(
     modifier =
       modifier
         .fillMaxWidth()
-        .padding(horizontal = 16.dp, vertical = 8.dp),
-    shape = MaterialTheme.shapes.extraLargeIncreased,
-    colors =
-      CardDefaults.cardColors(
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-      ),
-    elevation =
-      CardDefaults.cardElevation(
-        defaultElevation = 0.dp,
-      ),
-  ) {
-    Column(
-      modifier = Modifier.padding(vertical = 8.dp),
-      verticalArrangement = Arrangement.spacedBy(0.dp),
-    ) {
-      content()
-    }
-  }
+        .padding(horizontal = 12.dp, vertical = 2.dp),
+    content = content,
+  )
 }
 
-/**
- * A divider to separate preferences within a card.
- */
+/** A quiet separator for adjacent preference rows. */
 @Composable
 fun PreferenceDivider(modifier: Modifier = Modifier) {
   HorizontalDivider(
-    modifier = modifier.padding(horizontal = 16.dp),
-    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+    modifier = modifier.padding(start = 16.dp, end = 16.dp),
+    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.42f),
   )
 }
 
 /**
- * A section header for preferences, displayed outside cards.
+ * Section heading for routine settings content.
+ *
+ * Expressive hierarchy comes from type, whitespace and the page-level hero/title—not a decorative
+ * underline repeated before every group.
  */
 @Composable
 fun PreferenceSectionHeader(
   title: String,
   modifier: Modifier = Modifier,
-  topPadding: Dp = 30.dp,
+  topPadding: Dp = 28.dp,
 ) {
   val emphasizedTypography = LocalEmphasizedTypography.current
-
-  Column(
+  Text(
+    text = title,
     modifier =
       modifier
         .fillMaxWidth()
         .padding(start = 24.dp, end = 24.dp, top = topPadding, bottom = 8.dp),
-  ) {
-    Text(
-      text = title,
-      style = emphasizedTypography.titleLarge,
-      color = MaterialTheme.colorScheme.onSurface,
-    )
-    Row(
-      modifier =
-        Modifier
-          .padding(top = 10.dp)
-          .fillMaxWidth(),
-      verticalAlignment = Alignment.CenterVertically,
-    ) {
-      Surface(
-        modifier =
-          Modifier
-            .width(42.dp)
-            .height(4.dp),
-        color = MaterialTheme.colorScheme.primary,
-        shape = MaterialTheme.shapes.extraSmall,
-        content = {},
-      )
-      Spacer(modifier = Modifier.width(8.dp))
-      HorizontalDivider(
-        modifier = Modifier.weight(1f),
-        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
-      )
-    }
-  }
+    style = emphasizedTypography.titleMedium,
+    color = MaterialTheme.colorScheme.onSurface,
+  )
 }
