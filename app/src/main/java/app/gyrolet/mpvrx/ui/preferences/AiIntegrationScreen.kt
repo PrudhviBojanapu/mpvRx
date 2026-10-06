@@ -13,6 +13,7 @@ import android.widget.Toast
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -252,8 +253,8 @@ object AiIntegrationScreen : Screen {
                 androidx.compose.ui.res
                   .stringResource(app.gyrolet.mpvrx.R.string.pref_section_ai_title),
               style = MaterialTheme.typography.headlineSmall,
-              fontWeight = FontWeight.ExtraBold,
-              color = MaterialTheme.colorScheme.primary,
+              fontWeight = FontWeight.Bold,
+              color = MaterialTheme.colorScheme.onSurface,
             )
           },
           navigationIcon = {
@@ -262,7 +263,7 @@ object AiIntegrationScreen : Screen {
                 Icon(
                   Icons.RoundedFilled.ArrowBack,
                   contentDescription = null,
-                  tint = MaterialTheme.colorScheme.secondary,
+                  tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
               }
             }
@@ -280,6 +281,8 @@ object AiIntegrationScreen : Screen {
               .fillMaxSize()
               .padding(padding)
               .then(settingsHighlight),
+          contentPadding = PaddingValues(bottom = 40.dp),
+          verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
           item {
             PreferenceSectionHeader(
@@ -302,7 +305,7 @@ object AiIntegrationScreen : Screen {
                 summary = {
                   Text(
                     if (enabled) "AI features are active" else "AI features are disabled",
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -415,7 +418,7 @@ val apiKeyInfo =
                           Text(
                             androidx.compose.ui.res
                               .stringResource(app.gyrolet.mpvrx.R.string.pref_api_key_saved),
-                            color = MaterialTheme.colorScheme.outline,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                           )
                         }
                       },
@@ -631,7 +634,7 @@ val apiKeyInfo =
                                   "Tap to select a model"
                                 },
                               style = MaterialTheme.typography.bodySmall,
-                              color = MaterialTheme.colorScheme.outline,
+                              color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                           }
                           if (selectedModel.isNotBlank()) {
@@ -661,7 +664,7 @@ val apiKeyInfo =
                       Text(
                         text = "Tap 'Fetch Models' to load available models from ${provider.displayName}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                       )
                     }
@@ -792,7 +795,7 @@ val apiKeyInfo =
                     Text(
                       androidx.compose.ui.res
                         .stringResource(app.gyrolet.mpvrx.R.string.pref_ai_rename_summary),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                   },
                 )
@@ -813,7 +816,7 @@ val apiKeyInfo =
                     Text(
                       androidx.compose.ui.res
                         .stringResource(app.gyrolet.mpvrx.R.string.pref_ai_search_summary),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                   },
                 )
@@ -846,7 +849,7 @@ val apiKeyInfo =
                       Text(
                         androidx.compose.ui.res
                           .stringResource(app.gyrolet.mpvrx.R.string.pref_stt_summary),
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                       )
                     },
                   )
@@ -870,7 +873,7 @@ val apiKeyInfo =
                     summary = {
                       Text(
                         subtitleGenerationOutputFormat.uppercase(),
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                       )
                     },
                   )
@@ -895,7 +898,7 @@ val apiKeyInfo =
                       Text(
                         androidx.compose.ui.res
                           .stringResource(app.gyrolet.mpvrx.R.string.pref_stt_provider_summary),
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                       )
                     },
                   )
@@ -977,7 +980,7 @@ val apiKeyInfo =
                     summary = {
                       Text(
                         if (sttLanguage.isBlank()) "Auto-detect speech language" else sttLanguage.uppercase(),
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                       )
                     },
                   )
@@ -1012,7 +1015,7 @@ val apiKeyInfo =
                         androidx.compose.ui.res.stringResource(
                           app.gyrolet.mpvrx.R.string.pref_enable_translation_summary,
                         ),
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                       )
                     },
                   )
@@ -1051,7 +1054,7 @@ val apiKeyInfo =
                       } else {
                         "Built-in AI instructions will be used"
                       },
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                   },
                 )
@@ -1081,7 +1084,7 @@ val apiKeyInfo =
                           app.gyrolet.mpvrx.R.string.pref_custom_prompts_description,
                         ),
                       style = MaterialTheme.typography.bodySmall,
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
 
                     TextField(
@@ -1163,7 +1166,7 @@ val apiKeyInfo =
                             app.gyrolet.mpvrx.R.string.pref_legacy_prompt_info,
                           ),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                       )
                     }
                   }
@@ -1327,7 +1330,7 @@ val apiKeyInfo =
                 "Tap to select STT model"
               },
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.outline,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
         }
         if (isLoadingStt) {
@@ -1377,7 +1380,7 @@ val apiKeyInfo =
             app.gyrolet.mpvrx.R.string.ui_when_translating_subtitles_if_1_language_is_configured_it_transl,
           ),
         style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.outline,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
 
       if (selectedCodes.isEmpty()) {
@@ -1396,7 +1399,7 @@ val apiKeyInfo =
           selectedCodes.forEach { code ->
             val langName = allLanguages[code] ?: code.uppercase()
             Surface(
-              shape = RoundedCornerShape(20.dp),
+              shape = MaterialTheme.shapes.largeIncreased,
               color = MaterialTheme.colorScheme.primary,
             ) {
               Row(

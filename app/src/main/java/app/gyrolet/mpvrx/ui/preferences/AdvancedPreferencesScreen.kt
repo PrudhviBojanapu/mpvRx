@@ -18,7 +18,9 @@ import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -330,8 +332,8 @@ object AdvancedPreferencesScreen : Screen {
             Text(
               text = stringResource(R.string.pref_advanced),
               style = MaterialTheme.typography.headlineSmall,
-              fontWeight = FontWeight.ExtraBold,
-              color = MaterialTheme.colorScheme.primary,
+              fontWeight = FontWeight.Bold,
+              color = MaterialTheme.colorScheme.onSurface,
             )
           },
           navigationIcon = {
@@ -340,7 +342,7 @@ object AdvancedPreferencesScreen : Screen {
                 Icon(
                   Icons.RoundedFilled.ArrowBack,
                   contentDescription = null,
-                  tint = MaterialTheme.colorScheme.secondary,
+                  tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
               }
             }
@@ -359,6 +361,8 @@ object AdvancedPreferencesScreen : Screen {
               .fillMaxSize()
               .padding(padding)
               .then(settingsHighlight),
+          contentPadding = PaddingValues(bottom = 40.dp),
+          verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
           // App Language Section
           item {
@@ -382,7 +386,7 @@ object AdvancedPreferencesScreen : Screen {
                 summary = {
                   Text(
                     text = currentAppLanguage.displayName(context),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -424,7 +428,7 @@ object AdvancedPreferencesScreen : Screen {
                     } else {
                       stringResource(R.string.pref_auto_backup_summary)
                     },
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -437,7 +441,7 @@ object AdvancedPreferencesScreen : Screen {
                 summary = {
                   Text(
                     text = stringResource(R.string.pref_export_settings_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
                 icon = {
@@ -460,7 +464,7 @@ object AdvancedPreferencesScreen : Screen {
                 summary = {
                   Text(
                     text = stringResource(R.string.pref_import_settings_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
                 icon = {
@@ -495,7 +499,7 @@ object AdvancedPreferencesScreen : Screen {
                       } else {
                         stringResource(R.string.pref_base_storage_folder_summary)
                       },
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                   )
@@ -634,7 +638,7 @@ object AdvancedPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(R.string.pref_enable_lua_scripts_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -649,22 +653,22 @@ object AdvancedPreferencesScreen : Screen {
                     mpvConfStorageLocation.isBlank() || !enableLuaScripts ->
                       Text(
                         stringResource(R.string.pref_manage_scripts_summary_disabled),
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                       )
                     selectedScripts.isEmpty() ->
                       Text(
                         stringResource(R.string.pref_manage_scripts_summary_none),
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                       )
                     selectedScripts.size == 1 ->
                       Text(
                         stringResource(R.string.pref_manage_scripts_summary_singular),
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                       )
                     else ->
                       Text(
                         stringResource(R.string.pref_manage_scripts_summary_plural, selectedScripts.size),
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                       )
                   }
                 },
@@ -681,7 +685,7 @@ object AdvancedPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(R.string.pref_custom_buttons_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
                 onClick = {
@@ -722,7 +726,7 @@ object AdvancedPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(R.string.pref_advanced_enable_recently_played_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -743,11 +747,11 @@ object AdvancedPreferencesScreen : Screen {
                   Column {
                     Text(
                       stringResource(R.string.pref_advanced_clear_playback_history_confirm_subtitle),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
                       playbackHistorySummary,
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                       style = MaterialTheme.typography.bodySmall,
                     )
                   }
@@ -856,11 +860,11 @@ object AdvancedPreferencesScreen : Screen {
                   Column {
                     Text(
                       text = stringResource(R.string.pref_config_cache_summary),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
                       text = stringResource(R.string.pref_config_cache_size, sizeStr),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                       style = MaterialTheme.typography.bodySmall,
                     )
                   }
@@ -916,11 +920,11 @@ object AdvancedPreferencesScreen : Screen {
                   Column {
                     Text(
                       text = stringResource(R.string.pref_thumbnail_cache_summary),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
                       text = stringResource(R.string.pref_thumbnail_cache_size, sizeStr),
-                      color = MaterialTheme.colorScheme.outline,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                       style = MaterialTheme.typography.bodySmall,
                     )
                   }
@@ -976,7 +980,7 @@ object AdvancedPreferencesScreen : Screen {
                   val sizeStr = formatFileSize(fontsCacheSize)
                   Text(
                     text = stringResource(R.string.pref_fonts_cache_size, sizeStr, fontsFileCount),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
                 onClick = {
@@ -1035,7 +1039,7 @@ object AdvancedPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(R.string.pref_advanced_verbose_logging_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
               )
@@ -1051,7 +1055,7 @@ object AdvancedPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(R.string.pref_debug_log_size_summary, debugLogSizeMb),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
                 valueRange = 1f..10f,
@@ -1066,7 +1070,7 @@ object AdvancedPreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(R.string.pref_advanced_dump_logs_summary),
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )
                 },
                 onClick = {

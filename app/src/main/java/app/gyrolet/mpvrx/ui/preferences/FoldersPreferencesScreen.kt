@@ -348,7 +348,7 @@ private fun NoMediaPreferenceCard(
     modifier = modifier.fillMaxWidth(),
     colors =
       CardDefaults.cardColors(
-        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
       ),
   ) {
     Column {
@@ -503,7 +503,7 @@ private fun BlacklistedFolderItem(
           if (isSelected) {
             MaterialTheme.colorScheme.primaryContainer
           } else {
-            MaterialTheme.colorScheme.surfaceVariant
+            MaterialTheme.colorScheme.surfaceContainerLow
           },
       ),
   ) {
@@ -736,7 +736,7 @@ internal fun StorageRootPickerCard(
     modifier = Modifier.fillMaxWidth(),
     colors =
       CardDefaults.cardColors(
-        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
       ),
   ) {
     Row(
