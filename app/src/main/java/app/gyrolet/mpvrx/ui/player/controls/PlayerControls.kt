@@ -19,6 +19,7 @@ import app.gyrolet.mpvrx.domain.torrent.formatTorrentSpeed
 
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.os.Debug
+import android.view.SurfaceView
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -32,6 +33,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
@@ -98,6 +100,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInParent
@@ -130,8 +133,6 @@ import app.gyrolet.mpvrx.preferences.preference.collectAsState
 import app.gyrolet.mpvrx.preferences.preference.deleteAndGet
 import app.gyrolet.mpvrx.preferences.preference.minusAssign
 import app.gyrolet.mpvrx.preferences.preference.plusAssign
-import app.gyrolet.mpvrx.presentation.components.captureLiquidGlassBackdrop
-import app.gyrolet.mpvrx.presentation.components.rememberLiquidGlassBackdrop
 import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
 import app.gyrolet.mpvrx.ui.player.Decoder.Companion.getDecoderFromValue
@@ -141,6 +142,8 @@ import app.gyrolet.mpvrx.ui.player.PlayerUpdates
 import app.gyrolet.mpvrx.ui.player.PlayerViewModel
 import app.gyrolet.mpvrx.ui.player.Sheets
 import app.gyrolet.mpvrx.ui.player.VideoOpenAnimationOverlay
+import app.gyrolet.mpvrx.ui.player.components.VideoAmbientFrame
+import app.gyrolet.mpvrx.ui.player.components.rememberVideoAmbientFrame
 import app.gyrolet.mpvrx.ui.player.buildControlsEnterH
 import app.gyrolet.mpvrx.ui.player.buildControlsEnterV
 import app.gyrolet.mpvrx.ui.player.buildControlsExitH
@@ -182,7 +185,6 @@ import app.gyrolet.mpvrx.ui.liquidglass.AdaptiveControlsButton
 import app.gyrolet.mpvrx.ui.liquidglass.AdaptiveControlsContainer
 import app.gyrolet.mpvrx.ui.liquidglass.LiquidPillButton
 import app.gyrolet.mpvrx.ui.liquidglass.LocalKyantPlayerBackdrop
-import app.gyrolet.mpvrx.ui.liquidglass.LocalPlayerBackdrop
 import app.gyrolet.mpvrx.ui.liquidglass.PlayerLiquidTokens
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
@@ -208,6 +210,7 @@ fun <T> playerControlsEnterAnimationSpec(durationMillis: Int = 100): FiniteAnima
 fun PlayerControls(
   viewModel: PlayerViewModel,
   onBackPress: () -> Unit,
+  videoSurface: SurfaceView? = null,
   modifier: Modifier = Modifier,
 ) {
   val spacing = MaterialTheme.spacing
@@ -469,6 +472,35 @@ fun PlayerControls(
 
   val playerActivity = LocalActivity.current as PlayerActivity
   val configuration = LocalConfiguration.current
+  val hdrScreenMode by viewModel.hdrScreenMode.collectAsState()
+  val playerGlassFrame =
+    if (videoSurface != null) {
+      rememberVideoAmbientFrame(
+        surfaceView = videoSurface,
+        active =
+          enableLiquidGlass &&
+            controlsShown &&
+            !areControlsLocked &&
+            !isAudioOnly &&
+            playbackSessionState.surfaceAttached &&
+            (playbackSessionState.phase == PlaybackPhase.READY ||
+              playbackSessionState.phase == PlaybackPhase.BACKGROUND),
+        playbackGeneration = playbackSessionState.generation,
+        hdrScreenMode = hdrScreenMode,
+        orientation = configuration.orientation,
+        isSurfaceReadyProvider = {
+          PlaybackSession.state.value.surfaceAttached && videoSurface.holder.surface.isValid
+        },
+        isPlayingProvider = { !PlaybackSession.state.value.paused },
+        fallbackFrameProvider = { dimension ->
+          withContext(Dispatchers.IO) {
+            runCatching { PlaybackSession.grabThumbnail(dimension) }.getOrNull()
+          }
+        },
+      )
+    } else {
+      VideoAmbientFrame(supported = false)
+    }
   var playerBounds by remember { mutableStateOf(IntSize.Zero) }
   val isPortrait =
     remember(configuration.orientation, playerBounds) {
@@ -626,7 +658,6 @@ fun PlayerControls(
 
   DoubleTapToSeekOvals(doubleTapSeekAmount, seekText, showDoubleTapOvals, showSeekTime, showSeekTime, interactionSource)
 
-  val playerHazeBackdrop = rememberLiquidGlassBackdrop()
   val playerKyantBackdrop = rememberLayerBackdrop()
 
   CompositionLocalProvider(
@@ -647,6 +678,31 @@ fun PlayerControls(
       animationState = videoOpenAnimState,
     )
     if (enableLiquidGlass) {
+      // mpv renders in a separate SurfaceView layer, which Compose effects cannot sample directly.
+      // Mirror its tiny, throttled PixelCopy frame into an invisible Compose layer so Kyant glass
+      // refracts the live video without duplicating full-resolution playback work.
+      val glassFrame = playerGlassFrame.frame
+      if (glassFrame != null) {
+        Image(
+          bitmap = glassFrame,
+          contentDescription = null,
+          contentScale = ContentScale.FillBounds,
+          modifier =
+            Modifier
+              .fillMaxSize()
+              .alpha(0f)
+              .layerBackdrop(playerKyantBackdrop),
+        )
+      } else {
+        Box(
+          modifier =
+            Modifier
+              .fillMaxSize()
+              .alpha(0f)
+              .layerBackdrop(playerKyantBackdrop)
+              .background(Color.Black),
+        )
+      }
       Box(
         modifier =
           Modifier
@@ -661,9 +717,7 @@ fun PlayerControls(
                 ),
               ),
               alpha = transparentOverlay,
-            )
-            .captureLiquidGlassBackdrop(playerHazeBackdrop)
-            .layerBackdrop(playerKyantBackdrop),
+            ),
       )
     }
     if (brightness < 0) {
@@ -700,7 +754,6 @@ fun PlayerControls(
         CompositionLocalProvider(
           LocalRippleConfiguration provides playerRippleConfiguration,
           LocalPlayerButtonsClickEvent provides { resetControlsTimestamp = System.currentTimeMillis() },
-          LocalPlayerBackdrop provides playerHazeBackdrop,
           LocalKyantPlayerBackdrop provides playerKyantBackdrop,
           LocalForceDarkPlayerButtonsBackground provides forceDarkButtonBackground,
           LocalHidePlayerButtonsBackground provides hideBackground,

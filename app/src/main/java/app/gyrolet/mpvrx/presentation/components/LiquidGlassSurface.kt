@@ -58,7 +58,6 @@ fun ProvideLiquidGlassBackdrop(
 enum class LiquidGlassStyle {
   MiniPlayer,
   Navigation,
-  Control,
 }
 
 /**
@@ -83,24 +82,9 @@ fun LiquidGlassSurface(
   val reducedMotion = AppMotion.shouldReduceMotion()
   val liquidGlassSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
   val blurRadius = if (style == LiquidGlassStyle.MiniPlayer) 12.dp else 8.dp
-  val refractionHeightFraction =
-    when (style) {
-      LiquidGlassStyle.MiniPlayer -> 0.30f
-      LiquidGlassStyle.Navigation -> 0.28f
-      LiquidGlassStyle.Control -> 0.24f
-    }
-  val refractionAmount =
-    when (style) {
-      LiquidGlassStyle.MiniPlayer -> 26.dp
-      LiquidGlassStyle.Navigation -> 22.dp
-      LiquidGlassStyle.Control -> 18.dp
-    }
-  val shadowElevation: Dp =
-    when (style) {
-      LiquidGlassStyle.MiniPlayer -> 10.dp
-      LiquidGlassStyle.Navigation -> 8.dp
-      LiquidGlassStyle.Control -> 4.dp
-    }
+  val refractionHeightFraction = if (style == LiquidGlassStyle.MiniPlayer) 0.30f else 0.28f
+  val refractionAmount = if (style == LiquidGlassStyle.MiniPlayer) 26.dp else 22.dp
+  val shadowElevation: Dp = if (style == LiquidGlassStyle.MiniPlayer) 10.dp else 8.dp
   val roundedShape = shape as? RoundedCornerShape
 
   val glassStyle =

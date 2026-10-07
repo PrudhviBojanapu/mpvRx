@@ -21,7 +21,6 @@ import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,13 +29,9 @@ import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import app.gyrolet.mpvrx.presentation.components.LiquidGlassBackdrop
-import app.gyrolet.mpvrx.presentation.components.LiquidGlassStyle
-import app.gyrolet.mpvrx.presentation.components.LiquidGlassSurface
 import app.gyrolet.mpvrx.ui.icons.AppIcon
 import app.gyrolet.mpvrx.ui.icons.Icon
-
-val LocalPlayerBackdrop = staticCompositionLocalOf<LiquidGlassBackdrop?> { null }
+import com.kyant.backdrop.Backdrop
 
 object PlayerLiquidTokens {
   val ButtonSize: Dp = 40.dp
@@ -74,7 +69,7 @@ fun LiquidIconButton(
   iconSize: Dp = PlayerLiquidTokens.IconSize,
   spacing: Dp = 8.dp,
   useGlass: Boolean = true,
-  backdrop: LiquidGlassBackdrop? = LocalPlayerBackdrop.current,
+  backdrop: Backdrop? = LocalKyantPlayerBackdrop.current,
 ) {
   CompositionLocalProvider(LocalContentColor provides tint) {
     LiquidPillButton(
@@ -112,51 +107,45 @@ fun LiquidPillButton(
   spacing: Dp = 8.dp,
   horizontalPadding: Dp = 16.dp,
   useGlass: Boolean = true,
-  backdrop: LiquidGlassBackdrop? = LocalPlayerBackdrop.current,
+  backdrop: Backdrop? = LocalKyantPlayerBackdrop.current,
   content: @Composable RowScope.() -> Unit,
 ) {
   val resolvedTint = if (tint.isSpecified) tint else PlayerLiquidTokens.contentColor
   val resolvedSurface = if (surfaceColor.isSpecified) surfaceColor else PlayerLiquidTokens.surfaceColor
-  val interactionSource = remember { MutableInteractionSource() }
-  val clickModifier =
-    modifier
-      .height(height)
-      .clip(CircleShape)
-      .combinedClickable(
-        enabled = isInteractive,
-        interactionSource = interactionSource,
-        indication = ripple(),
-        role = Role.Button,
+  CompositionLocalProvider(LocalContentColor provides resolvedTint) {
+    if (useGlass && backdrop != null) {
+      LiquidButton(
         onClick = onClick,
         onLongClick = onLongClick,
+        backdrop = backdrop,
+        modifier = modifier,
+        enabled = isInteractive,
+        surfaceColor = resolvedSurface,
+        height = height,
+        horizontalPadding = horizontalPadding,
+        spacing = spacing,
+        content = content,
       )
-
-  val contentRow: @Composable RowScope.() -> Unit = content
-  if (useGlass) {
-    LiquidGlassSurface(
-      shape = CircleShape,
-      modifier = clickModifier,
-      style = LiquidGlassStyle.Control,
-      glassColor = resolvedSurface,
-      fallbackColor = resolvedSurface.copy(alpha = 0.86f),
-      contentColor = resolvedTint,
-      backdrop = backdrop,
-      glowStrength = 0.72f,
-    ) {
+    } else {
+      val interactionSource = remember { MutableInteractionSource() }
       Row(
-        modifier = Modifier.padding(horizontal = horizontalPadding),
+        modifier =
+          modifier
+            .height(height)
+            .clip(CircleShape)
+            .combinedClickable(
+              enabled = isInteractive,
+              interactionSource = interactionSource,
+              indication = ripple(),
+              role = Role.Button,
+              onClick = onClick,
+              onLongClick = onLongClick,
+            ).padding(horizontal = horizontalPadding),
         horizontalArrangement = Arrangement.spacedBy(spacing, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
-        content = contentRow,
+        content = content,
       )
     }
-  } else {
-    Row(
-      modifier = clickModifier.padding(horizontal = horizontalPadding),
-      horizontalArrangement = Arrangement.spacedBy(spacing, Alignment.CenterHorizontally),
-      verticalAlignment = Alignment.CenterVertically,
-      content = contentRow,
-    )
   }
 }
 

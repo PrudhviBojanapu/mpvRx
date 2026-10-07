@@ -716,7 +716,7 @@ object MainScreen : Screen {
                 val mutedColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f)
 
                 LiquidBottomTabs(
-                  selectedTabIndex = { selectedTabIndex },
+                  selectedTabIndex = selectedTabIndex,
                   onTabSelected = { index -> navigationTabs.getOrNull(index)?.let { onTabSelected(it) } },
                   backdrop = liquidLayerBackdrop,
                   tabsCount = navigationTabs.size,

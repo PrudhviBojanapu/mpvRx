@@ -34,11 +34,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.gyrolet.mpvrx.preferences.AppearancePreferences
 import app.gyrolet.mpvrx.preferences.preference.collectAsState
-import app.gyrolet.mpvrx.presentation.components.LiquidGlassBackdrop
 import app.gyrolet.mpvrx.ui.icons.AppIcon
 import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.player.controls.LocalPlayerButtonsClickEvent
 import app.gyrolet.mpvrx.ui.theme.spacing
+import com.kyant.backdrop.Backdrop
 import org.koin.compose.koinInject
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -54,7 +54,7 @@ fun AdaptiveControlsButton(
   surfaceColor: Color = Color.Unspecified,
   buttonSize: Dp = 40.dp,
   useGlass: Boolean = true,
-  backdrop: LiquidGlassBackdrop? = LocalPlayerBackdrop.current,
+  backdrop: Backdrop? = LocalKyantPlayerBackdrop.current,
 ) {
   val preferences = koinInject<AppearancePreferences>()
   val liquidGlassEnabled by preferences.liquidGlassEnabled.collectAsState()
@@ -172,7 +172,7 @@ fun AdaptiveControlsContainer(
   buttonSize: Dp = 40.dp,
   spacing: Dp = 8.dp,
   horizontalPadding: Dp? = null,
-  backdrop: LiquidGlassBackdrop? = LocalPlayerBackdrop.current,
+  backdrop: Backdrop? = LocalKyantPlayerBackdrop.current,
   content: @Composable RowScope.() -> Unit,
 ) {
   val preferences = koinInject<AppearancePreferences>()

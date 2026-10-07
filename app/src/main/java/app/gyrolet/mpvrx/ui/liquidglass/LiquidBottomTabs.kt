@@ -15,14 +15,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -50,8 +48,6 @@ import com.kyant.backdrop.highlight.Highlight
 import com.kyant.backdrop.shadow.InnerShadow
 import com.kyant.backdrop.shadow.Shadow
 import com.kyant.shapes.Capsule
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.sign
@@ -60,7 +56,7 @@ val LocalLiquidBottomTabScale = staticCompositionLocalOf { { 1f } }
 
 @Composable
 fun LiquidBottomTabs(
-    selectedTabIndex: () -> Int,
+    selectedTabIndex: Int,
     onTabSelected: (index: Int) -> Unit,
     backdrop: Backdrop,
     tabsCount: Int,
@@ -99,13 +95,12 @@ fun LiquidBottomTabs(
 
         val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
         val animationScope = rememberCoroutineScope()
-        var currentIndex by remember(selectedTabIndex) {
-            mutableIntStateOf(selectedTabIndex())
-        }
-        val dampedDragAnimation = remember(animationScope) {
+        val currentOnTabSelected by rememberUpdatedState(onTabSelected)
+        val initialIndex = selectedTabIndex.fastCoerceIn(0, tabsCount - 1)
+        val dampedDragAnimation = remember(animationScope, tabsCount) {
             DampedDragAnimation(
                 animationScope = animationScope,
-                initialValue = selectedTabIndex().toFloat(),
+                initialValue = initialIndex.toFloat(),
                 valueRange = 0f..(tabsCount - 1).toFloat(),
                 visibilityThreshold = 0.001f,
                 initialScale = 1f,
@@ -113,8 +108,8 @@ fun LiquidBottomTabs(
                 onDragStarted = {},
                 onDragStopped = {
                     val targetIndex = targetValue.fastRoundToInt().fastCoerceIn(0, tabsCount - 1)
-                    currentIndex = targetIndex
                     animateToValue(targetIndex.toFloat())
+                    currentOnTabSelected(targetIndex)
                     animationScope.launch {
                         offsetAnimation.animateTo(
                             0f,
@@ -133,19 +128,11 @@ fun LiquidBottomTabs(
                 }
             )
         }
-        LaunchedEffect(selectedTabIndex) {
-            snapshotFlow { selectedTabIndex() }
-                .collectLatest { index ->
-                    currentIndex = index
-                }
-        }
-        LaunchedEffect(dampedDragAnimation) {
-            snapshotFlow { currentIndex }
-                .drop(1)
-                .collectLatest { index ->
-                    dampedDragAnimation.animateToValue(index.toFloat())
-                    onTabSelected(index)
-                }
+        LaunchedEffect(selectedTabIndex, tabsCount, dampedDragAnimation) {
+            val targetIndex = selectedTabIndex.fastCoerceIn(0, tabsCount - 1).toFloat()
+            if (dampedDragAnimation.targetValue != targetIndex) {
+                dampedDragAnimation.animateToValue(targetIndex)
+            }
         }
 
         val interactiveHighlight = remember(animationScope) {
@@ -242,12 +229,6 @@ fun LiquidBottomTabs(
                     translationX =
                         if (isLtr) dampedDragAnimation.value * tabWidth + panelOffset
                         else size.width - (dampedDragAnimation.value + 1f) * tabWidth + panelOffset
-
-                    scaleX = dampedDragAnimation.scaleX
-                    scaleY = dampedDragAnimation.scaleY
-                    val velocity = dampedDragAnimation.velocity / 10f
-                    scaleX /= 1f - (velocity * 0.75f).fastCoerceIn(-0.2f, 0.2f)
-                    scaleY *= 1f - (velocity * 0.25f).fastCoerceIn(-0.2f, 0.2f)
                 }
                 .then(interactiveHighlight.gestureModifier)
                 .then(dampedDragAnimation.modifier)
