@@ -4,44 +4,47 @@
 
 package app.gyrolet.mpvrx.presentation.components
 
-import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.gyrolet.mpvrx.ui.theme.AppMotion
-import dev.chrisbanes.haze.ExperimentalHazeApi
-import dev.chrisbanes.haze.HazeInput
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.glass.GlassStyle
-import dev.chrisbanes.haze.glass.hazeGlass
-import dev.chrisbanes.haze.hazeSource
-import dev.chrisbanes.haze.rememberHazeState
+import com.kyant.backdrop.backdrops.LayerBackdrop
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.kyant.backdrop.drawBackdrop
+import com.kyant.backdrop.effects.blur
+import com.kyant.backdrop.effects.lens
+import com.kyant.backdrop.effects.vibrancy
+import com.kyant.backdrop.highlight.Highlight
+import com.kyant.backdrop.shadow.InnerShadow
+import com.kyant.backdrop.shadow.Shadow
+import com.kyant.shapes.Capsule
+import com.kyant.shapes.ContinuousRoundedRectangle
 
-typealias LiquidGlassBackdrop = HazeState
+typealias LiquidGlassBackdrop = LayerBackdrop
 
 private val LocalLiquidGlassBackdrop = staticCompositionLocalOf<LiquidGlassBackdrop?> { null }
 
 @Composable
-fun rememberLiquidGlassBackdrop(): LiquidGlassBackdrop = rememberHazeState()
+fun rememberLiquidGlassBackdrop(): LiquidGlassBackdrop = rememberLayerBackdrop()
 
 fun Modifier.captureLiquidGlassBackdrop(
   backdrop: LiquidGlassBackdrop?,
   enabled: Boolean = true,
-): Modifier = if (enabled && backdrop != null) hazeSource(backdrop) else this
+): Modifier = if (enabled && backdrop != null) layerBackdrop(backdrop) else this
 
 @Composable
 fun ProvideLiquidGlassBackdrop(
@@ -60,13 +63,7 @@ enum class LiquidGlassStyle {
   Navigation,
 }
 
-/**
- * Haze-backed liquid glass surface.
- *
- * The caller-provided source state keeps the effect portable on Android versions where advanced
- * refraction is unavailable; Haze automatically simplifies unsupported optical features.
- */
-@OptIn(ExperimentalHazeApi::class)
+/** Kyant-backed liquid glass surface shared by mini players and floating action bars. */
 @Composable
 fun LiquidGlassSurface(
   shape: Shape,
@@ -77,53 +74,60 @@ fun LiquidGlassSurface(
   contentColor: Color = MaterialTheme.colorScheme.onSurface,
   backdrop: LiquidGlassBackdrop? = LocalLiquidGlassBackdrop.current,
   glowStrength: Float = 1f,
+  cornerRadius: Dp? = null,
   content: @Composable BoxScope.() -> Unit,
 ) {
   val reducedMotion = AppMotion.shouldReduceMotion()
-  val liquidGlassSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
   val blurRadius = if (style == LiquidGlassStyle.MiniPlayer) 12.dp else 8.dp
-  val refractionHeightFraction = if (style == LiquidGlassStyle.MiniPlayer) 0.30f else 0.28f
+  val refractionHeight = if (style == LiquidGlassStyle.MiniPlayer) 18.dp else 14.dp
   val refractionAmount = if (style == LiquidGlassStyle.MiniPlayer) 26.dp else 22.dp
   val shadowElevation: Dp = if (style == LiquidGlassStyle.MiniPlayer) 10.dp else 8.dp
-  val roundedShape = shape as? RoundedCornerShape
-
-  val glassStyle =
-    remember(roundedShape, style, glassColor, fallbackColor, reducedMotion, glowStrength) {
-      roundedShape?.let { resolvedShape ->
-        GlassStyle {
-          shape(resolvedShape)
-          tint(glassColor)
-          // A very light backing tint keeps the simplified renderer readable without making the
-          // normal source-backed path opaque.
-          backgroundColor(fallbackColor.copy(alpha = 0.08f))
-          optics(
-            refractionStrength = if (reducedMotion) 0f else 0.72f,
-            refractionHeightFraction = if (reducedMotion) 0f else refractionHeightFraction,
-            refractionDisplacement = if (reducedMotion) 0.dp else refractionAmount,
-            depth = if (reducedMotion) 0f else 0.6f,
-            blurRadius = blurRadius,
-            refractionDetailIntensity = if (reducedMotion) 0f else 0.5f,
-          )
-          // Replaces Backdrop's vibrancy/highlight/rim treatment.
-          chromaMultiplier(1.08f)
-          contrast(0.04f)
-          specularIntensity((if (reducedMotion) 0.28f else 0.52f) * glowStrength)
-          ambientResponse(0.36f * glowStrength)
-          edgeSoftness(1.dp)
-          edgeShadow(Color.Black.copy(alpha = 0.16f * glowStrength))
-          chromaticAberrationStrength(if (reducedMotion) 0f else 0.12f * glowStrength)
-        }
-      }
-    }
+  val glassCornerRadiusPx = with(LocalDensity.current) { cornerRadius?.toPx() }
 
   val surfaceModifier =
-    if (liquidGlassSupported && backdrop != null && roundedShape != null && glassStyle != null) {
+    if (backdrop != null) {
       modifier
         .shadow(shadowElevation, shape)
         .clip(shape)
-        .hazeGlass(
-          input = HazeInput.Sources(backdrop),
-          style = glassStyle,
+        .drawBackdrop(
+          backdrop = backdrop,
+          shape = {
+            if (glassCornerRadiusPx == null) {
+              Capsule()
+            } else {
+              ContinuousRoundedRectangle(glassCornerRadiusPx)
+            }
+          },
+          effects = {
+            vibrancy()
+            blur(blurRadius.toPx())
+            if (!reducedMotion) {
+              lens(
+                refractionHeight.toPx(),
+                refractionAmount.toPx(),
+                chromaticAberration = true,
+              )
+            }
+          },
+          highlight = {
+            Highlight.Ambient.copy(alpha = (if (reducedMotion) 0.28f else 0.52f) * glowStrength)
+          },
+          shadow = {
+            Shadow(
+              radius = shadowElevation,
+              color = Color.Black.copy(alpha = 0.16f * glowStrength),
+            )
+          },
+          innerShadow = {
+            InnerShadow(
+              radius = 2.dp,
+              color = Color.White.copy(alpha = 0.14f * glowStrength),
+            )
+          },
+          onDrawSurface = {
+            drawRect(fallbackColor.copy(alpha = 0.08f))
+            drawRect(glassColor)
+          },
         )
     } else {
       modifier

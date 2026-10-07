@@ -119,8 +119,6 @@ import com.kyant.backdrop.backdrops.layerBackdrop
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.gyrolet.mpvrx.presentation.Screen
 import app.gyrolet.mpvrx.presentation.components.ProvideLiquidGlassBackdrop
-import app.gyrolet.mpvrx.presentation.components.captureLiquidGlassBackdrop
-import app.gyrolet.mpvrx.presentation.components.rememberLiquidGlassBackdrop
 import app.gyrolet.mpvrx.ui.utils.LocalBackStack
 import app.gyrolet.mpvrx.ui.utils.navigateTo
 import app.gyrolet.mpvrx.ui.browser.folderlist.FolderListScreen
@@ -137,6 +135,8 @@ import app.gyrolet.mpvrx.ui.player.NavigationAnimStyle
 import app.gyrolet.mpvrx.ui.utils.navigationDurationMillis
 import app.gyrolet.mpvrx.ui.utils.navigationTabAnimationSpec
 import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
@@ -338,9 +338,9 @@ object MainScreen : Screen {
       onTabSelected(MainTab.HOME)
     }
 
-    // One captured backdrop drives both modes: plain Haze when Liquid Glass is off and
-    // Haze Glass when it is on. This keeps the effect local to the floating capsule.
-    val navigationBackdrop = rememberLiquidGlassBackdrop()
+    // Keep the app's established Haze path for the normal navigation bar. Liquid Glass uses the
+    // separate Kyant layer backdrop declared with the screen state above.
+    val navigationBackdrop = rememberHazeState()
 
     val mainNavBar = @Composable { modifier: Modifier ->
       ExpressivePillNavigationBar(
@@ -392,7 +392,7 @@ object MainScreen : Screen {
               Modifier
                 .fillMaxSize()
                 .layerBackdrop(liquidLayerBackdrop)
-                .captureLiquidGlassBackdrop(navigationBackdrop, navigationTabs.isNotEmpty()),
+                .hazeSource(navigationBackdrop),
           ) {
             CompositionLocalProvider(
               LocalNavigationBarHeight provides contentBottomPadding,
@@ -416,7 +416,7 @@ object MainScreen : Screen {
                   .clipToBounds()
                   .nestedScroll(NavigationBarState.navScrollConnection)
                   .layerBackdrop(liquidLayerBackdrop)
-                  .captureLiquidGlassBackdrop(navigationBackdrop, navigationTabs.isNotEmpty()),
+                  .hazeSource(navigationBackdrop),
               key = { page -> visibleTabs[page].name },
               beyondViewportPageCount = 1,
               userScrollEnabled = !isPermissionDenied,
@@ -619,7 +619,7 @@ object MainScreen : Screen {
 
         // Animated bottom navigation bar with slide animations
         ProvideLiquidGlassBackdrop(
-          backdrop = navigationBackdrop,
+          backdrop = liquidLayerBackdrop,
           enabled = liquidGlassEnabled,
         ) {
           AnimatedVisibility(

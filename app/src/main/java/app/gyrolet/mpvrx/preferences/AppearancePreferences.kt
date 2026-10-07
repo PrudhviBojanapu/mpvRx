@@ -127,8 +127,8 @@ class AppearancePreferences(
     preferenceStore.getBoolean("clip_button_migration_complete", false)
 
   init {
-    // Haze Glass relies on Android 12+ rendering primitives. A restored/legacy preference must
-    // never re-enable the expensive glass path on Android 11 or below.
+    // The advanced Liquid Glass optics rely on modern Android rendering primitives. A restored
+    // preference must not re-enable the expensive glass path on Android 11 or below.
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S && liquidGlassEnabled.get()) {
       liquidGlassEnabled.set(false)
     }

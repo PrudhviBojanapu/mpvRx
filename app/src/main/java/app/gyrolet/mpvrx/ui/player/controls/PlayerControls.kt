@@ -142,8 +142,8 @@ import app.gyrolet.mpvrx.ui.player.PlayerUpdates
 import app.gyrolet.mpvrx.ui.player.PlayerViewModel
 import app.gyrolet.mpvrx.ui.player.Sheets
 import app.gyrolet.mpvrx.ui.player.VideoOpenAnimationOverlay
-import app.gyrolet.mpvrx.ui.player.components.VideoAmbientFrame
-import app.gyrolet.mpvrx.ui.player.components.rememberVideoAmbientFrame
+import app.gyrolet.mpvrx.ui.player.components.VideoGlassFrame
+import app.gyrolet.mpvrx.ui.player.components.rememberVideoGlassFrame
 import app.gyrolet.mpvrx.ui.player.buildControlsEnterH
 import app.gyrolet.mpvrx.ui.player.buildControlsEnterV
 import app.gyrolet.mpvrx.ui.player.buildControlsExitH
@@ -475,16 +475,15 @@ fun PlayerControls(
   val hdrScreenMode by viewModel.hdrScreenMode.collectAsState()
   val playerGlassFrame =
     if (videoSurface != null) {
-      rememberVideoAmbientFrame(
+      rememberVideoGlassFrame(
         surfaceView = videoSurface,
         active =
           enableLiquidGlass &&
-            controlsShown &&
-            !areControlsLocked &&
             !isAudioOnly &&
             playbackSessionState.surfaceAttached &&
             (playbackSessionState.phase == PlaybackPhase.READY ||
               playbackSessionState.phase == PlaybackPhase.BACKGROUND),
+        controlsVisible = controlsShown && !areControlsLocked,
         playbackGeneration = playbackSessionState.generation,
         hdrScreenMode = hdrScreenMode,
         orientation = configuration.orientation,
@@ -499,7 +498,7 @@ fun PlayerControls(
         },
       )
     } else {
-      VideoAmbientFrame(supported = false)
+      VideoGlassFrame(supported = false)
     }
   var playerBounds by remember { mutableStateOf(IntSize.Zero) }
   val isPortrait =
@@ -679,8 +678,8 @@ fun PlayerControls(
     )
     if (enableLiquidGlass) {
       // mpv renders in a separate SurfaceView layer, which Compose effects cannot sample directly.
-      // Mirror its tiny, throttled PixelCopy frame into an invisible Compose layer so Kyant glass
-      // refracts the live video without duplicating full-resolution playback work.
+      // Mirror a spatially detailed, throttled PixelCopy frame into an invisible Compose layer so
+      // every Kyant control refracts the video pixels directly behind its screen position.
       val glassFrame = playerGlassFrame.frame
       if (glassFrame != null) {
         Image(
@@ -700,7 +699,7 @@ fun PlayerControls(
               .fillMaxSize()
               .alpha(0f)
               .layerBackdrop(playerKyantBackdrop)
-              .background(Color.Black),
+              .background(MaterialTheme.colorScheme.surfaceContainerHigh),
         )
       }
       Box(

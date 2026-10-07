@@ -143,7 +143,6 @@ libtorrent4j-android-x8664 = { module = "org.libtorrent4j:libtorrent4j-android-x
 libarchive-android = { module = "me.zhanghai.android.libarchive:library", version.ref = "libarchiveAndroid" }
 telephoto-zoomable = { module = "me.saket.telephoto:zoomable", version.ref = "telephoto" }
 haze-blur = { module = "dev.chrisbanes.haze:haze-blur", version.ref = "haze" }
-haze-glass = { module = "dev.chrisbanes.haze:haze-glass", version.ref = "haze" }
 kyant-backdrop = { module = "io.github.kyant0:backdrop-android", version.ref = "kyant" }
 kyant-shapes = { module = "io.github.kyant0:shapes-android", version.ref = "kyant-shapes" }
 

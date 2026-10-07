@@ -91,6 +91,7 @@ fun AudioMiniPlayer(modifier: Modifier = Modifier) {
           context.startActivity(intent)
         },
       shape = miniPlayerShape,
+      cornerRadius = 24.dp,
       style = LiquidGlassStyle.MiniPlayer,
       glassColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.30f),
       fallbackColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.95f),

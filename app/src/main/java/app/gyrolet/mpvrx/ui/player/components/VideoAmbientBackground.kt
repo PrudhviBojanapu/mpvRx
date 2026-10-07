@@ -63,6 +63,14 @@ private const val DISPLAY_WIDTH = 32
 private const val DISPLAY_HEIGHT = 18
 private const val DECIMATION = 3
 
+private const val GLASS_CAPTURE_WIDTH = 320
+private const val GLASS_CAPTURE_HEIGHT = 180
+private const val GLASS_VISIBLE_PLAYING_INTERVAL_MS = 100L
+private const val GLASS_VISIBLE_PAUSED_INTERVAL_MS = 500L
+private const val GLASS_HIDDEN_PLAYING_INTERVAL_MS = 1000L
+private const val GLASS_HIDDEN_PAUSED_INTERVAL_MS = 1500L
+private const val GLASS_FALLBACK_INTERVAL_MS = 1000L
+
 private const val CAPTURE_INTERVAL_MS = 350L
 private const val IDLE_INTERVAL_MS = 1000L
 private const val SMOOTH_INTERVAL_MS = 60L
@@ -118,6 +126,11 @@ data class VideoAmbientFrame(
   val frame: ImageBitmap? = null,
   val base: Color? = null,
   val accent: Color? = null,
+  val supported: Boolean = true,
+)
+
+data class VideoGlassFrame(
+  val frame: ImageBitmap? = null,
   val supported: Boolean = true,
 )
 
@@ -181,6 +194,163 @@ fun rememberVideoAmbientFrame(
 
   return state
 }
+
+/**
+ * Keeps a spatially detailed SurfaceView snapshot ready for Kyant glass.
+ *
+ * The ambient pipeline intentionally crushes the frame to a heavily blurred 32x18 color field,
+ * which is ideal for an ambient glow but cannot provide local reflections. This pipeline keeps a
+ * modest 320x180 frame instead, captures quickly while controls are visible, and idles at a low
+ * cadence while they are hidden so the first glass frame never starts from black.
+ */
+@Composable
+fun rememberVideoGlassFrame(
+  surfaceView: SurfaceView,
+  active: Boolean,
+  controlsVisible: Boolean,
+  playbackGeneration: Long,
+  hdrScreenMode: HdrScreenMode,
+  orientation: Int,
+  isSurfaceReadyProvider: () -> Boolean,
+  isPlayingProvider: () -> Boolean,
+  fallbackFrameProvider: suspend (Int) -> Bitmap?,
+): VideoGlassFrame {
+  var state by remember { mutableStateOf(VideoGlassFrame()) }
+  val currentControlsVisible by rememberUpdatedState(controlsVisible)
+  val currentIsSurfaceReadyProvider by rememberUpdatedState(isSurfaceReadyProvider)
+  val currentIsPlayingProvider by rememberUpdatedState(isPlayingProvider)
+  val currentFallbackFrameProvider by rememberUpdatedState(fallbackFrameProvider)
+  val lifecycleOwner = LocalLifecycleOwner.current
+
+  LaunchedEffect(
+    active,
+    surfaceView,
+    lifecycleOwner,
+    playbackGeneration,
+    hdrScreenMode,
+    orientation,
+  ) {
+    state = VideoGlassFrame()
+    if (!active) return@LaunchedEffect
+
+    lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+      val pipeline = VideoGlassPipeline()
+      try {
+        pipeline.runCapture(
+          surfaceView = surfaceView,
+          controlsVisible = { currentControlsVisible },
+          isSurfaceReady = currentIsSurfaceReadyProvider,
+          isPlaying = currentIsPlayingProvider,
+          fallbackFrame = { currentFallbackFrameProvider(GLASS_CAPTURE_WIDTH) },
+          onFrame = { state = VideoGlassFrame(frame = it) },
+          onUnsupported = { state = VideoGlassFrame(supported = false) },
+        )
+      } finally {
+        pipeline.close()
+      }
+    }
+  }
+
+  return state
+}
+
+private class VideoGlassPipeline : AutoCloseable {
+  private val frames =
+    arrayOf(
+      Bitmap.createBitmap(GLASS_CAPTURE_WIDTH, GLASS_CAPTURE_HEIGHT, Bitmap.Config.ARGB_8888),
+      Bitmap.createBitmap(GLASS_CAPTURE_WIDTH, GLASS_CAPTURE_HEIGHT, Bitmap.Config.ARGB_8888),
+    )
+  private val handler = Handler(Looper.getMainLooper())
+  private val fallbackPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+  private val frameBounds = Rect(0, 0, GLASS_CAPTURE_WIDTH, GLASS_CAPTURE_HEIGHT)
+  private var nextFrameIndex = 0
+  private var consecutiveFailures = 0
+  private var lastFallbackAt = 0L
+  @Volatile private var closed = false
+
+  suspend fun runCapture(
+    surfaceView: SurfaceView,
+    controlsVisible: () -> Boolean,
+    isSurfaceReady: () -> Boolean,
+    isPlaying: () -> Boolean,
+    fallbackFrame: suspend () -> Bitmap?,
+    onFrame: (ImageBitmap) -> Unit,
+    onUnsupported: () -> Unit,
+  ) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+      onUnsupported()
+      return
+    }
+
+    while (currentCoroutineContext().isActive && !closed) {
+      val visible = controlsVisible()
+      val playing = isPlaying()
+      var cadence = glassCaptureInterval(visible, playing)
+      if (isSurfaceReady() && surfaceView.width > 0 && surfaceView.height > 0) {
+        val target = frames[nextFrameIndex]
+        when (captureSurface(surfaceView, target, handler)) {
+          CAPTURE_OK -> {
+            consecutiveFailures = 0
+            onFrame(target.asImageBitmap())
+            nextFrameIndex = nextFrameIndex xor 1
+          }
+
+          CAPTURE_UNSUPPORTED -> {
+            onUnsupported()
+            return
+          }
+
+          else -> {
+            consecutiveFailures++
+            val now = SystemClock.elapsedRealtime()
+            val fallbackDue = now - lastFallbackAt >= GLASS_FALLBACK_INTERVAL_MS
+            if (fallbackDue && applyFallbackFrame(target, fallbackFrame)) {
+              lastFallbackAt = now
+              consecutiveFailures = 0
+              onFrame(target.asImageBitmap())
+              nextFrameIndex = nextFrameIndex xor 1
+              cadence = maxOf(glassCaptureInterval(visible, playing), GLASS_FALLBACK_INTERVAL_MS)
+            } else {
+              cadence =
+                (cadence * (1L shl consecutiveFailures.coerceAtMost(2)))
+                  .coerceAtMost(GLASS_HIDDEN_PAUSED_INTERVAL_MS)
+            }
+          }
+        }
+      }
+      if (!closed) delay(cadence)
+    }
+  }
+
+  private suspend fun applyFallbackFrame(
+    target: Bitmap,
+    provider: suspend () -> Bitmap?,
+  ): Boolean {
+    val fallback = provider() ?: return false
+    return try {
+      if (fallback.isRecycled || closed) return false
+      Canvas(target).drawBitmap(fallback, null, frameBounds, fallbackPaint)
+      true
+    } finally {
+      if (fallback !in frames && !fallback.isRecycled) fallback.recycle()
+    }
+  }
+
+  override fun close() {
+    closed = true
+  }
+}
+
+private fun glassCaptureInterval(
+  controlsVisible: Boolean,
+  isPlaying: Boolean,
+): Long =
+  when {
+    controlsVisible && isPlaying -> GLASS_VISIBLE_PLAYING_INTERVAL_MS
+    controlsVisible -> GLASS_VISIBLE_PAUSED_INTERVAL_MS
+    isPlaying -> GLASS_HIDDEN_PLAYING_INTERVAL_MS
+    else -> GLASS_HIDDEN_PAUSED_INTERVAL_MS
+  }
 
 private class VideoAmbientPipeline : AutoCloseable {
   private val sample = Bitmap.createBitmap(SAMPLE_WIDTH, SAMPLE_HEIGHT, Bitmap.Config.ARGB_8888)
