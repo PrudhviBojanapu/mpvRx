@@ -58,6 +58,7 @@ fun LiquidButton(
   spacing: Dp = 8.dp,
   content: @Composable RowScope.() -> Unit,
 ) {
+  val optics = rememberLiquidGlassOptics()
   val animationScope = rememberCoroutineScope()
   val interactiveHighlight =
     remember(animationScope) {
@@ -72,8 +73,14 @@ fun LiquidButton(
           shape = { Capsule() },
           effects = {
             vibrancy()
-            blur(2.dp.toPx())
-            lens(12.dp.toPx(), 24.dp.toPx())
+            blur(optics.blurRadius.toPx())
+            if (optics.refractionStrength > 0f) {
+              lens(
+                12.dp.toPx() * optics.refractionStrength,
+                24.dp.toPx() * optics.refractionStrength,
+                chromaticAberration = optics.chromaticAberration,
+              )
+            }
           },
           layerBlock =
             if (enabled) {
@@ -104,9 +111,15 @@ fun LiquidButton(
           onDrawSurface = {
             if (tint.isSpecified) {
               drawRect(tint, blendMode = BlendMode.Hue)
-              drawRect(tint.copy(alpha = 0.75f))
+              drawRect(tint.copy(alpha = (0.75f * optics.tintStrength).coerceIn(0f, 1f)))
             }
-            if (surfaceColor.isSpecified) drawRect(surfaceColor)
+            if (surfaceColor.isSpecified) {
+              drawRect(
+                surfaceColor.copy(
+                  alpha = (surfaceColor.alpha * optics.tintStrength).coerceIn(0f, 1f),
+                ),
+              )
+            }
           },
         ).combinedClickable(
           enabled = enabled,

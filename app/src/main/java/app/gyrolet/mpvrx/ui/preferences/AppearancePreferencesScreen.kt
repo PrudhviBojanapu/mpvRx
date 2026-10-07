@@ -457,6 +457,10 @@ object AppearancePreferencesScreen : Screen {
           item {
             val liquidGlassEnabled by preferences.liquidGlassEnabled.collectAsState()
             val liquidBottomBarStyle by preferences.liquidBottomBarStyle.collectAsState()
+            val liquidGlassBlurRadius by preferences.liquidGlassBlurRadius.collectAsState()
+            val liquidGlassRefractionStrength by preferences.liquidGlassRefractionStrength.collectAsState()
+            val liquidGlassTintStrength by preferences.liquidGlassTintStrength.collectAsState()
+            val liquidGlassChromaticAberration by preferences.liquidGlassChromaticAberration.collectAsState()
 
             PreferenceCard {
               SwitchPreference(
@@ -509,6 +513,86 @@ object AppearancePreferencesScreen : Screen {
                           LiquidBottomBarStyle.FloatingTabs -> R.string.pref_liquid_nav_floating_tabs
                         },
                       ),
+                    color = MaterialTheme.colorScheme.outline,
+                  )
+                },
+                enabled = liquidGlassEnabled && liquidGlassSupported,
+              )
+
+              PreferenceDivider()
+
+              SliderPreference(
+                value = liquidGlassBlurRadius,
+                onValueChange = { preferences.liquidGlassBlurRadius.set(it.coerceIn(0f, 24f)) },
+                title = { Text(stringResource(R.string.pref_liquid_blur_title)) },
+                summary = {
+                  Text(
+                    stringResource(R.string.pref_liquid_blur_summary, liquidGlassBlurRadius.roundToInt()),
+                    color = MaterialTheme.colorScheme.outline,
+                  )
+                },
+                valueRange = 0f..24f,
+                valueSteps = 23,
+                sliderValue = liquidGlassBlurRadius,
+                onSliderValueChange = { preferences.liquidGlassBlurRadius.set(it.coerceIn(0f, 24f)) },
+                enabled = liquidGlassEnabled && liquidGlassSupported,
+              )
+
+              PreferenceDivider()
+
+              SliderPreference(
+                value = liquidGlassRefractionStrength,
+                onValueChange = { preferences.liquidGlassRefractionStrength.set(it.coerceIn(0f, 2f)) },
+                title = { Text(stringResource(R.string.pref_liquid_refraction_title)) },
+                summary = {
+                  Text(
+                    stringResource(
+                      R.string.pref_liquid_refraction_summary,
+                      (liquidGlassRefractionStrength * 100).roundToInt(),
+                    ),
+                    color = MaterialTheme.colorScheme.outline,
+                  )
+                },
+                valueRange = 0f..2f,
+                valueSteps = 19,
+                sliderValue = liquidGlassRefractionStrength,
+                onSliderValueChange = {
+                  preferences.liquidGlassRefractionStrength.set(it.coerceIn(0f, 2f))
+                },
+                enabled = liquidGlassEnabled && liquidGlassSupported,
+              )
+
+              PreferenceDivider()
+
+              SliderPreference(
+                value = liquidGlassTintStrength,
+                onValueChange = { preferences.liquidGlassTintStrength.set(it.coerceIn(0f, 2f)) },
+                title = { Text(stringResource(R.string.pref_liquid_tint_title)) },
+                summary = {
+                  Text(
+                    stringResource(
+                      R.string.pref_liquid_tint_summary,
+                      (liquidGlassTintStrength * 100).roundToInt(),
+                    ),
+                    color = MaterialTheme.colorScheme.outline,
+                  )
+                },
+                valueRange = 0f..2f,
+                valueSteps = 19,
+                sliderValue = liquidGlassTintStrength,
+                onSliderValueChange = { preferences.liquidGlassTintStrength.set(it.coerceIn(0f, 2f)) },
+                enabled = liquidGlassEnabled && liquidGlassSupported,
+              )
+
+              PreferenceDivider()
+
+              SwitchPreference(
+                value = liquidGlassChromaticAberration,
+                onValueChange = preferences.liquidGlassChromaticAberration::set,
+                title = { Text(stringResource(R.string.pref_liquid_chromatic_title)) },
+                summary = {
+                  Text(
+                    stringResource(R.string.pref_liquid_chromatic_summary),
                     color = MaterialTheme.colorScheme.outline,
                   )
                 },

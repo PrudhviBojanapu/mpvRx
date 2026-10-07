@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.gyrolet.mpvrx.ui.theme.AppMotion
+import app.gyrolet.mpvrx.ui.liquidglass.rememberLiquidGlassOptics
 import com.kyant.backdrop.backdrops.LayerBackdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
@@ -74,8 +75,8 @@ fun LiquidGlassSurface(
   glowStrength: Float = 1f,
   content: @Composable BoxScope.() -> Unit,
 ) {
+  val optics = rememberLiquidGlassOptics()
   val reducedMotion = AppMotion.shouldReduceMotion()
-  val blurRadius = if (style == LiquidGlassStyle.MiniPlayer) 12.dp else 8.dp
   val refractionHeight = if (style == LiquidGlassStyle.MiniPlayer) 18.dp else 14.dp
   val refractionAmount = if (style == LiquidGlassStyle.MiniPlayer) 26.dp else 22.dp
   val shadowElevation: Dp = if (style == LiquidGlassStyle.MiniPlayer) 10.dp else 8.dp
@@ -90,12 +91,12 @@ fun LiquidGlassSurface(
           shape = { Capsule() },
           effects = {
             vibrancy()
-            blur(blurRadius.toPx())
-            if (!reducedMotion) {
+            blur(optics.blurRadius.toPx())
+            if (!reducedMotion && optics.refractionStrength > 0f) {
               lens(
-                refractionHeight.toPx(),
-                refractionAmount.toPx(),
-                chromaticAberration = true,
+                refractionHeight.toPx() * optics.refractionStrength,
+                refractionAmount.toPx() * optics.refractionStrength,
+                chromaticAberration = optics.chromaticAberration,
               )
             }
           },
@@ -115,8 +116,16 @@ fun LiquidGlassSurface(
             )
           },
           onDrawSurface = {
-            drawRect(fallbackColor.copy(alpha = 0.08f))
-            drawRect(glassColor)
+            drawRect(
+              fallbackColor.copy(
+                alpha = (0.08f * optics.tintStrength).coerceIn(0f, 1f),
+              ),
+            )
+            drawRect(
+              glassColor.copy(
+                alpha = (glassColor.alpha * optics.tintStrength).coerceIn(0f, 1f),
+              ),
+            )
           },
         )
     } else {

@@ -58,6 +58,7 @@ fun AdaptiveControlsButton(
 ) {
   val preferences = koinInject<AppearancePreferences>()
   val liquidGlassEnabled by preferences.liquidGlassEnabled.collectAsState()
+  val renderOwnGlass = useGlass && !LocalLiquidControlGroup.current
   val clickEvent = LocalPlayerButtonsClickEvent.current
   val resolvedTint = color ?: PlayerLiquidTokens.contentColor
   val resolvedSurface =
@@ -77,7 +78,7 @@ fun AdaptiveControlsButton(
       height = buttonSize,
       horizontalPadding = if (text != null) 8.dp else 0.dp,
       spacing = 4.dp,
-      useGlass = useGlass,
+      useGlass = renderOwnGlass,
     ) {
       if (icon != null) {
         Icon(
@@ -177,6 +178,7 @@ fun AdaptiveControlsContainer(
 ) {
   val preferences = koinInject<AppearancePreferences>()
   val liquidGlassEnabled by preferences.liquidGlassEnabled.collectAsState()
+  val renderOwnGlass = useGlass && !LocalLiquidControlGroup.current
   val clickEvent = LocalPlayerButtonsClickEvent.current
   val resolvedTint =
     color.takeUnless { it == Color.Unspecified } ?: PlayerLiquidTokens.contentColor
@@ -192,7 +194,7 @@ fun AdaptiveControlsContainer(
       onLongClick = onLongClick,
       modifier = modifier,
       isInteractive = isInteractive,
-      useGlass = useGlass,
+      useGlass = renderOwnGlass,
       tint = resolvedTint,
       surfaceColor = resolvedSurface,
       height = buttonSize,

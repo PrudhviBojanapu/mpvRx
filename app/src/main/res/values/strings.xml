@@ -34,6 +34,14 @@
   <string name="pref_liquid_nav_variant_title">Navigation bar variant</string>
   <string name="pref_liquid_nav_expressive_pill">Expressive pill</string>
   <string name="pref_liquid_nav_floating_tabs">Floating liquid tabs</string>
+  <string name="pref_liquid_blur_title">Glass blur</string>
+  <string name="pref_liquid_blur_summary">Blur radius: %1$d dp</string>
+  <string name="pref_liquid_refraction_title">Refraction</string>
+  <string name="pref_liquid_refraction_summary">Lens strength: %1$d%%</string>
+  <string name="pref_liquid_tint_title">Surface tint</string>
+  <string name="pref_liquid_tint_summary">Tint strength: %1$d%%</string>
+  <string name="pref_liquid_chromatic_title">Chromatic edge</string>
+  <string name="pref_liquid_chromatic_summary">Add subtle color separation around refracted glass edges</string>
   <string name="pref_appearance_system_font_title">Use system font</string>
   <string name="pref_appearance_system_font_summary">Use the Android system typeface across mpvRx instead of Google Sans</string>
   <string name="pref_appearance_app_font_title">App font</string>

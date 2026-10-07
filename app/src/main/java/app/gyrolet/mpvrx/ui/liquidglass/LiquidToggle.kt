@@ -55,6 +55,7 @@ fun LiquidToggle(
     enabled: Boolean = true,
     isInteractive: Boolean = true,
 ) {
+    val optics = rememberLiquidGlassOptics()
     val trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
 
     val density = LocalDensity.current
@@ -157,12 +158,14 @@ fun LiquidToggle(
                     shape = { Capsule() },
                     effects = {
                         val progress = dampedDragAnimation.pressProgress
-                        blur(8f.dp.toPx() * (1f - progress))
-                        lens(
-                            5f.dp.toPx() * progress,
-                            10f.dp.toPx() * progress,
-                            chromaticAberration = true
-                        )
+                        blur(optics.blurRadius.toPx() * (1f - progress))
+                        if (optics.refractionStrength > 0f) {
+                            lens(
+                                5f.dp.toPx() * progress * optics.refractionStrength,
+                                10f.dp.toPx() * progress * optics.refractionStrength,
+                                chromaticAberration = optics.chromaticAberration
+                            )
+                        }
                     },
                     highlight = {
                         val progress = dampedDragAnimation.pressProgress
@@ -194,7 +197,11 @@ fun LiquidToggle(
                     },
                     onDrawSurface = {
                         val progress = dampedDragAnimation.pressProgress
-                        drawRect(Color.White.copy(alpha = 1f - progress))
+                        drawRect(
+                            Color.White.copy(
+                                alpha = ((1f - progress) * optics.tintStrength).coerceIn(0f, 1f)
+                            )
+                        )
                     }
                 )
                 .size(40f.dp, 24f.dp)

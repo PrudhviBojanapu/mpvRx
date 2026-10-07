@@ -88,6 +88,7 @@ import androidx.compose.ui.util.lerp
 import androidx.compose.ui.graphics.drawscope.scale
 import app.gyrolet.mpvrx.ui.liquidglass.DampedDragAnimation
 import app.gyrolet.mpvrx.ui.liquidglass.LocalKyantPlayerBackdrop
+import app.gyrolet.mpvrx.ui.liquidglass.rememberLiquidGlassOptics
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberBackdrop
 import com.kyant.backdrop.backdrops.rememberCombinedBackdrop
@@ -1630,6 +1631,7 @@ private fun LiquidSeekbar(
   val isThumbInteracting = isPressed || isDragged || isScrubbing
 
   val chapterStarts = remember(chapters) { chapters.map(Segment::start) }
+  val optics = rememberLiquidGlassOptics()
   val playerBackdrop = LocalKyantPlayerBackdrop.current ?: rememberLayerBackdrop()
   val trackBackdrop = rememberLayerBackdrop()
   val density = LocalDensity.current
@@ -1808,12 +1810,14 @@ private fun LiquidSeekbar(
           shape = { Capsule() },
           effects = {
             val progress = dampedDragAnimation.pressProgress
-            blur(with(density) { 8.dp.toPx() * (1f - progress) })
-            lens(
-              with(density) { 10.dp.toPx() * progress },
-              with(density) { 14.dp.toPx() * progress },
-              chromaticAberration = true,
-            )
+            blur(optics.blurRadius.toPx() * (1f - progress))
+            if (optics.refractionStrength > 0f) {
+              lens(
+                10.dp.toPx() * progress * optics.refractionStrength,
+                14.dp.toPx() * progress * optics.refractionStrength,
+                chromaticAberration = optics.chromaticAberration,
+              )
+            }
           },
           highlight = {
             val progress = dampedDragAnimation.pressProgress

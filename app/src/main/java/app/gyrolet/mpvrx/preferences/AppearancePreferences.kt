@@ -68,6 +68,11 @@ class AppearancePreferences(
   val liquidGlassEnabled = preferenceStore.getBoolean("liquid_glass_enabled", true)
   val liquidBottomBarStyle =
     preferenceStore.getEnum("liquid_bottom_bar_style", LiquidBottomBarStyle.ExpressivePill)
+  val liquidGlassBlurRadius = preferenceStore.getFloat("liquid_glass_blur_radius", 8f)
+  val liquidGlassRefractionStrength = preferenceStore.getFloat("liquid_glass_refraction_strength", 1f)
+  val liquidGlassTintStrength = preferenceStore.getFloat("liquid_glass_tint_strength", 1f)
+  val liquidGlassChromaticAberration =
+    preferenceStore.getBoolean("liquid_glass_chromatic_aberration", true)
   val navigationBarGlow = preferenceStore.getBoolean("navigation_bar_glow", true)
   val useSystemFont = preferenceStore.getBoolean("use_system_font", false)
   val googleFontFamily = preferenceStore.getString("google_font_family", "")

@@ -63,13 +63,14 @@ fun LiquidBottomTabs(
     modifier: Modifier = Modifier,
     content: @Composable RowScope.() -> Unit
 ) {
+    val optics = rememberLiquidGlassOptics()
     val isDark = isSystemInDarkTheme()
     val accentColor = MaterialTheme.colorScheme.primary
     val isLightTheme = !isDark
     val containerColor = if (isLightTheme) {
-        Color(0xFFFAFAFA).copy(alpha = 0.4f)
+        Color(0xFFFAFAFA).copy(alpha = (0.4f * optics.tintStrength).coerceIn(0f, 1f))
     } else {
-        Color(0xFF121212).copy(alpha = 0.4f)
+        Color(0xFF121212).copy(alpha = (0.4f * optics.tintStrength).coerceIn(0f, 1f))
     }
 
     val tabsBackdrop = rememberLayerBackdrop()
@@ -158,8 +159,14 @@ fun LiquidBottomTabs(
                     shape = { Capsule() },
                     effects = {
                         vibrancy()
-                        blur(8f.dp.toPx())
-                        lens(24f.dp.toPx(), 24f.dp.toPx())
+                        blur(optics.blurRadius.toPx())
+                        if (optics.refractionStrength > 0f) {
+                            lens(
+                                24f.dp.toPx() * optics.refractionStrength,
+                                24f.dp.toPx() * optics.refractionStrength,
+                                chromaticAberration = optics.chromaticAberration
+                            )
+                        }
                     },
                     layerBlock = {
                         val progress = dampedDragAnimation.pressProgress
@@ -198,11 +205,14 @@ fun LiquidBottomTabs(
                         effects = {
                             val progress = dampedDragAnimation.pressProgress
                             vibrancy()
-                            blur(8f.dp.toPx())
-                            lens(
-                                24f.dp.toPx() * progress,
-                                24f.dp.toPx() * progress
-                            )
+                            blur(optics.blurRadius.toPx())
+                            if (optics.refractionStrength > 0f) {
+                                lens(
+                                    24f.dp.toPx() * progress * optics.refractionStrength,
+                                    24f.dp.toPx() * progress * optics.refractionStrength,
+                                    chromaticAberration = optics.chromaticAberration
+                                )
+                            }
                         },
                         highlight = {
                             val progress = dampedDragAnimation.pressProgress
@@ -237,11 +247,13 @@ fun LiquidBottomTabs(
                     shape = { Capsule() },
                     effects = {
                         val progress = dampedDragAnimation.pressProgress
-                        lens(
-                            10f.dp.toPx() * progress,
-                            14f.dp.toPx() * progress,
-                            chromaticAberration = true
-                        )
+                        if (optics.refractionStrength > 0f) {
+                            lens(
+                                10f.dp.toPx() * progress * optics.refractionStrength,
+                                14f.dp.toPx() * progress * optics.refractionStrength,
+                                chromaticAberration = optics.chromaticAberration
+                            )
+                        }
                     },
                     highlight = {
                         val progress = dampedDragAnimation.pressProgress

@@ -38,6 +38,7 @@ import app.gyrolet.mpvrx.ui.icons.AppIcon
 import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
 import app.gyrolet.mpvrx.ui.liquidglass.AdaptiveControlsButton
+import app.gyrolet.mpvrx.ui.liquidglass.LiquidControlGroup
 import app.gyrolet.mpvrx.ui.player.controls.LocalPlayerButtonsClickEvent
 import app.gyrolet.mpvrx.ui.theme.LocalDarkAppColorScheme
 import app.gyrolet.mpvrx.ui.theme.spacing
@@ -148,18 +149,28 @@ fun ControlsButton(
 @Composable
 fun ControlsGroup(
   modifier: Modifier = Modifier,
+  glassSurface: Boolean = true,
+  horizontalArrangement: androidx.compose.foundation.layout.Arrangement.Horizontal =
+    androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp),
   content: @Composable RowScope.() -> Unit,
 ) {
-  val spacing = MaterialTheme.spacing
+  val appearancePreferences = koinInject<AppearancePreferences>()
+  val enableLiquidGlass by appearancePreferences.liquidGlassEnabled.collectAsState()
 
-  Row(
-    modifier = modifier,
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement =
-      androidx.compose.foundation.layout.Arrangement
-        .spacedBy(spacing.extraSmall),
-    content = content,
-  )
+  if (enableLiquidGlass && glassSurface) {
+    LiquidControlGroup(
+      modifier = modifier,
+      horizontalArrangement = horizontalArrangement,
+      content = content,
+    )
+  } else {
+    Row(
+      modifier = modifier,
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = horizontalArrangement,
+      content = content,
+    )
+  }
 }
 
 @Preview

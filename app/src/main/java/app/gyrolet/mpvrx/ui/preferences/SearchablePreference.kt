@@ -93,7 +93,19 @@ object SearchablePreferences {
         SearchablePreference(
           titleRes = R.string.pref_appearance_liquid_glass_title,
           summaryRes = R.string.pref_appearance_liquid_glass_summary,
-          keywords = listOf("liquid glass", "glass", "blur", "translucent", "navigation", "seekbar", "switch"),
+          keywords =
+            listOf(
+              "liquid glass",
+              "glass",
+              "blur",
+              "refraction",
+              "tint",
+              "chromatic",
+              "translucent",
+              "navigation",
+              "seekbar",
+              "switch",
+            ),
           category = "Appearance",
           screen = AppearancePreferencesScreen,
         ),

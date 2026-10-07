@@ -186,6 +186,7 @@ import app.gyrolet.mpvrx.ui.liquidglass.AdaptiveControlsContainer
 import app.gyrolet.mpvrx.ui.liquidglass.LiquidPillButton
 import app.gyrolet.mpvrx.ui.liquidglass.LocalKyantPlayerBackdrop
 import app.gyrolet.mpvrx.ui.liquidglass.PlayerLiquidTokens
+import app.gyrolet.mpvrx.ui.player.controls.components.ControlsGroup
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import kotlin.math.abs
@@ -1710,9 +1711,8 @@ is PlayerUpdates.FrameInfo -> {
               playlistMode && (playlistItems.size > 1 || viewModel.getPlaylistTotalCount() > 1)
 
             if (hasPlaylistControls) {
-              androidx.compose.foundation.layout.Row(
+              ControlsGroup(
                 horizontalArrangement = Arrangement.spacedBy(24.dp),
-                verticalAlignment = Alignment.CenterVertically,
               ) {
                 AdaptiveControlsContainer(
                   onClick = {

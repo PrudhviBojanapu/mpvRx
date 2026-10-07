@@ -27,7 +27,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.gyrolet.mpvrx.R
@@ -36,6 +35,7 @@ import app.gyrolet.mpvrx.preferences.preference.collectAsState
 import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
 import app.gyrolet.mpvrx.ui.liquidglass.LocalKyantPlayerBackdrop
+import app.gyrolet.mpvrx.ui.liquidglass.rememberLiquidGlassOptics
 import app.gyrolet.mpvrx.ui.theme.AppShapeScale
 import app.gyrolet.mpvrx.ui.theme.spacing
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
@@ -166,9 +166,9 @@ fun BrightnessSlider(
   val percentText = remember(percentInt) { "$percentInt%" }
   val appearancePreferences = koinInject<AppearancePreferences>()
   val enableLiquidGlass by appearancePreferences.liquidGlassEnabled.collectAsState()
+  val optics = rememberLiquidGlassOptics()
   val playerBackdrop = LocalKyantPlayerBackdrop.current ?: rememberLayerBackdrop()
   val sliderShape = AppShapeScale.extraLarge
-  val density = LocalDensity.current
   val glassModifier = if (enableLiquidGlass) {
     modifier
       .clip(sliderShape)
@@ -176,8 +176,14 @@ fun BrightnessSlider(
         backdrop = playerBackdrop,
         shape = { sliderShape },
         effects = {
-          blur(with(density) { 16.dp.toPx() })
-          lens(with(density) { 16.dp.toPx() }, with(density) { 24.dp.toPx() })
+          blur(optics.blurRadius.toPx())
+          if (optics.refractionStrength > 0f) {
+            lens(
+              16.dp.toPx() * optics.refractionStrength,
+              24.dp.toPx() * optics.refractionStrength,
+              chromaticAberration = optics.chromaticAberration,
+            )
+          }
         },
         shadow = { Shadow(color = Color.Black.copy(alpha = 0.25f), radius = 12.dp) },
         innerShadow = { InnerShadow(color = Color.White.copy(alpha = 0.15f), radius = 2.dp) },
@@ -188,7 +194,12 @@ fun BrightnessSlider(
   Surface(
     modifier = glassModifier,
     shape = sliderShape,
-    color = if (enableLiquidGlass) Color.Black.copy(alpha = 0.25f) else Color.Black.copy(alpha = 0.5f),
+    color =
+      if (enableLiquidGlass) {
+        Color.Black.copy(alpha = (0.25f * optics.tintStrength).coerceIn(0f, 1f))
+      } else {
+        Color.Black.copy(alpha = 0.5f)
+      },
     contentColor = Color.White,
   ) {
     Column(
@@ -238,9 +249,9 @@ fun VolumeSlider(
   val percentage = volumePercentage.coerceIn(0, 100)
   val appearancePreferences = koinInject<AppearancePreferences>()
   val enableLiquidGlass by appearancePreferences.liquidGlassEnabled.collectAsState()
+  val optics = rememberLiquidGlassOptics()
   val playerBackdrop = LocalKyantPlayerBackdrop.current ?: rememberLayerBackdrop()
   val sliderShape = AppShapeScale.extraLarge
-  val density = LocalDensity.current
   val glassModifier = if (enableLiquidGlass) {
     modifier
       .clip(sliderShape)
@@ -248,8 +259,14 @@ fun VolumeSlider(
         backdrop = playerBackdrop,
         shape = { sliderShape },
         effects = {
-          blur(with(density) { 16.dp.toPx() })
-          lens(with(density) { 16.dp.toPx() }, with(density) { 24.dp.toPx() })
+          blur(optics.blurRadius.toPx())
+          if (optics.refractionStrength > 0f) {
+            lens(
+              16.dp.toPx() * optics.refractionStrength,
+              24.dp.toPx() * optics.refractionStrength,
+              chromaticAberration = optics.chromaticAberration,
+            )
+          }
         },
         shadow = { Shadow(color = Color.Black.copy(alpha = 0.25f), radius = 12.dp) },
         innerShadow = { InnerShadow(color = Color.White.copy(alpha = 0.15f), radius = 2.dp) },
@@ -260,7 +277,12 @@ fun VolumeSlider(
   Surface(
     modifier = glassModifier,
     shape = sliderShape,
-    color = if (enableLiquidGlass) Color.Black.copy(alpha = 0.25f) else Color.Black.copy(alpha = 0.5f),
+    color =
+      if (enableLiquidGlass) {
+        Color.Black.copy(alpha = (0.25f * optics.tintStrength).coerceIn(0f, 1f))
+      } else {
+        Color.Black.copy(alpha = 0.5f)
+      },
     contentColor = Color.White,
   ) {
     Column(

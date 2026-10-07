@@ -50,6 +50,7 @@ import app.gyrolet.mpvrx.ui.player.PlayerViewModel
 import app.gyrolet.mpvrx.ui.player.Sheets
 import app.gyrolet.mpvrx.ui.player.VideoAspect
 import app.gyrolet.mpvrx.ui.player.controls.components.ControlsButton
+import app.gyrolet.mpvrx.ui.player.controls.components.ControlsGroup
 import app.gyrolet.mpvrx.ui.player.controls.components.playerButtonBorderColor
 import app.gyrolet.mpvrx.ui.player.controls.components.playerButtonContainerColor
 import app.gyrolet.mpvrx.ui.player.controls.components.playerButtonContentColor
@@ -279,10 +280,7 @@ fun TopRightPlayerControlsLandscape(
   activity: PlayerActivity,
 ) {
   PlayerButtonTheme(hideBackground) {
-    Row(
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.extraSmall),
-    ) {
+    ControlsGroup {
       buttons.forEach { button ->
         RenderPlayerButton(
           button = button,
@@ -328,10 +326,7 @@ fun BottomRightPlayerControlsLandscape(
   activity: PlayerActivity,
 ) {
   PlayerButtonTheme(hideBackground) {
-    Row(
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.extraSmall),
-    ) {
+    ControlsGroup {
       buttons.forEach { button ->
         RenderPlayerButton(
           button = button,
@@ -384,10 +379,7 @@ fun BottomLeftPlayerControlsLandscape(
   activity: PlayerActivity,
 ) {
   PlayerButtonTheme(hideBackground) {
-    Row(
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.extraSmall),
-    ) {
+    ControlsGroup {
       buttons.forEach { button ->
         RenderPlayerButton(
           button = button,

@@ -84,7 +84,7 @@ fun TopPlayerControlsPortrait(
       Row(
         verticalAlignment = Alignment.CenterVertically,
       ) {
-        ControlsGroup {
+        ControlsGroup(glassSurface = false) {
           ControlsButton(
             icon = Icons.RoundedFilled.ArrowBack,
             onClick = onBackPress,
@@ -271,14 +271,13 @@ fun BottomPlayerControlsPortrait(
   activity: PlayerActivity,
 ) {
   PlayerButtonTheme(hideBackground) {
-    Row(
+    ControlsGroup(
       modifier =
         Modifier
           .fillMaxWidth()
           .horizontalScroll(rememberScrollState())
           .padding(bottom = MaterialTheme.spacing.medium),
       horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.CenterHorizontally),
-      verticalAlignment = Alignment.CenterVertically,
     ) {
       buttons.forEach { button ->
         RenderPlayerButton(
