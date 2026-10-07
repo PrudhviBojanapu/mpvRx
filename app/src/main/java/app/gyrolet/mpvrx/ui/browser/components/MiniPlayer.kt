@@ -314,7 +314,6 @@ private fun MiniPlayerContent(
       }
       .clickable { launchPlayer() },
     shape = miniPlayerShape,
-    cornerRadius = 20.dp,
     style = LiquidGlassStyle.MiniPlayer,
     glassColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.30f),
     fallbackColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.96f),

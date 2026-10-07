@@ -17,7 +17,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.gyrolet.mpvrx.ui.theme.AppMotion
@@ -32,7 +31,6 @@ import com.kyant.backdrop.highlight.Highlight
 import com.kyant.backdrop.shadow.InnerShadow
 import com.kyant.backdrop.shadow.Shadow
 import com.kyant.shapes.Capsule
-import com.kyant.shapes.ContinuousRoundedRectangle
 
 typealias LiquidGlassBackdrop = LayerBackdrop
 
@@ -74,7 +72,6 @@ fun LiquidGlassSurface(
   contentColor: Color = MaterialTheme.colorScheme.onSurface,
   backdrop: LiquidGlassBackdrop? = LocalLiquidGlassBackdrop.current,
   glowStrength: Float = 1f,
-  cornerRadius: Dp? = null,
   content: @Composable BoxScope.() -> Unit,
 ) {
   val reducedMotion = AppMotion.shouldReduceMotion()
@@ -82,7 +79,6 @@ fun LiquidGlassSurface(
   val refractionHeight = if (style == LiquidGlassStyle.MiniPlayer) 18.dp else 14.dp
   val refractionAmount = if (style == LiquidGlassStyle.MiniPlayer) 26.dp else 22.dp
   val shadowElevation: Dp = if (style == LiquidGlassStyle.MiniPlayer) 10.dp else 8.dp
-  val glassCornerRadiusPx = with(LocalDensity.current) { cornerRadius?.toPx() }
 
   val surfaceModifier =
     if (backdrop != null) {
@@ -91,13 +87,7 @@ fun LiquidGlassSurface(
         .clip(shape)
         .drawBackdrop(
           backdrop = backdrop,
-          shape = {
-            if (glassCornerRadiusPx == null) {
-              Capsule()
-            } else {
-              ContinuousRoundedRectangle(glassCornerRadiusPx)
-            }
-          },
+          shape = { Capsule() },
           effects = {
             vibrancy()
             blur(blurRadius.toPx())
