@@ -48,15 +48,14 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import app.gyrolet.mpvrx.ui.icons.Icon
-import app.gyrolet.mpvrx.ui.icons.Icons
-import app.gyrolet.mpvrx.ui.theme.AppMotion
-import app.gyrolet.mpvrx.ui.utils.rememberAppHaptics
-
 import app.gyrolet.mpvrx.preferences.AppearancePreferences
 import app.gyrolet.mpvrx.preferences.preference.collectAsState
+import app.gyrolet.mpvrx.ui.icons.Icon
+import app.gyrolet.mpvrx.ui.icons.Icons
 import app.gyrolet.mpvrx.ui.liquidglass.LiquidToggle
-import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import app.gyrolet.mpvrx.ui.theme.AppMotion
+import app.gyrolet.mpvrx.ui.utils.rememberAppHaptics
+import com.kyant.backdrop.backdrops.rememberCanvasBackdrop
 import org.koin.compose.koinInject
 
 private const val SWITCH_MOTION_DURATION_MS = 250
@@ -90,11 +89,11 @@ fun IconSwitch(
 ) {
   val haptics = rememberAppHaptics()
   val appearancePreferences = koinInject<AppearancePreferences>()
-  val enableLiquidGlass by appearancePreferences.enableLiquidGlass.collectAsState()
-  val liquidToggleColor by appearancePreferences.liquidToggleColor.collectAsState()
+  val liquidGlassEnabled by appearancePreferences.liquidGlassEnabled.collectAsState()
 
-  if (enableLiquidGlass) {
-    val backdrop = rememberLayerBackdrop()
+  if (liquidGlassEnabled) {
+    val switchBackdropColor = MaterialTheme.colorScheme.surfaceContainer
+    val backdrop = rememberCanvasBackdrop { drawRect(switchBackdropColor) }
     LiquidToggle(
       selected = { checked },
       onSelect = { newValue ->
@@ -105,7 +104,7 @@ fun IconSwitch(
       },
       backdrop = backdrop,
       modifier = modifier,
-      accentColor = Color(liquidToggleColor),
+      accentColor = MaterialTheme.colorScheme.primary,
       enabled = enabled,
       isInteractive = onCheckedChange != null,
     )

@@ -35,7 +35,7 @@ import app.gyrolet.mpvrx.preferences.AppearancePreferences
 import app.gyrolet.mpvrx.preferences.preference.collectAsState
 import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
-import app.gyrolet.mpvrx.ui.liquidglass.LocalPlayerBackdrop
+import app.gyrolet.mpvrx.ui.liquidglass.LocalKyantPlayerBackdrop
 import app.gyrolet.mpvrx.ui.theme.AppShapeScale
 import app.gyrolet.mpvrx.ui.theme.spacing
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
@@ -165,8 +165,8 @@ fun BrightnessSlider(
   val percentInt = (coercedBrightness * 100).toInt()
   val percentText = remember(percentInt) { "$percentInt%" }
   val appearancePreferences = koinInject<AppearancePreferences>()
-  val enableLiquidGlass by appearancePreferences.enableLiquidGlass.collectAsState()
-  val playerBackdrop = LocalPlayerBackdrop.current ?: rememberLayerBackdrop()
+  val enableLiquidGlass by appearancePreferences.liquidGlassEnabled.collectAsState()
+  val playerBackdrop = LocalKyantPlayerBackdrop.current ?: rememberLayerBackdrop()
   val sliderShape = AppShapeScale.extraLarge
   val density = LocalDensity.current
   val glassModifier = if (enableLiquidGlass) {
@@ -237,8 +237,8 @@ fun VolumeSlider(
 ) {
   val percentage = volumePercentage.coerceIn(0, 100)
   val appearancePreferences = koinInject<AppearancePreferences>()
-  val enableLiquidGlass by appearancePreferences.enableLiquidGlass.collectAsState()
-  val playerBackdrop = LocalPlayerBackdrop.current ?: rememberLayerBackdrop()
+  val enableLiquidGlass by appearancePreferences.liquidGlassEnabled.collectAsState()
+  val playerBackdrop = LocalKyantPlayerBackdrop.current ?: rememberLayerBackdrop()
   val sliderShape = AppShapeScale.extraLarge
   val density = LocalDensity.current
   val glassModifier = if (enableLiquidGlass) {

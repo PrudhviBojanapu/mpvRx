@@ -119,8 +119,6 @@ import com.kyant.backdrop.backdrops.layerBackdrop
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.gyrolet.mpvrx.presentation.Screen
 import app.gyrolet.mpvrx.presentation.components.ProvideLiquidGlassBackdrop
-import app.gyrolet.mpvrx.presentation.components.LiquidGlassStyle
-import app.gyrolet.mpvrx.presentation.components.LiquidGlassSurface
 import app.gyrolet.mpvrx.presentation.components.captureLiquidGlassBackdrop
 import app.gyrolet.mpvrx.presentation.components.rememberLiquidGlassBackdrop
 import app.gyrolet.mpvrx.ui.utils.LocalBackStack
@@ -144,6 +142,14 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import app.gyrolet.mpvrx.ui.theme.AppMotion
 import app.gyrolet.mpvrx.ui.theme.wallpaperAwareBackgroundColor
+import com.kyant.backdrop.Backdrop
+import com.kyant.backdrop.drawBackdrop
+import com.kyant.backdrop.effects.blur
+import com.kyant.backdrop.effects.lens
+import com.kyant.backdrop.effects.vibrancy
+import com.kyant.backdrop.highlight.Highlight
+import com.kyant.backdrop.shadow.Shadow
+import com.kyant.shapes.Capsule
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
 
@@ -343,6 +349,7 @@ object MainScreen : Screen {
         onTabSelected = onTabSelected,
         pagerState = pagerState,
         hazeBackdrop = navigationBackdrop,
+        kyantBackdrop = liquidLayerBackdrop,
         liquidGlassEnabled = liquidGlassEnabled,
         modifier = modifier,
       )
@@ -687,7 +694,7 @@ object MainScreen : Screen {
                     (containerWidth * centerFraction.value - width / 2).coerceAtLeast(horizontalMargin)
                 }
 
-              if (liquidGlassEnabled && liquidBottomBarStyle == LiquidBottomBarStyle.StyleB) {
+              if (liquidGlassEnabled && liquidBottomBarStyle == LiquidBottomBarStyle.FloatingTabs) {
                 val selectedTabIndex = navigationTabs.indexOf(selectedTab).coerceAtLeast(0)
                 val labels = navigationTabs.map { tab ->
                   stringResource(when (tab) {
@@ -770,6 +777,7 @@ object MainScreen : Screen {
                   onTabSelected = onTabSelected,
                   pagerState = pagerState,
                   hazeBackdrop = navigationBackdrop,
+                  kyantBackdrop = liquidLayerBackdrop,
                   liquidGlassEnabled = liquidGlassEnabled,
                   modifier = navModifier,
                 )
@@ -790,6 +798,7 @@ internal fun ExpressivePillNavigationBar(
   modifier: Modifier = Modifier,
   pagerState: PagerState? = null,
   hazeBackdrop: HazeState? = null,
+  kyantBackdrop: Backdrop? = null,
   liquidGlassEnabled: Boolean = false,
 ) {
   if (visibleTabs.isEmpty()) return
@@ -963,21 +972,37 @@ internal fun ExpressivePillNavigationBar(
         translationX = motion.frame.panelOffset * density.density
       },
     ) {
-      if (liquidGlassEnabled) {
-        LiquidGlassSurface(
-          modifier = Modifier.matchParentSize(),
-          shape = CircleShape,
-          style = LiquidGlassStyle.Navigation,
-          glassColor = surfaceColor.copy(alpha = 0.24f),
-          fallbackColor = surfaceColor.copy(alpha = 0.82f),
-          contentColor = MaterialTheme.colorScheme.onSurface,
-          glowStrength = glowStrength,
-        ) {
-          Box(Modifier.matchParentSize().navigationGlassRim(glowStrength).drawWithContent {
-            drawContent()
-            drawNavigationJellyGlow(motion.frame, accentColor.copy(alpha = glowStrength))
-          })
-        }
+      if (liquidGlassEnabled && kyantBackdrop != null) {
+        Box(
+          modifier =
+            Modifier
+              .matchParentSize()
+              .drawBackdrop(
+                backdrop = kyantBackdrop,
+                shape = { Capsule() },
+                effects = {
+                  vibrancy()
+                  blur(8.dp.toPx())
+                  lens(24.dp.toPx(), 24.dp.toPx(), chromaticAberration = true)
+                },
+                highlight = {
+                  Highlight.Ambient.copy(alpha = 0.58f * glowStrength)
+                },
+                shadow = {
+                  Shadow(
+                    radius = 8.dp,
+                    color = Color.Black.copy(alpha = 0.14f * glowStrength),
+                  )
+                },
+                onDrawSurface = {
+                  drawRect(surfaceColor.copy(alpha = 0.34f))
+                },
+              ).navigationGlassRim(glowStrength)
+              .drawWithContent {
+                drawContent()
+                drawNavigationJellyGlow(motion.frame, accentColor.copy(alpha = glowStrength))
+              },
+        )
       } else {
         Box(
           modifier = Modifier.matchParentSize()

@@ -10,6 +10,7 @@ import androidx.compose.foundation.MutatorMutex
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
@@ -24,12 +25,15 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.util.fastCoerceIn
+import com.kyant.backdrop.Backdrop
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.android.awaitFrame
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+
+val LocalKyantPlayerBackdrop = staticCompositionLocalOf<Backdrop?> { null }
 
 suspend fun PointerInputScope.inspectDragGestures(
     onDragStart: (PointerInputChange) -> Unit = {},
@@ -198,7 +202,7 @@ class InteractiveHighlight(
             layout(color) uniform half4 color;
             uniform float radius;
             uniform float2 position;
-            
+
             half4 main(float2 coord) {
                 float dist = distance(coord, position);
                 float intensity = smoothstep(radius, radius * 0.5, dist);

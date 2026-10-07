@@ -173,7 +173,7 @@ fun RenderPlayerButton(
         advancedPreferences.enabledStatisticsPage.collectAsState().value
       }
     val appearancePreferences = org.koin.compose.koinInject<AppearancePreferences>()
-    val enableLiquidGlass by appearancePreferences.enableLiquidGlass.collectAsState()
+    val enableLiquidGlass by appearancePreferences.liquidGlassEnabled.collectAsState()
     when (button) {
     PlayerButton.BACK_ARROW -> {
       ControlsButton(

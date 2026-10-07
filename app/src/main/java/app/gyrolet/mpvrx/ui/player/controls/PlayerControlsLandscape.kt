@@ -44,7 +44,6 @@ import app.gyrolet.mpvrx.preferences.preference.collectAsState
 import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
 import app.gyrolet.mpvrx.ui.liquidglass.LiquidPillButton
-import org.koin.compose.koinInject
 import app.gyrolet.mpvrx.ui.player.Panels
 import app.gyrolet.mpvrx.ui.player.PlayerActivity
 import app.gyrolet.mpvrx.ui.player.PlayerViewModel
@@ -57,6 +56,7 @@ import app.gyrolet.mpvrx.ui.player.controls.components.playerButtonContentColor
 import app.gyrolet.mpvrx.ui.theme.controlColor
 import app.gyrolet.mpvrx.ui.theme.spacing
 import dev.vivvvek.seeker.Segment
+import org.koin.compose.koinInject
 
 @Composable
 fun TopLeftPlayerControlsLandscape(
@@ -76,7 +76,7 @@ fun TopLeftPlayerControlsLandscape(
     val playlistModeEnabled = viewModel.hasPlaylistSupport()
     val clickEvent = LocalPlayerButtonsClickEvent.current
     val appearancePreferences = koinInject<AppearancePreferences>()
-    val enableLiquidGlass by appearancePreferences.enableLiquidGlass.collectAsState()
+    val enableLiquidGlass by appearancePreferences.liquidGlassEnabled.collectAsState()
 
     Column(
       modifier = Modifier.width(IntrinsicSize.Max),
@@ -243,7 +243,9 @@ fun TopLeftPlayerControlsLandscape(
           Text(
             text =
               if (isRealtimeSubsActive) {
-                "${stringResource(R.string.realtime_subtitles_label)}: ${realtimeSubsLanguage.ifBlank { "?" }} ${realtimeSubsStatus.ifBlank { "" }}"
+                "${stringResource(
+                  R.string.realtime_subtitles_label,
+                )}: ${realtimeSubsLanguage.ifBlank { "?" }} ${realtimeSubsStatus.ifBlank { "" }}"
               } else {
                 "Translating ${translatingTrackName.ifBlank { "subs" }} ${translationStatus.ifBlank { "" }}"
               },

@@ -17,8 +17,8 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -33,15 +33,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import app.gyrolet.mpvrx.R
 import app.gyrolet.mpvrx.preferences.AppearancePreferences
 import app.gyrolet.mpvrx.preferences.preference.collectAsState
-import app.gyrolet.mpvrx.R
 import app.gyrolet.mpvrx.ui.liquidglass.LiquidPillButton
 import app.gyrolet.mpvrx.ui.theme.AppShapeScale
 import app.gyrolet.mpvrx.ui.theme.spacing
@@ -58,7 +58,7 @@ fun CurrentChapter(
   onLongClick: () -> Unit = {},
 ) {
   val appearancePreferences = koinInject<AppearancePreferences>()
-  val enableLiquidGlass by appearancePreferences.enableLiquidGlass.collectAsState()
+  val enableLiquidGlass by appearancePreferences.liquidGlassEnabled.collectAsState()
 
   val chapterContent: @Composable () -> Unit = {
     AnimatedContent(

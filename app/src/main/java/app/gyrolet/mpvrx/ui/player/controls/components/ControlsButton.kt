@@ -57,15 +57,13 @@ private fun playerButtonColorScheme(
   if (forceDark) LocalDarkAppColorScheme.current ?: MaterialTheme.colorScheme else MaterialTheme.colorScheme
 
 @Composable
-internal fun playerButtonContainerColor(): Color =
-  playerButtonColorScheme().surfaceContainer.copy(alpha = 0.55f)
+internal fun playerButtonContainerColor(): Color = playerButtonColorScheme().surfaceContainer.copy(alpha = 0.55f)
 
 @Composable
 internal fun playerButtonContentColor(): Color = playerButtonColorScheme().onSurface
 
 @Composable
-internal fun playerButtonBorderColor(): Color =
-  playerButtonColorScheme().outlineVariant.copy(alpha = 0.4f)
+internal fun playerButtonBorderColor(): Color = playerButtonColorScheme().outlineVariant.copy(alpha = 0.4f)
 
 @Suppress("ModifierClickableOrder")
 @OptIn(ExperimentalFoundationApi::class)
@@ -81,7 +79,7 @@ fun ControlsButton(
   onLongClickLabel: String? = null,
 ) {
   val appearancePreferences = koinInject<AppearancePreferences>()
-  val enableLiquidGlass by appearancePreferences.enableLiquidGlass.collectAsState()
+  val enableLiquidGlass by appearancePreferences.liquidGlassEnabled.collectAsState()
   val resolvedColor = color ?: playerButtonContentColor()
 
   if (enableLiquidGlass) {

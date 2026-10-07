@@ -51,8 +51,7 @@ fun SwitchPreference(
             onValueChange(checked)
             haptics.selection(checked)
           }
-        }
-        .padding(horizontal = 16.dp, vertical = 12.dp),
+        }.padding(horizontal = 16.dp, vertical = 12.dp),
     verticalAlignment = Alignment.CenterVertically,
   ) {
     if (icon != null) {

@@ -30,8 +30,10 @@
   <string name="pref_appearance_liquid_glass_title">Liquid glass</string>
   <string name="pref_appearance_liquid_glass_summary">Use translucent, refractive surfaces for the mini player and navigation</string>
   <string name="pref_appearance_liquid_glass_summary_unavailable">Available on Android 12 and above</string>
-  <string name="pref_anim_liquid_glass_title">Liquid Glass Effects</string>
-  <string name="pref_anim_liquid_glass_summary">Enable advanced physical glass refraction and optical distortion effects</string>
+  <string name="pref_appearance_category_liquid_glass">Liquid glass</string>
+  <string name="pref_liquid_nav_variant_title">Navigation bar variant</string>
+  <string name="pref_liquid_nav_expressive_pill">Expressive pill</string>
+  <string name="pref_liquid_nav_floating_tabs">Floating liquid tabs</string>
   <string name="pref_appearance_system_font_title">Use system font</string>
   <string name="pref_appearance_system_font_summary">Use the Android system typeface across mpvRx instead of Google Sans</string>
   <string name="pref_appearance_app_font_title">App font</string>

@@ -92,7 +92,25 @@ object YtdlpManager {
   // must never be routed through yt-dlp, extension or not.
   private val DIRECT_MEDIA_EXCLUDE =
     (
-      listOf("^127%.0%.0%.1:", "^localhost:") +
+      listOf(
+        "^/",
+        "^content:",
+        "^file:",
+        "^fd:",
+        "^asset:",
+        "^android%-resource:",
+        "^smb:",
+        "^ftp:",
+        "^sftp:",
+        "^dav:",
+        "^davs:",
+        "^magnet:",
+        "^rtsp:",
+        "^rtmp:",
+        "^udp:",
+        "^127%.0%.0%.1:",
+        "^localhost:",
+      ) +
         HttpUtils.directMediaExtensions
           .flatMap { extension ->
             listOf(
@@ -353,13 +371,15 @@ object YtdlpManager {
     source: String,
     onLog: (String) -> Unit = {},
   ): Boolean {
+    // Environment setup is cheap and process-scoped, and must be visible before ytdl_hook is
+    // enabled for this load. The multi-megabyte asset copy and installer remain lazy below.
+    applyBridgeEnvironment(context.applicationContext)
     val uri = Uri.parse(source)
     val isWebSource = uri.scheme.equals("http", true) || uri.scheme.equals("https", true)
     if (!isWebSource) return true
 
     return withContext(Dispatchers.IO) {
       installMutex.withLock {
-        applyBridgeEnvironment(context)
         if (!prepareRuntimeAssets(context, onLog)) return@withLock false
         if (!requiresYtdlp(source) || isPlaybackRuntimeReady(context)) return@withLock true
 

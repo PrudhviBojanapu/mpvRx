@@ -48,6 +48,7 @@ import app.gyrolet.mpvrx.domain.thumbnail.ThumbnailRepository
 import app.gyrolet.mpvrx.preferences.AppearancePreferences
 import app.gyrolet.mpvrx.preferences.BrowserPreferences
 import app.gyrolet.mpvrx.preferences.GesturePreferences
+import app.gyrolet.mpvrx.preferences.LiquidBottomBarStyle
 import app.gyrolet.mpvrx.preferences.MultiChoiceSegmentedButton
 import app.gyrolet.mpvrx.preferences.PlayerPreferences
 import app.gyrolet.mpvrx.preferences.ThumbnailMode
@@ -56,7 +57,6 @@ import app.gyrolet.mpvrx.preferences.TreeFlattenDepth
 import app.gyrolet.mpvrx.preferences.preference.collectAsState
 import app.gyrolet.mpvrx.presentation.Screen
 import app.gyrolet.mpvrx.presentation.components.ConfirmDialog
-import app.gyrolet.mpvrx.ui.liquidglass.LiquidSettingsScreen
 import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
 import app.gyrolet.mpvrx.ui.player.ControlsAnimationStyle
@@ -311,7 +311,6 @@ object AppearancePreferencesScreen : Screen {
                   PreferenceDivider()
 
                   val amoledMode by preferences.amoledMode.collectAsState()
-                  val liquidGlassEnabled by preferences.liquidGlassEnabled.collectAsState()
                   ThemePicker(
                     currentTheme = appTheme,
                     customThemes = pickerThemes,
@@ -388,46 +387,6 @@ object AppearancePreferencesScreen : Screen {
 
                   PreferenceDivider()
 
-                  SwitchPreference(
-                    modifier = Modifier.settingsSearchTarget(R.string.pref_appearance_liquid_glass_title),
-                    value = liquidGlassEnabled && liquidGlassSupported,
-                    onValueChange = preferences.liquidGlassEnabled::set,
-                    title = {
-                      Text(text = stringResource(R.string.pref_appearance_liquid_glass_title))
-                    },
-                    summary = {
-                      Text(
-                        text =
-                          stringResource(
-                            if (liquidGlassSupported) {
-                              R.string.pref_appearance_liquid_glass_summary
-                            } else {
-                              R.string.pref_appearance_liquid_glass_summary_unavailable
-                            },
-                          ),
-                        color = MaterialTheme.colorScheme.outline,
-                      )
-                    },
-                    enabled = liquidGlassSupported,
-                  )
-
-                  PreferenceDivider()
-
-                  Preference(
-                    modifier = Modifier.settingsSearchTarget(R.string.pref_anim_liquid_glass_title),
-                    title = { Text(stringResource(R.string.pref_anim_liquid_glass_title)) },
-                    summary = {
-                      Text(
-                        stringResource(R.string.pref_anim_liquid_glass_summary),
-                        color = MaterialTheme.colorScheme.outline,
-                      )
-                    },
-                    enabled = liquidGlassSupported,
-                    onClick = { backstack.navigateTo(LiquidSettingsScreen) },
-                  )
-
-                  PreferenceDivider()
-
                   val navigationBarGlow by preferences.navigationBarGlow.collectAsState()
                   SwitchPreference(
                     modifier = Modifier.settingsSearchTarget(R.string.navbar_glow_title),
@@ -485,6 +444,76 @@ object AppearancePreferencesScreen : Screen {
                   )
                 }
               }
+            }
+          }
+
+          item {
+            PreferenceSectionHeader(
+              title = stringResource(R.string.pref_appearance_category_liquid_glass),
+              modifier = Modifier.settingsSearchTarget(R.string.pref_appearance_liquid_glass_title),
+            )
+          }
+
+          item {
+            val liquidGlassEnabled by preferences.liquidGlassEnabled.collectAsState()
+            val liquidBottomBarStyle by preferences.liquidBottomBarStyle.collectAsState()
+
+            PreferenceCard {
+              SwitchPreference(
+                value = liquidGlassEnabled && liquidGlassSupported,
+                onValueChange = preferences.liquidGlassEnabled::set,
+                title = {
+                  Text(text = stringResource(R.string.pref_appearance_liquid_glass_title))
+                },
+                summary = {
+                  Text(
+                    text =
+                      stringResource(
+                        if (liquidGlassSupported) {
+                          R.string.pref_appearance_liquid_glass_summary
+                        } else {
+                          R.string.pref_appearance_liquid_glass_summary_unavailable
+                        },
+                      ),
+                    color = MaterialTheme.colorScheme.outline,
+                  )
+                },
+                enabled = liquidGlassSupported,
+              )
+
+              PreferenceDivider()
+
+              ListPreference(
+                value = liquidBottomBarStyle,
+                onValueChange = preferences.liquidBottomBarStyle::set,
+                values = LiquidBottomBarStyle.entries,
+                valueToText = { style ->
+                  AnnotatedString(
+                    stringResource(
+                      when (style) {
+                        LiquidBottomBarStyle.ExpressivePill -> R.string.pref_liquid_nav_expressive_pill
+                        LiquidBottomBarStyle.FloatingTabs -> R.string.pref_liquid_nav_floating_tabs
+                      },
+                    ),
+                  )
+                },
+                title = {
+                  Text(stringResource(R.string.pref_liquid_nav_variant_title))
+                },
+                summary = {
+                  Text(
+                    text =
+                      stringResource(
+                        when (liquidBottomBarStyle) {
+                          LiquidBottomBarStyle.ExpressivePill -> R.string.pref_liquid_nav_expressive_pill
+                          LiquidBottomBarStyle.FloatingTabs -> R.string.pref_liquid_nav_floating_tabs
+                        },
+                      ),
+                    color = MaterialTheme.colorScheme.outline,
+                  )
+                },
+                enabled = liquidGlassEnabled && liquidGlassSupported,
+              )
             }
           }
 

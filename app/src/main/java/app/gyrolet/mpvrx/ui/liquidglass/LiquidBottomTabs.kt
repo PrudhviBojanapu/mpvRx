@@ -15,7 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -56,7 +56,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.sign
 
-val LocalLiquidBottomTabScale = compositionLocalOf { { 1f } }
+val LocalLiquidBottomTabScale = staticCompositionLocalOf { { 1f } }
 
 @Composable
 fun LiquidBottomTabs(
@@ -109,7 +109,7 @@ fun LiquidBottomTabs(
                 valueRange = 0f..(tabsCount - 1).toFloat(),
                 visibilityThreshold = 0.001f,
                 initialScale = 1f,
-                pressedScale = 1.06f,
+                pressedScale = 78f / 56f,
                 onDragStarted = {},
                 onDragStopped = {
                     val targetIndex = targetValue.fastRoundToInt().fastCoerceIn(0, tabsCount - 1)
@@ -194,7 +194,7 @@ fun LiquidBottomTabs(
 
         CompositionLocalProvider(
             LocalLiquidBottomTabScale provides {
-                lerp(1f, 1.05f, dampedDragAnimation.pressProgress)
+                lerp(1f, 1.2f, dampedDragAnimation.pressProgress)
             }
         ) {
             Row(
@@ -251,9 +251,6 @@ fun LiquidBottomTabs(
                 }
                 .then(interactiveHighlight.gestureModifier)
                 .then(dampedDragAnimation.modifier)
-                .height(60f.dp)
-                .fillMaxWidth(1f / tabsCount)
-                .padding(horizontal = 2.dp, vertical = 3.dp)
                 .drawBackdrop(
                     backdrop = rememberCombinedBackdrop(backdrop, tabsBackdrop),
                     shape = { Capsule() },
@@ -296,6 +293,8 @@ fun LiquidBottomTabs(
                         drawRect(Color.Black.copy(alpha = 0.03f * progress))
                     }
                 )
+                .height(56f.dp)
+                .fillMaxWidth(1f / tabsCount)
         )
     }
 }

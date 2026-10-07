@@ -6095,16 +6095,21 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
         resumeMode == ResumePlaybackMode.Always &&
         !item.isDefinitelyAudioOnly()
     ensureCurrentMediaRequest(requestGeneration)
-    val requiresYtdlp = sequenceOf(item.originalUri, item.playableUri).any(YtdlpManager::requiresYtdlp)
+    val ytdlpSource =
+      sequenceOf(item.originalUri, item.playableUri)
+        .firstOrNull(YtdlpManager::requiresYtdlp)
+    val requiresYtdlp = ytdlpSource != null
     // The yt-dlp runtime prep (multi-MB runtime copy plus a Python subprocess for web sources),
     // the previous-session stop wait and the resume-position database read have no ordering
     // dependency on each other, so they are started together and joined only where their result
     // is needed: pre-load latency becomes max(...) instead of sum(...).
     val generation = coroutineScope {
       val ytdlpReadyDeferred =
-        async {
-          YtdlpManager.prepareForPlayback(this@PlayerActivity, item.playableUri) { line ->
-            line.trim().takeIf { it.isNotEmpty() }?.let { message -> Log.d(TAG, message) }
+        ytdlpSource?.let { source ->
+          async {
+            YtdlpManager.prepareForPlayback(this@PlayerActivity, source) { line ->
+              line.trim().takeIf { it.isNotEmpty() }?.let { message -> Log.d(TAG, message) }
+            }
           }
         }
       val stopCompletedDeferred = async { PlaybackSession.awaitStopCompletion() }
@@ -6125,13 +6130,21 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
           ?.positionSeconds
           ?.takeIf { it.isFinite() && it > 0.0 }
           ?: savedPositionDeferred?.await()
-      if (!ytdlpReadyDeferred.await()) throw IllegalStateException("yt-dlp could not be prepared for web playback")
+      if (ytdlpReadyDeferred?.await() == false) {
+        throw IllegalStateException("yt-dlp could not be prepared for web playback")
+      }
       ensureCurrentMediaRequest(requestGeneration)
       if (!stopCompletedDeferred.await()) {
         throw IllegalStateException("Timed out waiting for previous playback to stop")
       }
       ensureCurrentMediaRequest(requestGeneration)
-      if (requiresYtdlp) player.setupYtdlpOptions()
+      if (requiresYtdlp) {
+        player.setupYtdlpOptions()
+      } else {
+        // mpv keeps script options on the reused core. Explicitly disable ytdl_hook for local and
+        // direct-media loads so a prior web item cannot leak an extractor probe into this load.
+        PlaybackSession.setIntegrationOptionString("ytdl", "no")
+      }
       val loadGeneration =
         PlaybackSession.load(
           item = item,

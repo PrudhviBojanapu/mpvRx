@@ -130,6 +130,8 @@ import app.gyrolet.mpvrx.preferences.preference.collectAsState
 import app.gyrolet.mpvrx.preferences.preference.deleteAndGet
 import app.gyrolet.mpvrx.preferences.preference.minusAssign
 import app.gyrolet.mpvrx.preferences.preference.plusAssign
+import app.gyrolet.mpvrx.presentation.components.captureLiquidGlassBackdrop
+import app.gyrolet.mpvrx.presentation.components.rememberLiquidGlassBackdrop
 import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
 import app.gyrolet.mpvrx.ui.player.Decoder.Companion.getDecoderFromValue
@@ -179,6 +181,7 @@ import org.koin.compose.koinInject
 import app.gyrolet.mpvrx.ui.liquidglass.AdaptiveControlsButton
 import app.gyrolet.mpvrx.ui.liquidglass.AdaptiveControlsContainer
 import app.gyrolet.mpvrx.ui.liquidglass.LiquidPillButton
+import app.gyrolet.mpvrx.ui.liquidglass.LocalKyantPlayerBackdrop
 import app.gyrolet.mpvrx.ui.liquidglass.LocalPlayerBackdrop
 import app.gyrolet.mpvrx.ui.liquidglass.PlayerLiquidTokens
 import com.kyant.backdrop.backdrops.layerBackdrop
@@ -215,7 +218,7 @@ fun PlayerControls(
   val aiEnabled by aiPreferences.enabled.collectAsState()
   val realtimeSubsEnabled by aiPreferences.realtimeSubsEnabled.collectAsState()
   val hideBackground by appearancePreferences.hidePlayerButtonsBackground.collectAsState()
-  val enableLiquidGlass by appearancePreferences.enableLiquidGlass.collectAsState()
+  val enableLiquidGlass by appearancePreferences.liquidGlassEnabled.collectAsState()
   val forceDarkButtonBackground by appearancePreferences.forceDarkPlayerButtonsBackground.collectAsState()
   val portraitPlaybackControlsPosition by
     appearancePreferences.portraitPlaybackControlsPosition.collectAsState()
@@ -623,7 +626,8 @@ fun PlayerControls(
 
   DoubleTapToSeekOvals(doubleTapSeekAmount, seekText, showDoubleTapOvals, showSeekTime, showSeekTime, interactionSource)
 
-  val playerBackdrop = rememberLayerBackdrop()
+  val playerHazeBackdrop = rememberLiquidGlassBackdrop()
+  val playerKyantBackdrop = rememberLayerBackdrop()
 
   CompositionLocalProvider(
     LocalForceDarkPlayerButtonsBackground provides forceDarkButtonBackground,
@@ -658,7 +662,8 @@ fun PlayerControls(
               ),
               alpha = transparentOverlay,
             )
-            .layerBackdrop(playerBackdrop),
+            .captureLiquidGlassBackdrop(playerHazeBackdrop)
+            .layerBackdrop(playerKyantBackdrop),
       )
     }
     if (brightness < 0) {
@@ -695,7 +700,8 @@ fun PlayerControls(
         CompositionLocalProvider(
           LocalRippleConfiguration provides playerRippleConfiguration,
           LocalPlayerButtonsClickEvent provides { resetControlsTimestamp = System.currentTimeMillis() },
-          LocalPlayerBackdrop provides playerBackdrop,
+          LocalPlayerBackdrop provides playerHazeBackdrop,
+          LocalKyantPlayerBackdrop provides playerKyantBackdrop,
           LocalForceDarkPlayerButtonsBackground provides forceDarkButtonBackground,
           LocalHidePlayerButtonsBackground provides hideBackground,
           LocalContentColor provides MaterialTheme.colorScheme.onSurface,

@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
 package app.gyrolet.mpvrx.ui.liquidglass
 
 import androidx.compose.foundation.BorderStroke
@@ -30,199 +34,214 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.gyrolet.mpvrx.preferences.AppearancePreferences
 import app.gyrolet.mpvrx.preferences.preference.collectAsState
+import app.gyrolet.mpvrx.presentation.components.LiquidGlassBackdrop
 import app.gyrolet.mpvrx.ui.icons.AppIcon
+import app.gyrolet.mpvrx.ui.icons.Icon
+import app.gyrolet.mpvrx.ui.player.controls.LocalPlayerButtonsClickEvent
 import app.gyrolet.mpvrx.ui.theme.spacing
-import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import org.koin.compose.koinInject
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AdaptiveControlsButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    icon: AppIcon? = null,
-    onLongClick: () -> Unit = {},
-    text: String? = null,
-    title: String? = null,
-    color: Color? = null,
-    surfaceColor: Color = Color.Unspecified,
-    buttonSize: Dp = 40.dp,
-    useGlass: Boolean = true,
-    backdrop: Backdrop? = null
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+  icon: AppIcon? = null,
+  onLongClick: () -> Unit = {},
+  text: String? = null,
+  title: String? = null,
+  color: Color? = null,
+  surfaceColor: Color = Color.Unspecified,
+  buttonSize: Dp = 40.dp,
+  useGlass: Boolean = true,
+  backdrop: LiquidGlassBackdrop? = LocalPlayerBackdrop.current,
 ) {
-    val preferences = koinInject<AppearancePreferences>()
-    val enableLiquidGlass by preferences.enableLiquidGlass.collectAsState()
-    val clickEvent = app.gyrolet.mpvrx.ui.player.controls.LocalPlayerButtonsClickEvent.current
+  val preferences = koinInject<AppearancePreferences>()
+  val liquidGlassEnabled by preferences.liquidGlassEnabled.collectAsState()
+  val clickEvent = LocalPlayerButtonsClickEvent.current
+  val resolvedTint = color ?: PlayerLiquidTokens.contentColor
+  val resolvedSurface =
+    surfaceColor.takeUnless { it == Color.Unspecified } ?: PlayerLiquidTokens.surfaceColor
 
-    if (enableLiquidGlass) {
-        val resolvedTint = color ?: PlayerLiquidTokens.contentColor
-        val resolvedSurface = if (surfaceColor != Color.Unspecified) surfaceColor else PlayerLiquidTokens.surfaceColor
-
-        LiquidButton(
+  if (liquidGlassEnabled) {
+    LiquidPillButton(
+      onClick = {
+        clickEvent()
+        onClick()
+      },
+      onLongClick = onLongClick,
+      backdrop = backdrop,
+      modifier = modifier.height(buttonSize).widthIn(min = buttonSize),
+      tint = resolvedTint,
+      surfaceColor = resolvedSurface,
+      height = buttonSize,
+      horizontalPadding = if (text != null) 8.dp else 0.dp,
+      spacing = 4.dp,
+      useGlass = useGlass,
+    ) {
+      if (icon != null) {
+        Icon(
+          imageVector = icon,
+          contentDescription = title ?: text,
+          tint = resolvedTint,
+          modifier = Modifier.size(PlayerLiquidTokens.IconSize),
+        )
+      }
+      if (text != null) {
+        Text(
+          text = text,
+          style = MaterialTheme.typography.labelLarge,
+          color = resolvedTint,
+          maxLines = 1,
+        )
+      }
+    }
+  } else {
+    val hideBackground by preferences.hidePlayerButtonsBackground.collectAsState()
+    val interactionSource = remember { MutableInteractionSource() }
+    Surface(
+      modifier =
+        modifier
+          .clip(CircleShape)
+          .combinedClickable(
             onClick = {
-                clickEvent()
-                onClick()
+              clickEvent()
+              onClick()
             },
             onLongClick = onLongClick,
-            backdrop = backdrop ?: LocalPlayerBackdrop.current ?: rememberLayerBackdrop(),
-            modifier = modifier.height(buttonSize).widthIn(min = buttonSize),
+            interactionSource = interactionSource,
+            indication = ripple(),
+          ),
+      shape = CircleShape,
+      color = if (hideBackground) Color.Transparent else resolvedSurface,
+      contentColor = resolvedTint,
+      tonalElevation = 0.dp,
+      shadowElevation = 0.dp,
+      border =
+        if (hideBackground || !useGlass) {
+          null
+        } else {
+          BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.40f))
+        },
+    ) {
+      Row(
+        modifier =
+          Modifier
+            .padding(horizontal = if (text != null) 8.dp else 0.dp)
+            .height(buttonSize)
+            .widthIn(min = buttonSize),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+      ) {
+        if (icon != null) {
+          Icon(
+            imageVector = icon,
+            contentDescription = title ?: text,
             tint = resolvedTint,
-            surfaceColor = resolvedSurface,
-            height = buttonSize,
-            horizontalPadding = if (text != null) 8.dp else 0.dp,
-            spacing = 4.dp,
-            useGlass = useGlass,
-        ) {
-            if (icon != null) {
-                app.gyrolet.mpvrx.ui.icons.Icon(
-                    imageVector = icon,
-                    contentDescription = title ?: text,
-                    tint = resolvedTint,
-                    modifier = Modifier.size(PlayerLiquidTokens.IconSize),
-                )
-            }
-            if (text != null) {
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = resolvedTint,
-                    maxLines = 1,
-                )
-            }
+            modifier =
+              Modifier
+                .padding(if (text == null) MaterialTheme.spacing.small else 0.dp)
+                .size(20.dp),
+          )
         }
-    } else {
-        val hideBackground by preferences.hidePlayerButtonsBackground.collectAsState()
-        val interactionSource = remember { MutableInteractionSource() }
-
-        Surface(
-            modifier = modifier
-                .clip(CircleShape)
-                .combinedClickable(
-                    onClick = {
-                        clickEvent()
-                        onClick()
-                    },
-                    onLongClick = onLongClick,
-                    interactionSource = interactionSource,
-                    indication = ripple(),
-                ),
-            shape = CircleShape,
-            color = if (hideBackground) Color.Transparent else if (surfaceColor != Color.Unspecified) surfaceColor else MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.55f),
-            contentColor = color ?: MaterialTheme.colorScheme.onSurface,
-            tonalElevation = 0.dp,
-            shadowElevation = 0.dp,
-            border = if (hideBackground || !useGlass) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.40f)),
-        ) {
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = if (text != null) 8.dp else 0.dp)
-                    .height(buttonSize)
-                    .widthIn(min = buttonSize),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                if (icon != null) {
-                    app.gyrolet.mpvrx.ui.icons.Icon(
-                        imageVector = icon,
-                        contentDescription = title ?: text,
-                        tint = color ?: MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier
-                            .padding(if (text == null) MaterialTheme.spacing.small else 0.dp)
-                            .size(20.dp),
-                    )
-                }
-                if (text != null) {
-                    if (icon != null) Spacer(Modifier.width(4.dp))
-                    Text(
-                        text = text,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = color ?: MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                    )
-                }
-            }
+        if (text != null) {
+          if (icon != null) Spacer(Modifier.width(4.dp))
+          Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            color = resolvedTint,
+            maxLines = 1,
+          )
         }
+      }
     }
+  }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AdaptiveControlsContainer(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    onLongClick: () -> Unit = {},
-    color: Color = Color.Unspecified,
-    surfaceColor: Color = Color.Unspecified,
-    isInteractive: Boolean = true,
-    useGlass: Boolean = true,
-    hideBackground: Boolean = false,
-    buttonSize: Dp = 40.dp,
-    spacing: Dp = 8.dp,
-    horizontalPadding: Dp? = null,
-    backdrop: Backdrop? = null,
-    content: @Composable RowScope.() -> Unit
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+  onLongClick: () -> Unit = {},
+  color: Color = Color.Unspecified,
+  surfaceColor: Color = Color.Unspecified,
+  isInteractive: Boolean = true,
+  useGlass: Boolean = true,
+  hideBackground: Boolean = false,
+  buttonSize: Dp = 40.dp,
+  spacing: Dp = 8.dp,
+  horizontalPadding: Dp? = null,
+  backdrop: LiquidGlassBackdrop? = LocalPlayerBackdrop.current,
+  content: @Composable RowScope.() -> Unit,
 ) {
-    val preferences = koinInject<AppearancePreferences>()
-    val enableLiquidGlass by preferences.enableLiquidGlass.collectAsState()
-    val clickEvent = app.gyrolet.mpvrx.ui.player.controls.LocalPlayerButtonsClickEvent.current
+  val preferences = koinInject<AppearancePreferences>()
+  val liquidGlassEnabled by preferences.liquidGlassEnabled.collectAsState()
+  val clickEvent = LocalPlayerButtonsClickEvent.current
+  val resolvedTint =
+    color.takeUnless { it == Color.Unspecified } ?: PlayerLiquidTokens.contentColor
+  val resolvedSurface =
+    surfaceColor.takeUnless { it == Color.Unspecified } ?: PlayerLiquidTokens.surfaceColor
 
-    if (enableLiquidGlass) {
-        LiquidPillButton(
-            onClick = {
-                if (isInteractive) clickEvent()
-                onClick()
+  if (liquidGlassEnabled) {
+    LiquidPillButton(
+      onClick = {
+        if (isInteractive) clickEvent()
+        onClick()
+      },
+      onLongClick = onLongClick,
+      modifier = modifier,
+      isInteractive = isInteractive,
+      useGlass = useGlass,
+      tint = resolvedTint,
+      surfaceColor = resolvedSurface,
+      height = buttonSize,
+      spacing = spacing,
+      horizontalPadding = horizontalPadding ?: 8.dp,
+      backdrop = backdrop,
+      content = content,
+    )
+  } else {
+    Surface(
+      shape = CircleShape,
+      color = if (hideBackground) Color.Transparent else resolvedSurface,
+      contentColor = resolvedTint,
+      tonalElevation = 0.dp,
+      shadowElevation = 0.dp,
+      border =
+        if (hideBackground || !useGlass) {
+          null
+        } else {
+          BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.40f))
+        },
+      modifier =
+        modifier
+          .height(buttonSize)
+          .clip(CircleShape)
+          .then(
+            if (isInteractive) {
+              Modifier.combinedClickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = ripple(bounded = true),
+                onClick = {
+                  clickEvent()
+                  onClick()
+                },
+                onLongClick = onLongClick,
+              )
+            } else {
+              Modifier
             },
-            onLongClick = onLongClick,
-            modifier = modifier,
-            isInteractive = isInteractive,
-            useGlass = useGlass,
-            tint = if (color != Color.Unspecified) color else PlayerLiquidTokens.contentColor,
-            surfaceColor = if (surfaceColor != Color.Unspecified) surfaceColor else PlayerLiquidTokens.surfaceColor,
-            height = buttonSize,
-            spacing = spacing,
-            horizontalPadding = horizontalPadding ?: 8.dp,
-            backdrop = backdrop ?: LocalPlayerBackdrop.current ?: rememberLayerBackdrop(),
-            content = content
+          ),
+    ) {
+      Box(contentAlignment = Alignment.Center) {
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          modifier = Modifier.padding(horizontal = horizontalPadding ?: MaterialTheme.spacing.small),
+          horizontalArrangement = Arrangement.spacedBy(spacing),
+          content = content,
         )
-    } else {
-        Surface(
-            shape = CircleShape,
-            color = if (hideBackground) Color.Transparent else if (surfaceColor != Color.Unspecified) surfaceColor else MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.55f),
-            contentColor = if (color != Color.Unspecified) color else MaterialTheme.colorScheme.onSurface,
-            tonalElevation = 0.dp,
-            shadowElevation = 0.dp,
-            border = if (hideBackground || !useGlass) null else BorderStroke(
-                1.dp,
-                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.40f),
-            ),
-            modifier = modifier
-                .height(buttonSize)
-                .clip(CircleShape)
-                .then(
-                    if (isInteractive) {
-                        @OptIn(ExperimentalFoundationApi::class)
-                        Modifier.combinedClickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = ripple(bounded = true),
-                            onClick = {
-                                clickEvent()
-                                onClick()
-                            },
-                            onLongClick = onLongClick
-                        )
-                    } else {
-                        Modifier
-                    }
-                ),
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = horizontalPadding ?: MaterialTheme.spacing.small),
-                    horizontalArrangement = Arrangement.spacedBy(spacing),
-                    content = content
-                )
-            }
-        }
+      }
     }
+  }
 }
