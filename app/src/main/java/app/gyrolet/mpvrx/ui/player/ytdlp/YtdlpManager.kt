@@ -303,6 +303,7 @@ object YtdlpManager {
               add(getExecutablePath(context))
               add(File(getYtdlDir(context), "yt-dlp").absolutePath)
               add("--ignore-config")
+              add("--no-playlist")
               add("--dump-single-json")
               add("--no-warnings")
               add("--no-progress")
@@ -329,10 +330,6 @@ object YtdlpManager {
             }
 
           val completed = executePlaylistExtractionProcess(command, context) { chunk -> output.append(chunk) }
-          if (!completed) {
-            return@withLock Result.failure(IllegalStateException("yt-dlp extraction failed"))
-          }
-
           val fullText = output.toString().trim()
           val jsonPayload = fullText.lineSequence()
             .map(String::trim)
@@ -341,7 +338,12 @@ object YtdlpManager {
               val start = fullText.indexOf('{')
               val end = fullText.lastIndexOf('}')
               if (start in 0 until end) fullText.substring(start, end + 1) else null
-            } ?: return@withLock Result.failure(IllegalStateException("No JSON output from yt-dlp"))
+            }
+
+          if (jsonPayload == null) {
+            Log.e(TAG, "yt-dlp extraction failed (completed=$completed): $fullText")
+            return@withLock Result.failure(IllegalStateException("yt-dlp extraction failed: $fullText"))
+          }
 
           val json = JSONObject(jsonPayload)
           val title = json.optString("title")
