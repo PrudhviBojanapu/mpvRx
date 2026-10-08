@@ -7,6 +7,61 @@
 #include <wchar.h>
 #include <limits.h>
 #include <libgen.h>
+#include <sys/stat.h>
+#include <time.h>
+
+static unsigned long long hash_url_c(const char *str) {
+    unsigned long long hash = 14695981039346656037ULL;
+    while (*str) {
+        hash ^= (unsigned char)(*str++);
+        hash *= 1099511628211ULL;
+    }
+    return hash;
+}
+
+static int extract_youtube_id_c(const char *url, char *out_id, size_t max_len) {
+    if (!url || max_len < 12) return 0;
+    const char *v = strstr(url, "v=");
+    if (v) {
+        v += 2;
+        size_t len = 0;
+        while (v[len] && v[len] != '&' && v[len] != '?' && v[len] != '#' && len < 11) {
+            out_id[len] = v[len];
+            len++;
+        }
+        if (len == 11) {
+            out_id[11] = '\0';
+            return 1;
+        }
+    }
+    const char *be = strstr(url, "youtu.be/");
+    if (be) {
+        be += 9;
+        size_t len = 0;
+        while (be[len] && be[len] != '?' && be[len] != '/' && be[len] != '#' && len < 11) {
+            out_id[len] = be[len];
+            len++;
+        }
+        if (len == 11) {
+            out_id[11] = '\0';
+            return 1;
+        }
+    }
+    const char *sh = strstr(url, "/shorts/");
+    if (sh) {
+        sh += 8;
+        size_t len = 0;
+        while (sh[len] && sh[len] != '?' && sh[len] != '/' && sh[len] != '#' && len < 11) {
+            out_id[len] = sh[len];
+            len++;
+        }
+        if (len >= 10 && len <= 12) {
+            out_id[len] = '\0';
+            return 1;
+        }
+    }
+    return 0;
+}
 
 /*
  * libytdl: A native bridge for yt-dlp on Android 10+
@@ -58,6 +113,55 @@ int main(int argc, char *argv[]) {
                 strncpy(app_files_dir, data_dirs[i], sizeof(app_files_dir) - 1);
                 snprintf(ytdl_dir, sizeof(ytdl_dir), "%s/ytdl", data_dirs[i]);
                 break;
+            }
+        }
+    }
+
+    // Fast path: Check for preloaded yt-dlp single-json dump cache
+    int is_dump_json = 0;
+    const char *target_url = NULL;
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-J") == 0 || strcmp(argv[i], "--dump-single-json") == 0 ||
+            strcmp(argv[i], "-j") == 0 || strcmp(argv[i], "--dump-json") == 0) {
+            is_dump_json = 1;
+        }
+        if (strncmp(argv[i], "http://", 7) == 0 || strncmp(argv[i], "https://", 8) == 0) {
+            target_url = argv[i];
+        }
+    }
+
+    if (is_dump_json && target_url && ytdl_dir[0] != '\0') {
+        char cache_file[PATH_MAX] = {0};
+        char yt_id[32] = {0};
+        int found = 0;
+
+        if (extract_youtube_id_c(target_url, yt_id, sizeof(yt_id))) {
+            snprintf(cache_file, sizeof(cache_file), "%s/cache/yt_%s.json", ytdl_dir, yt_id);
+            if (access(cache_file, R_OK) == 0) found = 1;
+        }
+        if (!found) {
+            unsigned long long h = hash_url_c(target_url);
+            snprintf(cache_file, sizeof(cache_file), "%s/cache/%llx.json", ytdl_dir, h);
+            if (access(cache_file, R_OK) == 0) found = 1;
+        }
+
+        if (found) {
+            struct stat st;
+            if (stat(cache_file, &st) == 0 && st.st_size > 100) {
+                time_t now = time(NULL);
+                if ((now - st.st_mtime) < 7200) {
+                    FILE *fp = fopen(cache_file, "rb");
+                    if (fp) {
+                        char buf[16384];
+                        size_t n;
+                        while ((n = fread(buf, 1, sizeof(buf), fp)) > 0) {
+                            fwrite(buf, 1, n, stdout);
+                        }
+                        fclose(fp);
+                        fflush(stdout);
+                        return 0; // FAST CACHE HIT (<2ms instant return)!
+                    }
+                }
             }
         }
     }

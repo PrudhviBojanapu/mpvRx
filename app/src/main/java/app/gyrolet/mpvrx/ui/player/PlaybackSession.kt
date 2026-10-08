@@ -287,6 +287,7 @@ object PlaybackSession : MPVLib.EventObserver {
   private var desiredAmbientScaleY = 1.0
   private var streamingOptionsApplied = false
   private var appliedUserAgent: String? = null
+  private var pendingExternalAudioUrl: String? = null
 
   val isInitialized: Boolean
     get() = initialized
@@ -926,6 +927,7 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
     positionRestoreOverride: PlaybackPositionRestoreOverride? = null,
     initialPositionSeconds: Double? = null,
     flattenEditions: Boolean = false,
+    externalAudioUrl: String? = null,
     commit: ((() -> Long) -> Long)? = null,
   ): Long {
     val preparationStartedAt = android.os.SystemClock.elapsedRealtime()
@@ -952,6 +954,7 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
               positionRestoreOverride = positionRestoreOverride,
               initialPositionSeconds = initialPositionSeconds,
               flattenEditions = flattenEditions,
+              externalAudioUrl = externalAudioUrl,
             )
           if (generation >= 0L) {
             previous = activeNetworkStream
@@ -987,6 +990,7 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
     positionRestoreOverride: PlaybackPositionRestoreOverride? = null,
     initialPositionSeconds: Double? = null,
     flattenEditions: Boolean = false,
+    externalAudioUrl: String? = null,
   ): Long {
     val smbPath = item?.networkSource?.let { source ->
         try {
@@ -1004,6 +1008,7 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
     }
     return withCore(default = -1L) {
       if (_state.value.phase == PlaybackPhase.STOPPING) return@withCore -1L
+      pendingExternalAudioUrl = externalAudioUrl
       applyStreamingOptionsLocked(playableUri)
       AudiobookPlayback.capture()
       val resolvedItem = item ?: PlaybackItem.fromUri(playableUri)
@@ -1096,6 +1101,10 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
           initialPosition?.let { add("start=$it") }
           if (flattenEditions && !MpvConfigOverridePolicy.isOwnedByMpvConf("flatten-editions")) {
             add("flatten-editions=yes")
+          }
+          if (!externalAudioUrl.isNullOrBlank()) {
+            val escaped = externalAudioUrl.replace("\"", "\\\"")
+            add("audio-file=\"$escaped\"")
           }
         }.joinToString(",")
       PlaybackPerformanceTrace.mark("LOADFILE_SENT", "generation=$generation")
@@ -1694,6 +1703,19 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
               }
               if (deferredVideoSelectionGeneration == current.generation) {
                 deferredVideoSelectionGeneration = null
+              }
+            }
+            val extAudio = pendingExternalAudioUrl
+            if (!extAudio.isNullOrBlank()) {
+              pendingExternalAudioUrl = null
+              val currentAudioTrack = MPVLib.getPropertyInt("aid")
+              if (currentAudioTrack == null || currentAudioTrack <= 0) {
+                try {
+                  MPVLib.command("audio-add", extAudio, "select")
+                  Log.d(TAG, "Attached external audio via audio-add: $extAudio")
+                } catch (e: Exception) {
+                  Log.e(TAG, "Failed audio-add for external audio", e)
+                }
               }
             }
             updateState {

@@ -345,6 +345,20 @@ object YtdlpManager {
             return@withLock Result.failure(IllegalStateException("yt-dlp extraction failed: $fullText"))
           }
 
+          // Cache the raw single-json payload for instant zero-buffering playback in mpv's ytdl_hook
+          try {
+            val cacheDir = File(getYtdlDir(context), "cache").apply { if (!exists()) mkdirs() }
+            val ytId = extractYouTubeVideoId(source)
+            if (!ytId.isNullOrBlank()) {
+              File(cacheDir, "yt_$ytId.json").writeText(jsonPayload)
+              Log.d(TAG, "Cached preloaded yt-dlp JSON for video: $ytId")
+            }
+            val hash = computeUrlHash(source)
+            File(cacheDir, "$hash.json").writeText(jsonPayload)
+          } catch (e: Exception) {
+            Log.w(TAG, "Failed to cache yt-dlp JSON", e)
+          }
+
           val json = JSONObject(jsonPayload)
           val title = json.optString("title")
           val duration = json.optInt("duration", 0)
@@ -1000,5 +1014,29 @@ object YtdlpManager {
     env["SSL_CERT_FILE"] = File(context.filesDir, "cacert.pem").absolutePath
     env["LD_LIBRARY_PATH"] = nativeLibDir
     return processBuilder.start()
+  }
+
+  fun extractYouTubeVideoId(url: String): String? {
+    val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return null
+    val host = uri.host?.lowercase().orEmpty()
+    if (host.contains("youtu.be")) {
+      return uri.lastPathSegment?.takeIf { it.length == 11 }
+    }
+    if (host.contains("youtube.com")) {
+      if (uri.path?.contains("/shorts/") == true) {
+        return uri.lastPathSegment?.takeIf { it.length >= 10 }
+      }
+      return uri.getQueryParameter("v")?.takeIf { it.length == 11 }
+    }
+    return null
+  }
+
+  fun computeUrlHash(url: String): String {
+    var hash = -3750763034362895579L
+    for (b in url.toByteArray(Charsets.UTF_8)) {
+      hash = hash xor (b.toLong() and 0xFF)
+      hash = hash * 1099511628211L
+    }
+    return java.lang.Long.toUnsignedString(hash, 16)
   }
 }
