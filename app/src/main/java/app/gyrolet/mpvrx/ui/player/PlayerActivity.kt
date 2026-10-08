@@ -6057,6 +6057,10 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
           }
           cookieExportDeferred?.await()
           val intentYtdlFormat = sourceIntent.getStringExtra("ytdl_format")
+          val preAudioUrl = sourceIntent.getStringExtra("audio_url")
+          if (!preAudioUrl.isNullOrBlank()) {
+            PlaybackSession.setIntegrationOptionString("audio-file", preAudioUrl)
+          }
           issuePlaybackLoad(
             item = itemWithArtwork,
             attempt = 0,
@@ -6215,6 +6219,11 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
                 if (requiresYtdlp) {
                   val effectiveFormat = ytdlFormat?.takeIf { it.isNotBlank() } ?: "bestvideo+bestaudio/best"
                   PlaybackSession.setPropertyString("ytdl-format", effectiveFormat)
+                }
+                val audioUrl = intent.getStringExtra("audio_url")
+                if (!audioUrl.isNullOrBlank()) {
+                  PlaybackSession.setIntegrationOptionString("audio-file", audioUrl)
+                  PlaybackSession.setPropertyString("audio-file", audioUrl)
                 }
                 nativeLoad()
               }

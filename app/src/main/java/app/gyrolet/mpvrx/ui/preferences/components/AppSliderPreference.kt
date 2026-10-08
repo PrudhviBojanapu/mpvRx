@@ -56,11 +56,11 @@ fun AppSliderPreference(
   }
 
   var observedValue by remember { mutableFloatStateOf(value) }
-  val latestDragValue = rememberUpdatedState(sliderValue)
+  val latestDragValue = remember { mutableFloatStateOf(sliderValue) }
   SideEffect {
     if (observedValue != value) {
       onSliderValueChange(value)
-      latestDragValue.value = value
+      latestDragValue.floatValue = value
       observedValue = value
     }
   }
@@ -76,7 +76,7 @@ fun AppSliderPreference(
           AppSlider(
             value = sliderValue,
             onValueChange = { changedValue ->
-              latestDragValue.value = changedValue
+              latestDragValue.floatValue = changedValue
               onSliderValueChange(changedValue)
             },
             modifier = Modifier.weight(1f),

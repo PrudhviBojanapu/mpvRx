@@ -628,6 +628,11 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths" />
         </provider>
+
+        <provider
+            android:name=".provider.YtdlpStreamProvider"
+            android:authorities="${applicationId}.ytdlp"
+            android:exported="true" />
     </application>
 </manifest>
 

@@ -141,7 +141,7 @@ object LiquidGlassPreferencesScreen : Screen {
                     enabled = supported,
                     modifier = Modifier.settingsSearchTarget(R.string.pref_appearance_liquid_glass_title),
                   )
-                },
+                }
               }
               liquidGlassPreferences(preferences, enabled = enabled && supported)
             }

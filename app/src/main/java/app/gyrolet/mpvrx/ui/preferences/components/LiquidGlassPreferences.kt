@@ -44,8 +44,7 @@ import app.gyrolet.mpvrx.ui.preferences.components.AppSliderPreference as Slider
 import java.text.NumberFormat
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 fun LazyListScope.liquidGlassPreferences(
   preferences: AppearancePreferences,
   enabled: Boolean,
