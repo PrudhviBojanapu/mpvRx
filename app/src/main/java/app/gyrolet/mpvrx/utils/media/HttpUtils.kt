@@ -340,6 +340,13 @@ object HttpUtils {
    */
   fun isDirectMediaUrl(uri: Uri?): Boolean {
     if (uri == null || !isNetworkStream(uri)) return false
+    val path = uri.path?.lowercase().orEmpty()
+    val full = uri.toString().lowercase()
+    if (path.contains(".m3u8") || path.contains(".mpd") || path.contains(".mp4") ||
+        path.contains(".webm") || path.contains(".mkv") || path.contains(".flv") ||
+        path.contains(".ts") || full.contains(".m3u8") || full.contains(".mpd")) {
+      return true
+    }
     return hasDirectMediaExtension(uri)
   }
 

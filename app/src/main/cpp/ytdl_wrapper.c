@@ -5,6 +5,8 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <wchar.h>
+#include <limits.h>
+#include <libgen.h>
 
 /*
  * libytdl: A native bridge for yt-dlp on Android 10+
@@ -16,33 +18,110 @@ typedef int (*Py_BytesMain_t)(int argc, char **argv);
 typedef void (*Py_SetProgramName_t)(const wchar_t *);
 
 int main(int argc, char *argv[]) {
-    char *python_lib = getenv("YTDL_PYTHON");
-    char *script_path = getenv("YTDL_SCRIPT");
-
-    // python313.zip ships only the aarch64 sysconfig module; reuse it on every ABI
-    // so 32-bit ARM and x86 devices don't die with "No module named '_sysconfigdata__android_...'".
-    setenv("_PYTHON_SYSCONFIGDATA_NAME", "_sysconfigdata__android_aarch64-linux-android", 0);
-
-    // Use a hardcoded fallback if env var is missing
-    if (!python_lib || strlen(python_lib) == 0) {
-        python_lib = "libpython.so";
+    // 1. Resolve our own executable directory via /proc/self/exe
+    char exe_path[PATH_MAX] = {0};
+    char native_lib_dir[PATH_MAX] = {0};
+    ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path) - 1);
+    if (len > 0) {
+        exe_path[len] = '\0';
+        char exe_dir_copy[PATH_MAX];
+        strncpy(exe_dir_copy, exe_path, sizeof(exe_dir_copy) - 1);
+        char *d = dirname(exe_dir_copy);
+        if (d) {
+            strncpy(native_lib_dir, d, sizeof(native_lib_dir) - 1);
+        }
     }
 
-    // Load the Python shared library
+    // 2. Discover the app files directory
+    // Priority: env var PYTHONHOME/YTDL_DIR -> known package paths
+    const char *data_dirs[] = {
+        "/data/data/app.gyrolet.mpvrx.debug/files",
+        "/data/data/app.gyrolet.mpvrx/files",
+        "/data/user/0/app.gyrolet.mpvrx.debug/files",
+        "/data/user/0/app.gyrolet.mpvrx/files",
+    };
+    char app_files_dir[PATH_MAX] = {0};
+    char ytdl_dir[PATH_MAX] = {0};
+
+    char *env_pyhome = getenv("PYTHONHOME");
+    if (env_pyhome && access(env_pyhome, F_OK) == 0) {
+        strncpy(ytdl_dir, env_pyhome, sizeof(ytdl_dir) - 1);
+        char pyhome_copy[PATH_MAX];
+        strncpy(pyhome_copy, env_pyhome, sizeof(pyhome_copy) - 1);
+        char *d = dirname(pyhome_copy);
+        if (d) strncpy(app_files_dir, d, sizeof(app_files_dir) - 1);
+    } else {
+        for (size_t i = 0; i < sizeof(data_dirs) / sizeof(data_dirs[0]); i++) {
+            char candidate[PATH_MAX];
+            snprintf(candidate, sizeof(candidate), "%s/ytdl/yt-dlp", data_dirs[i]);
+            if (access(candidate, F_OK) == 0) {
+                strncpy(app_files_dir, data_dirs[i], sizeof(app_files_dir) - 1);
+                snprintf(ytdl_dir, sizeof(ytdl_dir), "%s/ytdl", data_dirs[i]);
+                break;
+            }
+        }
+    }
+
+    // 3. Set up environment variables for Python runtime
+    setenv("_PYTHON_SYSCONFIGDATA_NAME", "_sysconfigdata__android_aarch64-linux-android", 0);
+
+    if (ytdl_dir[0] != '\0') {
+        setenv("PYTHONHOME", ytdl_dir, 1);
+        char python_path[PATH_MAX * 2];
+        if (native_lib_dir[0] != '\0') {
+            snprintf(python_path, sizeof(python_path), "%s/python313.zip:%s:%s", ytdl_dir, ytdl_dir, native_lib_dir);
+        } else {
+            snprintf(python_path, sizeof(python_path), "%s/python313.zip:%s", ytdl_dir, ytdl_dir);
+        }
+        setenv("PYTHONPATH", python_path, 1);
+    }
+
+    if (app_files_dir[0] != '\0') {
+        char cert_path[PATH_MAX];
+        snprintf(cert_path, sizeof(cert_path), "%s/cacert.pem", app_files_dir);
+        setenv("SSL_CERT_FILE", cert_path, 1);
+    }
+
+    if (native_lib_dir[0] != '\0') {
+        const char *cur_ld = getenv("LD_LIBRARY_PATH");
+        if (cur_ld && strlen(cur_ld) > 0) {
+            char new_ld[PATH_MAX * 2];
+            snprintf(new_ld, sizeof(new_ld), "%s:%s", native_lib_dir, cur_ld);
+            setenv("LD_LIBRARY_PATH", new_ld, 1);
+        } else {
+            setenv("LD_LIBRARY_PATH", native_lib_dir, 1);
+        }
+    }
+
+    // 4. Resolve python shared library path
+    char python_lib[PATH_MAX] = {0};
+    char *env_py_lib = getenv("YTDL_PYTHON");
+    if (env_py_lib && strlen(env_py_lib) > 0) {
+        strncpy(python_lib, env_py_lib, sizeof(python_lib) - 1);
+    } else if (native_lib_dir[0] != '\0') {
+        snprintf(python_lib, sizeof(python_lib), "%s/libpython.so", native_lib_dir);
+    } else {
+        strncpy(python_lib, "libpython.so", sizeof(python_lib) - 1);
+    }
+
     void *handle = dlopen(python_lib, RTLD_NOW | RTLD_GLOBAL);
+    if (!handle && native_lib_dir[0] != '\0') {
+        char direct_py[PATH_MAX];
+        snprintf(direct_py, sizeof(direct_py), "%s/libpython.so", native_lib_dir);
+        handle = dlopen(direct_py, RTLD_NOW | RTLD_GLOBAL);
+    }
     if (!handle) {
         handle = dlopen("libpython.so", RTLD_NOW | RTLD_GLOBAL);
     }
 
     if (!handle) {
-        fprintf(stderr, "libytdl: CRITICAL: Could not load libpython.so: %s\n", dlerror());
+        fprintf(stderr, "libytdl: CRITICAL: Could not load libpython.so (%s): %s\n", python_lib, dlerror());
         return 127;
     }
 
-    // Optional: Set program name to the binary path to help Python find its libs
+    // Optional: Set program name
     Py_SetProgramName_t Py_SetProgramName = (Py_SetProgramName_t)dlsym(handle, "Py_SetProgramName");
     if (Py_SetProgramName) {
-        // Simple conversion for the program name
         wchar_t wprog[512];
         mbstowcs(wprog, argv[0], 511);
         wprog[511] = L'\0';
@@ -52,36 +131,70 @@ int main(int argc, char *argv[]) {
     // Find Py_BytesMain (Standard entry point for Python 3.8+)
     Py_BytesMain_t Py_BytesMain = (Py_BytesMain_t)dlsym(handle, "Py_BytesMain");
     if (!Py_BytesMain) {
-        // Fallback for older Python 3 versions (Py_Main uses wchar_t**, which is harder to use here)
-        // But since we expect Python 3.8+, Py_BytesMain should be there.
         fprintf(stderr, "libytdl: CRITICAL: Could not find Py_BytesMain in libpython.so\n");
         dlclose(handle);
         return 127;
     }
 
-    int result;
-    if (script_path && strlen(script_path) > 0) {
-        // Correct way to run a script: python script.py arg1 arg2 ...
-        // We need original_argc + 1 slots for: "python", script_path, argv[1...], and NULL
-        int new_argc = argc + 1;
-        char **python_argv = malloc((new_argc + 1) * sizeof(char *));
-        if (!python_argv) return 1;
-
-        python_argv[0] = "python";
-        python_argv[1] = script_path;
-        for (int i = 1; i < argc; i++) {
-            python_argv[i + 1] = argv[i];
-        }
-        python_argv[new_argc] = NULL;
-
-        result = Py_BytesMain(new_argc, python_argv);
-        free(python_argv);
-    } else {
-        // If YTDL_SCRIPT is not set, we act as a transparent python interpreter.
-        result = Py_BytesMain(argc, argv);
+    // 5. Determine script path
+    char script_path[PATH_MAX] = {0};
+    char *env_script = getenv("YTDL_SCRIPT");
+    if (env_script && strlen(env_script) > 0 && access(env_script, F_OK) == 0) {
+        strncpy(script_path, env_script, sizeof(script_path) - 1);
+    } else if (ytdl_dir[0] != '\0') {
+        snprintf(script_path, sizeof(script_path), "%s/yt-dlp", ytdl_dir);
     }
 
-    // Note: We don't dlclose(handle) here as Py_BytesMain might have registered
-    // atexit handlers that need the library to remain loaded until process exit.
+    // Check if argv already specifies a script or if we need to insert script_path
+    // When invoked by mpv's ytdl_hook, argv[1] is an option like "--no-warnings" or "-J"
+    int need_insert_script = (script_path[0] != '\0');
+    if (argc > 1 && strcmp(argv[1], script_path) == 0) {
+        need_insert_script = 0;
+    }
+
+    // Check if quickjs runtime is available and if --js-runtimes is already present
+    char qjs_path[PATH_MAX] = {0};
+    int has_js_runtimes = 0;
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--js-runtimes") == 0 || strncmp(argv[i], "--js-runtimes=", 14) == 0) {
+            has_js_runtimes = 1;
+            break;
+        }
+    }
+    if (native_lib_dir[0] != '\0') {
+        snprintf(qjs_path, sizeof(qjs_path), "%s/libqjs.so", native_lib_dir);
+        if (access(qjs_path, F_OK) != 0) {
+            qjs_path[0] = '\0';
+        }
+    }
+
+    int extra_args = 0;
+    if (need_insert_script) extra_args += 1;
+    char qjs_arg[PATH_MAX + 16] = {0};
+    if (need_insert_script && !has_js_runtimes && qjs_path[0] != '\0') {
+        snprintf(qjs_arg, sizeof(qjs_arg), "quickjs:%s", qjs_path);
+        extra_args += 2; // --js-runtimes <qjs_arg>
+    }
+
+    int new_argc = argc + extra_args;
+    char **python_argv = malloc((new_argc + 1) * sizeof(char *));
+    if (!python_argv) return 1;
+
+    int idx = 0;
+    python_argv[idx++] = "python";
+    if (need_insert_script) {
+        python_argv[idx++] = script_path;
+        if (!has_js_runtimes && qjs_path[0] != '\0') {
+            python_argv[idx++] = "--js-runtimes";
+            python_argv[idx++] = qjs_arg;
+        }
+    }
+    for (int i = 1; i < argc; i++) {
+        python_argv[idx++] = argv[i];
+    }
+    python_argv[idx] = NULL;
+
+    int result = Py_BytesMain(new_argc, python_argv);
+    free(python_argv);
     return result;
 }

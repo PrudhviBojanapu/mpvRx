@@ -448,6 +448,11 @@ class App :
    */
   private fun prewarmPlaybackStartup() {
     applicationScope.launch {
+      runCatching {
+        val ytdlPrefs: app.gyrolet.mpvrx.preferences.YtdlPreferences = getKoin().get()
+        val subsPrefs: app.gyrolet.mpvrx.preferences.SubtitlesPreferences = getKoin().get()
+        app.gyrolet.mpvrx.ui.player.ytdlp.YtdlpManager.setupMpvOptions(this@App, ytdlPrefs, subsPrefs)
+      }.onFailure { error -> Log.e(TAG, "Failed to prewarm yt-dlp configuration", error) }
       runCatching { PlaybackSession.prewarmNativeCore(this@App) }
         .onFailure { error -> Log.e(TAG, "Failed to prewarm the libmpv core on launch", error) }
       runCatching { VideoCodecSupportInspector.hardwareDecoderCodecIds() }

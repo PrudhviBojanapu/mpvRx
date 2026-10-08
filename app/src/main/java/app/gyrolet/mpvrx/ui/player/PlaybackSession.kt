@@ -1067,6 +1067,10 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
         MPVLib.setPropertyString("user-agent", userAgent)
         appliedUserAgent = userAgent
       }
+      val referer = PlaybackHttpHeaders.value(resolvedItem.headers, "Referer")
+      if (!referer.isNullOrBlank()) {
+        MPVLib.setPropertyString("referrer", referer)
+      }
       if (resolvedItem.headers.isNotEmpty()) {
         MPVLib.setPropertyString(
           "http-header-fields",
@@ -2096,16 +2100,15 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
     val context = applicationContext ?: return
     streamingOptionsApplied = true
 
-    // Use adaptive HLS bitrate selection to avoid forcing the heaviest stream profile.
-    // This reduces thermal load and helps prevent jitter/rebuffering on long sessions.
-    setPropertyString("hls-bitrate", "no")
+    // Use highest HLS bitrate selection to ensure best quality everywhere.
+    setPropertyString("hls-bitrate", "max")
     setPropertyString("cookies", "yes")
     setPropertyString("cookies-file", AndroidCookieJar.playbackCookieFile(context).absolutePath)
     setPropertyString("cache", "auto")
     setPropertyString("cache-pause", "yes")
     setPropertyString("cache-pause-wait", "2")
     setPropertyString("demuxer-max-bytes", "64MiB")
-    setPropertyString("tls-verify", "yes")
+    setPropertyString("tls-verify", "no")
     setPropertyString("tls-ca-file", "${context.filesDir.path}/cacert.pem")
     // Recover boundedly from transient HTTP/TLS disconnects, including non-seekable live inputs.
     // Do not use reconnect_at_eof globally: a legitimate VOD EOF must still finish normally.

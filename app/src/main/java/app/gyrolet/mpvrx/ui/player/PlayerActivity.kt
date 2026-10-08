@@ -393,6 +393,7 @@ class PlayerActivity :
     val legacyMediaIdentifier: String? = null,
     val ytdlFormat: String? = null,
     val positionRestoreOverride: PlaybackPositionRestoreOverride? = null,
+    val disableYtdl: Boolean = false,
   )
 
   private var pendingSavedPlaylistSelection: SavedPlaylistSelection? = null
@@ -5829,6 +5830,7 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
       isTorrentSource(requestedSource, sourceIntent.type) || isTorrentSource(playableUri, sourceIntent.type)
     mediaLoadJob =
       lifecycleScope.launch(mediaLoadDispatcher) {
+        var activePlaybackItem: PlaybackItem? = null
         try {
           val bookId = sourceIntent.getLongExtra(AudiobookPlayback.EXTRA_BOOK_ID, -1L)
           if (sourceIntent.getBooleanExtra("internal_launch", false) && bookId > 0 && requestedQueueItem?.audiobook?.bookId != bookId) {
@@ -6004,6 +6006,7 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
               ?.takeIf { it.isNotBlank() }
               ?.let { artwork -> item.copy(artworkUri = artwork) }
               ?: item
+          activePlaybackItem = itemWithArtwork
           if (requestedQueueItem == null || isTorrentRequest) {
             val torrentSeries = torrentResult?.takeIf { it.playableFiles.size > 1 }
             if (torrentSeries != null) {
@@ -6052,17 +6055,43 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
               commitMediaRequest(requestGeneration) { PlaybackSession.replaceQueue(listOf(itemWithArtwork), 0) }
             }
           }
-          // libmpv reads the cookie file as it opens the stream, so this is the last join before loadfile.
           cookieExportDeferred?.await()
+          val intentYtdlFormat = sourceIntent.getStringExtra("ytdl_format")
           issuePlaybackLoad(
             item = itemWithArtwork,
             attempt = 0,
             requestGeneration = requestGeneration,
             legacyMediaIdentifier = requestedLegacyMediaIdentifier.takeUnless { isTorrentRequest },
+            ytdlFormat = intentYtdlFormat,
           )
         } catch (error: CancellationException) {
           throw error
         } catch (error: Exception) {
+          val fallbackItem = activePlaybackItem
+          if (fallbackItem != null) {
+            val hadDirect = sourceIntent.getBooleanExtra("direct_media", false) || sourceIntent.getStringExtra("ytdl") == "no"
+            Log.w(TAG, "Failed initial playback load, attempting inverted ytdl mode fallback", error)
+            try {
+              if (hadDirect) {
+                PlaybackSession.setIntegrationOptionString("ytdl", "yes")
+              } else {
+                PlaybackSession.setIntegrationOptionString("ytdl", "no")
+              }
+              issuePlaybackLoad(
+                item = fallbackItem,
+                attempt = 1,
+                requestGeneration = requestGeneration,
+                legacyMediaIdentifier = requestedLegacyMediaIdentifier.takeUnless { isTorrentRequest },
+                ytdlFormat = null,
+                disableYtdl = !hadDirect,
+              )
+              return@launch
+            } catch (fallbackError: CancellationException) {
+              throw fallbackError
+            } catch (fallbackError: Exception) {
+              Log.e(TAG, "Fallback load also failed", fallbackError)
+            }
+          }
           cancelPlaybackLoadRecovery()
           playWhenFileLoaded = false
           isAdvancingAtEof = false
@@ -6089,6 +6118,7 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
     legacyMediaIdentifier: String? = null,
     ytdlFormat: String? = null,
     positionRestoreOverride: PlaybackPositionRestoreOverride? = null,
+    disableYtdl: Boolean = false,
   ) {
     ensureCurrentMediaRequest(requestGeneration)
     val scriptRestore = if (intent.getStringExtra(EXTRA_SCRIPT_RESTORE_MEDIA_ID) == item.stableId) {
@@ -6116,9 +6146,13 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
         resumeMode == ResumePlaybackMode.Always &&
         !item.isDefinitelyAudioOnly()
     ensureCurrentMediaRequest(requestGeneration)
+    val intentDirectMedia = disableYtdl ||
+      intent.getBooleanExtra("direct_media", false) ||
+      intent.getStringExtra("ytdl") == "no"
     val ytdlpSource =
-      sequenceOf(item.originalUri, item.playableUri)
-        .firstOrNull(YtdlpManager::requiresYtdlp)
+      if (intentDirectMedia) null else
+        sequenceOf(item.originalUri, item.playableUri)
+          .firstOrNull(YtdlpManager::requiresYtdlp)
     val requiresYtdlp = ytdlpSource != null
     // The yt-dlp runtime prep (multi-MB runtime copy plus a Python subprocess for web sources),
     // the previous-session stop wait and the resume-position database read have no ordering
@@ -6178,7 +6212,10 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
               if (requestGeneration != mediaRequestGeneration) {
                 -1L
               } else {
-                if (requiresYtdlp) PlaybackSession.setPropertyString("ytdl-format", ytdlFormat.orEmpty())
+                if (requiresYtdlp) {
+                  val effectiveFormat = ytdlFormat?.takeIf { it.isNotBlank() } ?: "bestvideo+bestaudio/best"
+                  PlaybackSession.setPropertyString("ytdl-format", effectiveFormat)
+                }
                 nativeLoad()
               }
             }
@@ -6207,6 +6244,7 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
         legacyMediaIdentifier = legacyMediaIdentifier,
         ytdlFormat = ytdlFormat,
         positionRestoreOverride = effectivePositionOverride,
+        disableYtdl = disableYtdl,
       )
     withContext(Dispatchers.Main) { armPlaybackLoadRecovery(request) }
   }
@@ -6290,13 +6328,24 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
           ) {
             return@launch
           }
+          val nextDisableYtdl = if (request.attempt == 0) !request.disableYtdl else request.disableYtdl
+          val nextItem = if (request.attempt >= 1 && intent.hasExtra("fallback_url")) {
+            val fallback = intent.getStringExtra("fallback_url").orEmpty()
+            if (fallback.isNotBlank() && fallback != request.item.playableUri) {
+              Log.i(TAG, "Retrying with fallback URL: $fallback")
+              request.item.copy(playableUri = fallback, originalUri = fallback)
+            } else request.item
+          } else {
+            request.item
+          }
           issuePlaybackLoad(
-            item = request.item,
+            item = nextItem,
             attempt = request.attempt + 1,
             requestGeneration = request.requestGeneration,
             legacyMediaIdentifier = request.legacyMediaIdentifier,
             ytdlFormat = request.ytdlFormat,
             positionRestoreOverride = request.positionRestoreOverride,
+            disableYtdl = nextDisableYtdl,
           )
         } catch (cancellation: CancellationException) {
           throw cancellation

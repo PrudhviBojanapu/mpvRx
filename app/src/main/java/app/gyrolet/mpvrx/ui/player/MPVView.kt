@@ -399,6 +399,7 @@ class MPVView(
 
     setupSubtitlesOptions()
     setupAudioOptions()
+    setupYtdlpOptions()
   }
 
   /**
