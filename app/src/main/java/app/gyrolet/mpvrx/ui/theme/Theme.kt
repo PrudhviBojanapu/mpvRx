@@ -287,7 +287,7 @@ fun MpvrxTheme(
   val useSystemFont by preferences.useSystemFont.collectAsState()
   val googleFontFamily by preferences.googleFontFamily.collectAsState()
   val googleFontRevision by preferences.googleFontRevision.collectAsState()
-  val googleFontsRepository = koinInject<GoogleFontsRepository>()
+  val googleFontsRepository = org.koin.core.context.GlobalContext.getOrNull()?.getOrNull<GoogleFontsRepository>()
   val darkTheme = isSystemInDarkTheme()
   val configuration = LocalConfiguration.current
   val context = LocalContext.current
@@ -301,7 +301,7 @@ fun MpvrxTheme(
         .takeIf { it.isNotBlank() }
         ?.let {
           googleFontsRepository
-            .fontFile(it)
+            ?.fontFile(it)
             ?.let { file ->
               runCatching { FontFamily(Typeface.createFromFile(file)) }
                 .onFailure { Log.w("MpvrxTheme", "Could not load downloaded app font", it) }

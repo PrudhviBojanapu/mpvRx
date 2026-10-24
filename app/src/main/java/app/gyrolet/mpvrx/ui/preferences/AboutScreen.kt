@@ -1065,13 +1065,6 @@ internal val OPEN_SOURCE_LIBRARIES =
       url = "https://github.com/chrisbanes/haze",
     ),
     OpenSourceLibrary(
-      name = "Backdrop",
-      artifact = "io.github.kyant0:backdrop",
-      descriptionRes = R.string.oss_backdrop_description,
-      license = "Apache-2.0",
-      url = "https://github.com/Kyant0/AndroidLiquidGlass",
-    ),
-    OpenSourceLibrary(
       name = "Telephoto",
       artifact = "me.saket.telephoto:zoomable",
       descriptionRes = R.string.oss_telephoto_description,

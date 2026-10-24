@@ -9,8 +9,9 @@
 
 package app.gyrolet.mpvrx.ui.player.controls.components
 
+
+import androidx.compose.foundation.shape.CircleShape
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
-import app.gyrolet.mpvrx.ui.liquidglass.liquidGlassActive
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
@@ -66,20 +67,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import app.gyrolet.mpvrx.R
 import app.gyrolet.mpvrx.preferences.preference.collectAsState
-import app.gyrolet.mpvrx.ui.liquidglass.LiquidButton
-import app.gyrolet.mpvrx.ui.liquidglass.LocalKyantPlayerBackdrop
-import app.gyrolet.mpvrx.ui.liquidglass.drawCapsuleTint
-import app.gyrolet.mpvrx.ui.liquidglass.liquidGlassEffects
 import app.gyrolet.mpvrx.ui.liquidglass.outsideShadow
-import app.gyrolet.mpvrx.ui.liquidglass.rememberLiquidGlassSettings
 import app.gyrolet.mpvrx.ui.theme.AppMotion
 import com.composables.icons.materialsymbols.MaterialSymbols
 import com.composables.icons.materialsymbols.roundedfilled.Replay
-import com.kyant.backdrop.drawBackdrop
-import com.kyant.backdrop.highlight.Highlight
-import com.kyant.backdrop.shadow.InnerShadow
-import com.kyant.backdrop.shadow.Shadow
-import com.kyant.shapes.Capsule
 import `is`.xyz.mpv.Utils
 import kotlin.math.roundToInt
 import app.gyrolet.mpvrx.ui.player.PlayerActivity
@@ -158,53 +149,11 @@ fun PlayerUpdate(
   content: @Composable () -> Unit = {},
 ) {
   val controlsOffset = rememberPlayerUpdateOffset()
-  val backdrop = LocalKyantPlayerBackdrop.current
-  val glassSettings = rememberLiquidGlassSettings()
-  val glassEnabled = liquidGlassActive()
-  val reducedMotion = AppMotion.shouldReduceMotion()
-  val renderGlass = glassEnabled && backdrop != null
-  // Capture composable-context colors before entering DrawScope lambdas
   val pillColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.55f)
   val contentColor = MaterialTheme.colorScheme.onSurface
-
-  val glassModifier =
-    if (renderGlass) {
-      Modifier
-        .graphicsLayer { clip = false }
-        .drawBackdrop(
-          backdrop = checkNotNull(backdrop),
-          shape = { Capsule() },
-          effects = {
-            liquidGlassEffects(
-              glassSettings,
-              blurRadius = 8.dp.toPx(),
-              refractionHeight = 14.dp.toPx(),
-              refractionAmount = 22.dp.toPx(),
-              vibrant = true,
-              refractionEnabled = !reducedMotion,
-            )
-          },
-          highlight = {
-            glassSettings.highlight(
-              Highlight.Ambient.copy(alpha = if (reducedMotion) 0.28f else 0.52f),
-            )
-          },
-          shadow = {
-            Shadow(radius = 8.dp, color = Color.Black.copy(alpha = 0.16f))
-          },
-          innerShadow = {
-            InnerShadow(radius = 2.dp, color = Color.White.copy(alpha = 0.14f))
-          },
-          onDrawSurface = {
-            drawCapsuleTint(glassSettings.surfaceColor(pillColor))
-          },
-        )
-    } else {
-      Modifier
-        .outsideShadow(Capsule(), radius = 8.dp)
-        .clip(Capsule())
-        .background(pillColor)
-    }
+  val glassModifier = Modifier
+    .clip(CircleShape)
+    .background(pillColor)
 
   CompositionLocalProvider(LocalContentColor provides contentColor) {
     Box(

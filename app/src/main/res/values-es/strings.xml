@@ -2311,7 +2311,6 @@ Reinicia la aplicación para que se apliquen todos los cambios.</string>
   <string name="playlist_zip_import_failed">No se pudo añadir el archivo ZIP. Selecciona un ZIP legible, con acceso aleatorio y que contenga archivos de audio o vídeo.</string>
   <string name="playlist_zip_read_only">ZIP (solo lectura)</string>
   <string name="oss_haze_description">Desenfoque progresivo para superficies de navegación translúcidas.</string>
-  <string name="oss_backdrop_description">Desenfoque y refracción en Compose para superficies Liquid Glass.</string>
   <string name="oss_telephoto_description">Gestos de zoom y desplazamiento para el visor de imágenes.</string>
   <string name="oss_androidx_lifecycle_description">Estado y ViewModel conscientes del ciclo de vida para pantallas Compose.</string>
   <string name="oss_leakcanary_description">Detecta fugas de memoria en compilaciones de depuración.</string>

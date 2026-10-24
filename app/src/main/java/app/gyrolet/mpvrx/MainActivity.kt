@@ -70,9 +70,6 @@ import app.gyrolet.mpvrx.preferences.AppearancePreferences
 import app.gyrolet.mpvrx.preferences.PlayerPreferences
 import app.gyrolet.mpvrx.preferences.preference.collectAsState
 import app.gyrolet.mpvrx.presentation.Screen
-import app.gyrolet.mpvrx.presentation.components.ProvideLiquidGlassBackdrop
-import app.gyrolet.mpvrx.presentation.components.captureLiquidGlassBackdrop
-import app.gyrolet.mpvrx.presentation.components.rememberLiquidGlassBackdrop
 import app.gyrolet.mpvrx.ui.browser.MainScreen
 import app.gyrolet.mpvrx.ui.browser.LocalNavigationBarHeight
 import app.gyrolet.mpvrx.ui.browser.NavigationBarState
@@ -245,7 +242,7 @@ open class MainActivity : AppCompatActivity() {
       // See issue 1.6 in the startup audit.
       LaunchedEffect(networkStreamingEnabled) {
         if (networkStreamingEnabled) {
-          (application as? App)?.autoConnectNetworksOnce()
+          (application as? App)?.autoConnectNetworksOnce() ?: App.autoConnectNetworksOnce()
         }
       }
 
@@ -688,8 +685,7 @@ open class MainActivity : AppCompatActivity() {
       }
 
       if (hasNavEntries) {
-        val miniPlayerBackdrop = rememberLiquidGlassBackdrop()
-        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
           val density = LocalDensity.current
           val layoutDirection = LocalLayoutDirection.current
           val safeInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
@@ -722,7 +718,7 @@ open class MainActivity : AppCompatActivity() {
                   .fillMaxSize()
                   .coveredByInAppMusicSheet(musicSheet)
                   .playerSheetBackdrop()
-                  .captureLiquidGlassBackdrop(miniPlayerBackdrop, liquidGlassEnabled),
+                  ,
               backStack = typedBackstack,
               opaqueFrom = app.gyrolet.mpvrx.ui.preferences.PreferencesScreen,
               onBack = {
@@ -782,14 +778,9 @@ open class MainActivity : AppCompatActivity() {
                 androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.96f),
               ),
           )
-          ProvideLiquidGlassBackdrop(
-            backdrop = miniPlayerBackdrop,
-            enabled = liquidGlassEnabled,
-          ) {
-            MiniPlayer(
-              modifier = miniPlayerModifier.inAppMusicSheetMiniSource(musicSheet, AppShapeScale.largeIncreased),
-            )
-          }
+          MiniPlayer(
+            modifier = miniPlayerModifier.inAppMusicSheetMiniSource(musicSheet, AppShapeScale.largeIncreased),
+          )
           PlayerSheetTransitionOverlay(PlayerSheetDestination.MINI, Modifier.matchParentSize())
         }
       }

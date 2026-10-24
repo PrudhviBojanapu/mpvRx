@@ -2557,7 +2557,6 @@
   <string name="playlist_zip_import_failed">Could not add ZIP archive. Select a readable, seekable ZIP containing audio or video files.</string>
   <string name="playlist_zip_read_only">ZIP (read-only)</string>
   <string name="oss_haze_description">Progressive blur for translucent navigation surfaces.</string>
-  <string name="oss_backdrop_description">Compose blur and refraction for Liquid Glass surfaces.</string>
   <string name="oss_telephoto_description">Zoom and pan gestures for the image viewer.</string>
   <string name="oss_androidx_lifecycle_description">Lifecycle-aware state and ViewModel support for Compose screens.</string>
   <string name="oss_leakcanary_description">Detects memory leaks in debug builds.</string>

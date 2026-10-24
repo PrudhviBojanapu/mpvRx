@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.gyrolet.mpvrx.ui.icons.AppIcon
 import app.gyrolet.mpvrx.ui.icons.Icon
-import com.kyant.backdrop.Backdrop
 
 object PlayerLiquidTokens {
   val ButtonSize: Dp = 40.dp
@@ -54,7 +53,7 @@ fun LiquidIconButton(
   iconSize: Dp = PlayerLiquidTokens.IconSize,
   spacing: Dp = 8.dp,
   useGlass: Boolean = true,
-  backdrop: Backdrop? = LocalKyantPlayerBackdrop.current,
+  backdrop: Any? = null,
 ) {
   LiquidPillButton(
     onClick = onClick,
@@ -89,7 +88,7 @@ fun LiquidPillButton(
   spacing: Dp = 8.dp,
   horizontalPadding: Dp = 16.dp,
   useGlass: Boolean = true,
-  backdrop: Backdrop? = LocalKyantPlayerBackdrop.current,
+  backdrop: Any? = null,
   onLongClickLabel: String? = null,
   content: @Composable RowScope.() -> Unit,
 ) {

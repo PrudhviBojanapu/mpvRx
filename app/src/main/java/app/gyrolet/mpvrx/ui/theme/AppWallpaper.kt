@@ -49,9 +49,6 @@ import app.gyrolet.mpvrx.ui.background.AnimatedBackground
 import app.gyrolet.mpvrx.ui.background.BackdropGate
 import app.gyrolet.mpvrx.ui.background.BackgroundType
 import app.gyrolet.mpvrx.ui.background.rememberActiveBackground
-import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.backdrops.layerBackdrop
-import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
@@ -59,7 +56,7 @@ import org.koin.compose.koinInject
 val LocalAppWallpaperActive = compositionLocalOf { false }
 
 // Only the background is captured here; content and glass consumers remain outside this layer.
-internal val LocalAppBackgroundBackdrop = staticCompositionLocalOf<Backdrop?> { null }
+internal val LocalAppBackgroundBackdrop = staticCompositionLocalOf<Any?> { null }
 
 /** True when the light theme is showing a dark wallpaper, so text placed directly on it must be light. */
 val LocalLightTextOnWallpaper = compositionLocalOf { false }
@@ -88,10 +85,7 @@ fun AppWallpaperHost(content: @Composable () -> Unit) {
   val wallpaperScaleMode by preferences.customWallpaperScaleMode.collectAsState()
   val wallpaperBlur by preferences.customWallpaperBlur.collectAsState()
   val wallpaperAlpha by preferences.customWallpaperAlpha.collectAsState()
-  val liquidGlassEnabled by preferences.liquidGlassEnabled.collectAsState()
   val legacyNavigationBar by preferences.legacyNavigationBar.collectAsState()
-  val backgroundBackdrop =
-    if (liquidGlassEnabled && !legacyNavigationBar) rememberLayerBackdrop() else null
   // Hold the UI back until the first wallpaper load finishes, so the app doesn't flash a plain
   // background and then pop the wallpaper in on launch.
   var initialWallpaperResolved by remember { mutableStateOf(wallpaperUri.isBlank()) }
@@ -148,8 +142,7 @@ fun AppWallpaperHost(content: @Composable () -> Unit) {
       modifier =
         Modifier
           .matchParentSize()
-          .then(if (backgroundBackdrop != null) Modifier.layerBackdrop(backgroundBackdrop) else Modifier)
-          .background(MaterialTheme.colorScheme.background),
+                    .background(MaterialTheme.colorScheme.background),
     ) {
       wallpaper?.let { bitmap ->
         // Fade the wallpaper in together with the content so the launch hands off from the splash
@@ -182,7 +175,7 @@ fun AppWallpaperHost(content: @Composable () -> Unit) {
     }
     CompositionLocalProvider(
       LocalAppWallpaperActive provides (wallpaperActive || animationShown),
-      LocalAppBackgroundBackdrop provides backgroundBackdrop,
+      LocalAppBackgroundBackdrop provides null,
       LocalLightTextOnWallpaper provides lightTextOnWallpaper,
     ) {
       Box(modifier = Modifier.fillMaxSize().graphicsLayer { alpha = contentAlpha }) {

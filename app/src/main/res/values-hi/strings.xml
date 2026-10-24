@@ -2219,7 +2219,6 @@
   <string name="playlist_zip_import_failed">ZIP संग्रह नहीं जोड़ा जा सका। पढ़ने योग्य, सीक करने योग्य और ऑडियो या वीडियो फ़ाइलों वाला ZIP चुनें।</string>
   <string name="playlist_zip_read_only">ZIP (केवल पढ़ने योग्य)</string>
   <string name="oss_haze_description">पारदर्शी नेविगेशन सतहों के लिए क्रमिक धुंधलापन।</string>
-  <string name="oss_backdrop_description">Liquid Glass सतहों के लिए Compose धुंधलापन और अपवर्तन।</string>
   <string name="oss_telephoto_description">चित्र दर्शक के लिए ज़ूम और पैन जेस्चर।</string>
   <string name="oss_androidx_lifecycle_description">Compose स्क्रीन के लिए लाइफ़साइकल-जागरूक स्थिति और ViewModel समर्थन।</string>
   <string name="oss_leakcanary_description">डिबग बिल्ड में मेमोरी लीक का पता लगाता है।</string>

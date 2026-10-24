@@ -2304,7 +2304,6 @@
   <string name="playlist_zip_import_failed">ZIP アーカイブを追加できませんでした。読み取り可能でシークに対応し、音声または動画を含む ZIP を選択してください。</string>
   <string name="playlist_zip_read_only">ZIP（読み取り専用）</string>
   <string name="oss_haze_description">半透明ナビゲーション面のプログレッシブぼかし。</string>
-  <string name="oss_backdrop_description">Liquid Glass 面向けの Compose ぼかしと屈折。</string>
   <string name="oss_telephoto_description">画像ビューアーのズームとパン操作。</string>
   <string name="oss_androidx_lifecycle_description">Compose 画面向けのライフサイクル対応状態と ViewModel。</string>
   <string name="oss_leakcanary_description">デバッグビルドのメモリリークを検出します。</string>

@@ -18,47 +18,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import app.gyrolet.mpvrx.ui.theme.AppMotion
-import app.gyrolet.mpvrx.ui.liquidglass.drawShapeTint
-import app.gyrolet.mpvrx.ui.liquidglass.liquidGlassEffects
 import app.gyrolet.mpvrx.ui.liquidglass.outsideShadow
-import app.gyrolet.mpvrx.ui.liquidglass.rememberLiquidGlassSettings
-import app.gyrolet.mpvrx.preferences.AppearancePreferences
-import app.gyrolet.mpvrx.preferences.preference.collectAsState
-import androidx.compose.runtime.getValue
-import org.koin.compose.koinInject
-import com.kyant.backdrop.backdrops.LayerBackdrop
-import com.kyant.backdrop.backdrops.layerBackdrop
-import com.kyant.backdrop.backdrops.rememberLayerBackdrop
-import com.kyant.backdrop.drawBackdrop
-import com.kyant.backdrop.highlight.Highlight
-import com.kyant.backdrop.shadow.InnerShadow
-import com.kyant.backdrop.shadow.Shadow
-import com.kyant.shapes.Capsule
-import com.kyant.shapes.RoundedRectangle
 
-typealias LiquidGlassBackdrop = LayerBackdrop
+typealias LiquidGlassBackdrop = Any
 
 internal val LocalLiquidGlassBackdrop = staticCompositionLocalOf<LiquidGlassBackdrop?> { null }
 
 @Composable
-fun rememberLiquidGlassBackdrop(): LiquidGlassBackdrop = rememberLayerBackdrop()
+fun rememberLiquidGlassBackdrop(): LiquidGlassBackdrop? = null
 
 fun Modifier.captureLiquidGlassBackdrop(
   backdrop: LiquidGlassBackdrop?,
   enabled: Boolean = true,
-): Modifier = if (enabled && backdrop != null) layerBackdrop(backdrop) else this
+): Modifier = this
 
 @Composable
 fun ProvideLiquidGlassBackdrop(
-  backdrop: LiquidGlassBackdrop,
+  backdrop: LiquidGlassBackdrop?,
   enabled: Boolean = true,
   content: @Composable () -> Unit,
 ) {
-  CompositionLocalProvider(
-    LocalLiquidGlassBackdrop provides backdrop.takeIf { enabled },
-    content = content,
-  )
+  content()
 }
 
 enum class LiquidGlassStyle {
@@ -66,7 +46,6 @@ enum class LiquidGlassStyle {
   Navigation,
 }
 
-/** Kyant-backed liquid glass surface shared by mini players and floating action bars. */
 @Composable
 fun LiquidGlassSurface(
   shape: Shape,
@@ -75,76 +54,19 @@ fun LiquidGlassSurface(
   glassColor: Color,
   fallbackColor: Color,
   contentColor: Color = MaterialTheme.colorScheme.onSurface,
-  backdrop: LiquidGlassBackdrop? = LocalLiquidGlassBackdrop.current,
+  backdrop: LiquidGlassBackdrop? = null,
   glowStrength: Float = 1f,
   cornerRadius: Dp? = null,
   content: @Composable BoxScope.() -> Unit,
 ) {
-  val glassSettings = rememberLiquidGlassSettings()
-  val preferences = koinInject<AppearancePreferences>()
-  val glassEnabled by preferences.liquidGlassEnabled.collectAsState()
-  val renderGlass = glassEnabled && backdrop != null
-  val reducedMotion = AppMotion.shouldReduceMotion()
-  val blurRadius = when (style) {
-    LiquidGlassStyle.MiniPlayer -> 12.dp
-    LiquidGlassStyle.Navigation -> 8.dp
-  }
-  val refractionHeight = when (style) {
-    LiquidGlassStyle.MiniPlayer -> 18.dp
-    LiquidGlassStyle.Navigation -> 14.dp
-  }
-  val refractionAmount = when (style) {
-    LiquidGlassStyle.MiniPlayer -> 26.dp
-    LiquidGlassStyle.Navigation -> 22.dp
-  }
   val shadowElevation: Dp = if (style == LiquidGlassStyle.MiniPlayer) 10.dp else 8.dp
-  val glassShape =
-    when {
-      cornerRadius != null -> RoundedRectangle(cornerRadius)
-      style == LiquidGlassStyle.MiniPlayer -> shape
-      else -> Capsule()
-    }
-
-  val surfaceModifier =
-    if (renderGlass) {
-      modifier
-        .drawBackdrop(
-          backdrop = checkNotNull(backdrop),
-          shape = { glassShape },
-          effects = {
-            liquidGlassEffects(
-              glassSettings, blurRadius.toPx(), refractionHeight.toPx(), refractionAmount.toPx(),
-              vibrant = true,
-              refractionEnabled = !reducedMotion,
-            )
-          },
-          highlight = {
-            glassSettings.highlight(Highlight.Ambient.copy(alpha = (if (reducedMotion) 0.28f else 0.52f) * glowStrength))
-          },
-          shadow = {
-            Shadow(
-              radius = shadowElevation,
-              color = Color.Black.copy(alpha = 0.16f * glowStrength),
-            )
-          },
-          innerShadow = {
-            InnerShadow(
-              radius = 2.dp,
-              color = Color.White.copy(alpha = 0.14f * glowStrength),
-            )
-          },
-          onDrawSurface = {
-            drawShapeTint(glassShape, glassSettings.surfaceColor(glassColor))
-          },
-        )
-    } else {
-      modifier
+  CompositionLocalProvider(LocalContentColor provides contentColor) {
+    Box(
+      modifier = modifier
         .outsideShadow(shape, radius = shadowElevation)
         .clip(shape)
-        .background(fallbackColor)
-    }
-
-  CompositionLocalProvider(LocalContentColor provides contentColor) {
-    Box(modifier = surfaceModifier, content = content)
+        .background(fallbackColor),
+      content = content,
+    )
   }
 }

@@ -96,7 +96,6 @@ import app.gyrolet.mpvrx.ui.player.controls.components.rememberTvInitialFocusReq
 import app.gyrolet.mpvrx.ui.player.controls.components.tvFocusGroup
 import app.gyrolet.mpvrx.ui.player.controls.components.tvInitialFocus
 import androidx.compose.ui.focus.focusProperties
-import app.gyrolet.mpvrx.ui.liquidglass.LocalKyantPlayerBackdrop
 import app.gyrolet.mpvrx.ui.liquidglass.playerGlassSurface
 import app.gyrolet.mpvrx.ui.liquidglass.LocalPlayerGlassSurfaceActive
 import app.gyrolet.mpvrx.ui.theme.AppMotion
@@ -125,8 +124,7 @@ fun PlayerSheet(
 ) {
   val scope = rememberCoroutineScope()
   val liquidGlassEnabled = liquidGlassActive()
-  val playerBackdrop = LocalKyantPlayerBackdrop.current
-  val isFrosted = useFrostedGlass && liquidGlassEnabled
+    val isFrosted = useFrostedGlass && liquidGlassEnabled
   // TV/remote: request focus INTO the sheet content when it opens, so the D-pad can navigate/select
   // its rows instead of being trapped behind the (hidden) first-layer player controls. Ported from
   // mpvEx-TV; rememberTvInitialFocusRequester retries across the entrance animation and is TV-gated.
@@ -238,7 +236,7 @@ fun PlayerSheet(
     val expressiveContainerColor =
       baseContainerColor.copy(alpha = 1f)
     val glassModifier = Modifier.playerGlassSurface(
-      backdrop = playerBackdrop.takeIf { isFrosted },
+      backdrop = null,
       shape = sheetShape,
       containerColor = baseContainerColor,
       enabled = isFrosted,

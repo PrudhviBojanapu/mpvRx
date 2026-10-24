@@ -6,7 +6,6 @@ import com.android.build.api.instrumentation.InstrumentationScope
 import com.android.build.api.variant.FilterConfiguration
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.objectweb.asm.ClassVisitor
-import org.objectweb.asm.Opcodes
 import org.objectweb.asm.commons.ClassRemapper
 import org.objectweb.asm.commons.Remapper
 import java.util.Properties
@@ -19,7 +18,7 @@ abstract class SmbRpcExceptionCompatibility : AsmClassVisitorFactory<Instrumenta
     classData.className.startsWith("com.rapid7.client.dcerpc.")
 
   override fun createClassVisitor(classContext: ClassContext, nextClassVisitor: ClassVisitor): ClassVisitor =
-    ClassRemapper(nextClassVisitor, object : Remapper(Opcodes.ASM9) {
+    ClassRemapper(nextClassVisitor, object : Remapper() {
       override fun map(internalName: String): String =
         if (internalName == "java/rmi/UnmarshalException") {
           "app/gyrolet/mpvrx/data/network/client/SmbRpcDecodeException"
@@ -37,7 +36,6 @@ val localProperties =
 
 val targetAbiProp = project.findProperty("targetAbi")?.toString() ?: localProperties.getProperty("targetAbi")
 val enableX86 = project.findProperty("enableX86") != "false"
-val isExperimentalBuild = project.findProperty("experimentalBuild")?.toString()?.toBoolean() == true
 val x86Abis = if (enableX86) listOf("x86", "x86_64") else emptyList()
 val activeAbis =
   if (!targetAbiProp.isNullOrBlank()) {
@@ -45,35 +43,34 @@ val activeAbis =
   } else {
     listOf("arm64-v8a", "armeabi-v7a") + x86Abis
   }
-val universalOnlyDistributions = setOf("noVulkan", "fongmi", "playstore")
-// Distributions outside Google Play. Play forbids downloaded executable code (yt-dlp) and torrent
-// streaming, so only these flavors enable yt-dlp and ship yt-dlp and libtorrent native payloads.
-val sideloadDistributions = setOf("standard", "noVulkan", "fongmi")
-// AGP cannot build an app bundle while ABI splits produce multiple APKs (issuetracker 402800800).
-val isBundleBuild =
-  gradle.startParameter.taskNames.any { it.substringAfterLast(':').startsWith("bundle") }
-val releaseVersionCode = 301
+val universalOnlyDistributions = setOf("noVulkan", "fongmi")
+val releaseVersionCode = 272
 val versionCodeBandSize = 10_000
 val stableVersionCode = releaseVersionCode * versionCodeBandSize + (versionCodeBandSize - 1)
 val previewVersionCode =
   (releaseVersionCode + 1) * versionCodeBandSize +
     (getCommitCount().toIntOrNull() ?: 1).coerceIn(1, versionCodeBandSize - 2)
 
+val isStandalone = (rootProject.name != "MyAioApp")
+
 plugins {
-  alias(libs.plugins.android.application)
-  alias(libs.plugins.kotlin.compose.compiler)
+  alias(libs.plugins.androidLibrary)
+  id("org.jetbrains.kotlin.android")
+  alias(libs.plugins.composeCompiler)
   alias(libs.plugins.kotlinx.serialization)
   alias(libs.plugins.ksp)
   alias(libs.plugins.room)
   alias(libs.plugins.ktlint)
 }
 
-androidComponents {
-  onVariants(selector().all()) { variant ->
-    variant.instrumentation.transformClassesWith(
-      SmbRpcExceptionCompatibility::class.java,
-      InstrumentationScope.ALL,
-    ) {}
+if (isStandalone) {
+  androidComponents {
+    onVariants(selector().all()) { variant ->
+      variant.instrumentation.transformClassesWith(
+        SmbRpcExceptionCompatibility::class.java,
+        InstrumentationScope.ALL,
+      ) {}
+    }
   }
 }
 
@@ -83,20 +80,20 @@ android {
   ndkVersion = "27.3.13750724"
 
   defaultConfig {
-    applicationId = "app.gyrolet.mpvrx"
     minSdk = 26
-    targetSdk = 36
-    // Stable occupies the top of its version band. Preview uses the next band's commit-count
-    // offset, so Stable -> Preview -> newer Preview -> next Stable is always an Android upgrade.
-    versionCode = stableVersionCode
-    versionName = "3.0.1"
 
     vectorDrawables {
       useSupportLibrary = true
     }
 
+    buildConfigField("String", "VERSION_NAME", "\"2.7.2\"")
+    buildConfigField("int", "VERSION_CODE", stableVersionCode.toString())
+    buildConfigField("String", "APPLICATION_ID", "\"app.myaioapp\"")
     buildConfigField("String", "GIT_SHA", "\"${getCommitSha()}\"")
     buildConfigField("int", "GIT_COUNT", getCommitCount())
+    buildConfigField("boolean", "ENABLE_YTDLP", "true")
+    buildConfigField("boolean", "IS_PLAY_STORE_BUILD", "false")
+    buildConfigField("boolean", "IS_EXPERIMENTAL_BUILD", "false")
 
     externalNativeBuild {
       cmake {
@@ -117,28 +114,16 @@ android {
   productFlavors {
     create("standard") {
       dimension = "distribution"
-      buildConfigField("boolean", "IS_PLAY_STORE_BUILD", "false")
-      buildConfigField("boolean", "ENABLE_UPDATE_FEATURE", "true")
+      buildConfigField("boolean", "ENABLE_UPDATE_FEATURE", "false")
       buildConfigField("String", "UPDATE_APK_VARIANT", "\"standard\"")
       buildConfigField("boolean", "SCOPED_STORAGE_ONLY", "false")
       buildConfigField("boolean", "MPV_SUPPORTS_VULKAN", "true")
       buildConfigField("boolean", "MPV_SUPPORTS_MEDIACODEC_VULKAN", "false")
     }
 
-    create("playstore") {
-      dimension = "distribution"
-      buildConfigField("boolean", "IS_PLAY_STORE_BUILD", "true")
-      buildConfigField("boolean", "ENABLE_UPDATE_FEATURE", "false")
-      buildConfigField("String", "UPDATE_APK_VARIANT", "\"standard\"")
-      buildConfigField("boolean", "SCOPED_STORAGE_ONLY", "true")
-      buildConfigField("boolean", "MPV_SUPPORTS_VULKAN", "true")
-      buildConfigField("boolean", "MPV_SUPPORTS_MEDIACODEC_VULKAN", "false")
-    }
-
     create("noVulkan") {
       dimension = "distribution"
-      buildConfigField("boolean", "IS_PLAY_STORE_BUILD", "false")
-      buildConfigField("boolean", "ENABLE_UPDATE_FEATURE", "true")
+      buildConfigField("boolean", "ENABLE_UPDATE_FEATURE", "false")
       buildConfigField("String", "UPDATE_APK_VARIANT", "\"no-vulkan\"")
       buildConfigField("boolean", "SCOPED_STORAGE_ONLY", "false")
       buildConfigField("boolean", "MPV_SUPPORTS_VULKAN", "false")
@@ -147,55 +132,18 @@ android {
 
     create("fongmi") {
       dimension = "distribution"
-      buildConfigField("boolean", "IS_PLAY_STORE_BUILD", "false")
-      buildConfigField("boolean", "ENABLE_UPDATE_FEATURE", "true")
+      buildConfigField("boolean", "ENABLE_UPDATE_FEATURE", "false")
       buildConfigField("String", "UPDATE_APK_VARIANT", "\"fongmi\"")
       buildConfigField("boolean", "SCOPED_STORAGE_ONLY", "false")
       buildConfigField("boolean", "MPV_SUPPORTS_VULKAN", "true")
       buildConfigField("boolean", "MPV_SUPPORTS_MEDIACODEC_VULKAN", "true")
-    }
-
-    configureEach {
-      val enableYtdlp = name in sideloadDistributions
-      buildConfigField("boolean", "ENABLE_YTDLP", enableYtdlp.toString())
-      externalNativeBuild {
-        cmake {
-          arguments += "-DMPVRX_ENABLE_YTDLP=${if (enableYtdlp) "ON" else "OFF"}"
-        }
-      }
-    }
-  }
-
-  sourceSets {
-    sideloadDistributions.forEach { flavor ->
-      getByName(flavor).apply {
-        assets.directories.add("src/ytdlp/assets")
-        jniLibs.directories.add("src/ytdlp/jniLibs")
-      }
-    }
-  }
-
-  dependenciesInfo {
-    includeInApk = false
-    includeInBundle = false
-  }
-
-  splits {
-    abi {
-      isEnable = !isBundleBuild
-      reset()
-      include(*activeAbis.toTypedArray())
-      isUniversalApk = activeAbis.size > 1
     }
   }
 
   buildTypes {
     named("release") {
       buildConfigField("boolean", "IS_PREVIEW_BUILD", "false")
-      buildConfigField("boolean", "IS_EXPERIMENTAL_BUILD", isExperimentalBuild.toString())
-      if (isExperimentalBuild) versionNameSuffix = "-exp.r${getCommitCount()}"
       isMinifyEnabled = true
-      isShrinkResources = true
       proguardFiles(
         getDefaultProguardFile("proguard-android-optimize.txt"),
         "proguard-rules.pro",
@@ -207,17 +155,11 @@ android {
 
     create("preview") {
       initWith(getByName("release"))
-      signingConfig = signingConfigs.getByName("debug")
       buildConfigField("boolean", "IS_PREVIEW_BUILD", "true")
-      buildConfigField("boolean", "IS_EXPERIMENTAL_BUILD", "false")
-      versionNameSuffix = "-beta.r${getCommitCount()}"
     }
 
     named("debug") {
       buildConfigField("boolean", "IS_PREVIEW_BUILD", "false")
-      buildConfigField("boolean", "IS_EXPERIMENTAL_BUILD", "false")
-      applicationIdSuffix = ".debug"
-      versionNameSuffix = "-${getCommitCount()}"
       resValue("string", "app_name", "mpvRx-Debug")
     }
   }
@@ -250,10 +192,12 @@ android {
     }
   }
 
-  @Suppress("UnstableApiUsage")
-  androidResources {
-    generateLocaleConfig = true
+  sourceSets {
+    named("main") {
+      jniLibs.srcDir("src/ytdlp/jniLibs")
+    }
   }
+
 
   lint {
     checkReleaseBuilds = false
@@ -261,43 +205,6 @@ android {
   }
 }
 
-androidComponents {
-  val abiCodes =
-    mutableMapOf(
-      "armeabi-v7a" to 1,
-      "arm64-v8a" to 2,
-    )
-  if (enableX86) {
-    abiCodes["x86"] = 3
-    abiCodes["x86_64"] = 4
-  }
-
-  onVariants { variant ->
-    val isUniversalOnly =
-      variant.productFlavors.any { (dimension, flavor) ->
-        dimension == "distribution" && flavor in universalOnlyDistributions
-      }
-
-    variant.outputs.forEach { output ->
-      val abi =
-        output.filters
-          .find { it.filterType == FilterConfiguration.FilterType.ABI }
-          ?.identifier
-
-      if (isUniversalOnly && abi != null) {
-        output.enabled.set(false)
-      }
-
-      val channelVersionCode =
-        if (variant.buildType == "preview" || (variant.buildType == "release" && isExperimentalBuild)) {
-          previewVersionCode
-        } else {
-          output.versionCode.orNull ?: stableVersionCode
-        }
-      output.versionCode.set(channelVersionCode * 10 + (abiCodes[abi] ?: 0))
-    }
-  }
-}
 
 kotlin {
   compilerOptions {
@@ -327,7 +234,6 @@ dependencies {
   implementation(libs.google.material)
   implementation(libs.androidx.ui.tooling.preview)
   debugImplementation(libs.androidx.ui.tooling)
-  debugImplementation(libs.leakcanary.android)
   implementation(libs.bundles.compose.navigation3)
   implementation(libs.androidx.appcompat)
   implementation(libs.androidx.core.ktx)
@@ -360,14 +266,12 @@ dependencies {
   implementation(libs.okhttp)
   implementation(libs.jsoup)
   implementation(libs.androidx.media3.common)
-  implementation(libs.androidx.media3.exoplayer.core)
-  implementation(libs.androidx.media3.exoplayer.hls)
   implementation(libs.androidx.media3.effect)
   implementation(libs.androidx.media3.transformer)
   implementation(platform(libs.sora.editor.bom))
   implementation(libs.sora.editor)
   implementation(libs.sora.language.textmate)
-  // implementation(libs.sora.oniguruma.native)
+  implementation(libs.libarchive.android)
 
   coreLibraryDesugaring(libs.desugar.jdk.libs)
 
@@ -375,10 +279,8 @@ dependencies {
   implementation(libs.fsaf)
   implementation(libs.mediainfo.lib)
   implementation(libs.androidx.profileinstaller)
-  implementation(libs.google.cast.framework)
 
   "standardImplementation"(variantOf(libs.mpvlib.standard) { artifactType("aar") })
-  "playstoreImplementation"(variantOf(libs.mpvlib.standard) { artifactType("aar") })
   "noVulkanImplementation"(variantOf(libs.mpvlib.no.vulkan) { artifactType("aar") })
   "fongmiImplementation"(variantOf(libs.mpvlib.fongmi) { artifactType("aar") })
 
@@ -396,25 +298,20 @@ dependencies {
   implementation(libs.sardine.android) {
     exclude(group = "xpp3", module = "xpp3")
   }
-  implementation(libs.libarchive.android)
+
   implementation(libs.nanohttpd)
   implementation(libs.reorderable)
   implementation(libs.androidx.biometric)
   implementation(libs.telephoto.zoomable)
   implementation(libs.haze.blur)
-  implementation(libs.kyant.backdrop)
-  implementation(libs.kyant.shapes)
 
-  // libtorrent4j's Java API compiles everywhere; its native library for every enabled APK ABI
-  // ships only where torrent streaming exists.
+  // libtorrent4j's Java API plus the native library for every enabled APK ABI.
   implementation(libs.libtorrent4j)
-  sideloadDistributions.forEach { flavor ->
-    "${flavor}Implementation"(libs.libtorrent4j.android.arm64)
-    "${flavor}Implementation"(libs.libtorrent4j.android.arm)
-    if (enableX86) {
-      "${flavor}Implementation"(libs.libtorrent4j.android.x86)
-      "${flavor}Implementation"(libs.libtorrent4j.android.x8664)
-    }
+  implementation(libs.libtorrent4j.android.arm64)
+  implementation(libs.libtorrent4j.android.arm)
+  if (enableX86) {
+    implementation(libs.libtorrent4j.android.x86)
+    implementation(libs.libtorrent4j.android.x8664)
   }
 }
 

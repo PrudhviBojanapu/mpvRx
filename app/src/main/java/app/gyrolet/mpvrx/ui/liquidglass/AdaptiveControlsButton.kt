@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
-import com.kyant.shapes.Capsule
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +25,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,7 +47,6 @@ import app.gyrolet.mpvrx.ui.player.controls.components.tvFocusHighlight
 import app.gyrolet.mpvrx.ui.theme.spacing
 import app.gyrolet.mpvrx.ui.theme.AppMotion
 import app.gyrolet.mpvrx.ui.theme.appPressFeedback
-import com.kyant.backdrop.Backdrop
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -64,7 +61,7 @@ fun AdaptiveControlsButton(
   surfaceColor: Color = Color.Unspecified,
   buttonSize: Dp = 40.dp,
   useGlass: Boolean = true,
-  backdrop: Backdrop? = LocalKyantPlayerBackdrop.current,
+  backdrop: Any? = null,
   enabled: Boolean = true,
   onLongClickLabel: String? = null,
   hideBackground: Boolean? = null,
@@ -118,130 +115,85 @@ fun AdaptiveControlsContainer(
   buttonSize: Dp = 40.dp,
   spacing: Dp = 8.dp,
   horizontalPadding: Dp? = null,
-  backdrop: Backdrop? = LocalKyantPlayerBackdrop.current,
+  backdrop: Any? = null,
   enabled: Boolean = true,
   onLongClickLabel: String? = null,
   content: @Composable RowScope.() -> Unit,
 ) {
-  val liquidGlassEnabled = liquidGlassActive()
   val clickEvent = LocalPlayerButtonsClickEvent.current
   val interactionSource = remember { MutableInteractionSource() }
   val reduceMotion = AppMotion.playerReducedMotion()
   val resolvedTint =
     color.takeUnless { it == Color.Unspecified }
-      ?: if (hideBackground) LocalContentColor.current
-      else if (liquidGlassEnabled) PlayerLiquidTokens.contentColor else playerButtonContentColor()
-  val backgroundLevel = LocalPlayerButtonsOpacity.current
+      ?: if (hideBackground) LocalContentColor.current else playerButtonContentColor()
   val resolvedSurface =
-    if (liquidGlassEnabled) {
-      // Below the default level the whole glass layer fades instead (glassLayerAlpha).
-      val base = surfaceColor.takeUnless { it == Color.Unspecified } ?: PlayerLiquidTokens.surfaceColor
-      base.copy(
-        alpha =
-          PlayerButtonAlpha.background(
-            base.alpha,
-            maxOf(backgroundLevel, PlayerButtonAlpha.DEFAULT_BACKGROUND_LEVEL),
-          ),
-      )
-    } else {
-      surfaceColor.takeUnless { it == Color.Unspecified }?.asPlayerButtonBackground()
-        ?: playerButtonContainerColor()
-    }
+    surfaceColor.takeUnless { it == Color.Unspecified }?.asPlayerButtonBackground()
+      ?: playerButtonContainerColor()
   val contentTint =
     if (enabled) resolvedTint else resolvedTint.copy(alpha = resolvedTint.alpha * PlayerButtonAlpha.DISABLED_CONTENT)
-  val renderLiquidGlass = liquidGlassEnabled && useGlass && !hideBackground
-  val buttonShape = if (horizontalPadding != null && horizontalPadding > 0.dp) Capsule() else CircleShape
-  // Above the default level the glass tint thickens toward opaque; below it the whole glass fades.
-  val glassLayerAlpha =
-    (backgroundLevel / PlayerButtonAlpha.DEFAULT_BACKGROUND_LEVEL).coerceIn(0f, 1f)
+
+  val buttonShape = CircleShape
   val controlModifier =
     modifier
-      // LiquidButton already clips its glass to the capsule. Clipping again here, over the larger
-      // minimum touch target, would cut its drop shadow into a hard-edged halo.
-      .tvFocusHighlight(buttonShape, isInteractive && enabled, clipToShape = !renderLiquidGlass)
+      .tvFocusHighlight(buttonShape, isInteractive && enabled, clipToShape = true)
       .then(if (isInteractive) Modifier.minimumInteractiveComponentSize() else Modifier)
 
-  if (renderLiquidGlass) {
-    CompositionLocalProvider(LocalContentColor provides contentTint) {
-      LiquidButton(
-        onClick = {
-          clickEvent()
-          onClick()
-        },
-        onLongClick = {
-          clickEvent()
-          onLongClick()
-        },
-        onLongClickLabel = onLongClickLabel,
-        modifier = controlModifier,
-        enabled = isInteractive && enabled,
-        surfaceColor = resolvedSurface,
-        height = buttonSize,
-        spacing = spacing,
-        horizontalPadding = horizontalPadding ?: 8.dp,
-        backdrop = backdrop,
-        backgroundAlpha = glassLayerAlpha,
+  Surface(
+    shape = CircleShape,
+    color =
+      if (hideBackground || !useGlass) {
+        Color.Transparent
+      } else {
+        resolvedSurface
+      },
+    contentColor = contentTint,
+    tonalElevation = 0.dp,
+    shadowElevation = 0.dp,
+    border =
+      if (hideBackground || !useGlass) {
+        null
+      } else {
+        BorderStroke(1.dp, playerButtonBorderColor())
+      },
+    modifier =
+      controlModifier
+        .heightIn(min = buttonSize)
+        .appPressFeedback(
+          interactionSource,
+          enabled = isInteractive && enabled,
+          pressedScale = 0.94f,
+          reduceMotion = reduceMotion,
+        )
+        .clip(CircleShape)
+        .then(
+          if (isInteractive) {
+            Modifier.combinedClickable(
+              enabled = enabled,
+              role = Role.Button,
+              interactionSource = interactionSource,
+              indication = ripple(bounded = true),
+              onClick = {
+                clickEvent()
+                onClick()
+              },
+              onLongClick = {
+                clickEvent()
+                onLongClick()
+              },
+              onLongClickLabel = onLongClickLabel,
+            )
+          } else {
+            Modifier
+          },
+        ),
+  ) {
+    Box(contentAlignment = Alignment.Center) {
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(horizontal = horizontalPadding ?: MaterialTheme.spacing.small),
+        horizontalArrangement = Arrangement.spacedBy(spacing),
         content = content,
       )
-    }
-  } else {
-    Surface(
-      shape = CircleShape,
-      color =
-        if (hideBackground || !useGlass) {
-          Color.Transparent
-        } else {
-          resolvedSurface
-        },
-      contentColor = contentTint,
-      tonalElevation = 0.dp,
-      shadowElevation = 0.dp,
-      border =
-        if (hideBackground || !useGlass) {
-          null
-        } else {
-          BorderStroke(1.dp, playerButtonBorderColor())
-        },
-      modifier =
-        controlModifier
-          .heightIn(min = buttonSize)
-          .appPressFeedback(
-            interactionSource,
-            enabled = isInteractive && enabled,
-            pressedScale = 0.94f,
-            reduceMotion = reduceMotion,
-          )
-          .clip(CircleShape)
-          .then(
-            if (isInteractive) {
-              Modifier.combinedClickable(
-                enabled = enabled,
-                role = Role.Button,
-                interactionSource = interactionSource,
-                indication = ripple(bounded = true),
-                onClick = {
-                  clickEvent()
-                  onClick()
-                },
-                onLongClick = {
-                  clickEvent()
-                  onLongClick()
-                },
-                onLongClickLabel = onLongClickLabel,
-              )
-            } else {
-              Modifier
-            },
-          ),
-    ) {
-      Box(contentAlignment = Alignment.Center) {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          modifier = Modifier.padding(horizontal = horizontalPadding ?: MaterialTheme.spacing.small),
-          horizontalArrangement = Arrangement.spacedBy(spacing),
-          content = content,
-        )
-      }
     }
   }
 }

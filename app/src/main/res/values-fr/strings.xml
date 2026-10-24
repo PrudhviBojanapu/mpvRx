@@ -2311,7 +2311,6 @@ Veuillez redémarrer l’application pour appliquer toutes les modifications.</s
   <string name="playlist_zip_import_failed">Impossible d’ajouter l’archive ZIP. Sélectionnez un ZIP lisible, indexable et contenant des fichiers audio ou vidéo.</string>
   <string name="playlist_zip_read_only">ZIP (lecture seule)</string>
   <string name="oss_haze_description">Flou progressif pour les surfaces de navigation translucides.</string>
-  <string name="oss_backdrop_description">Flou et réfraction Compose pour les surfaces Liquid Glass.</string>
   <string name="oss_telephoto_description">Gestes de zoom et de déplacement pour la visionneuse d’images.</string>
   <string name="oss_androidx_lifecycle_description">État sensible au cycle de vie et prise en charge des ViewModel pour Compose.</string>
   <string name="oss_leakcanary_description">Détecte les fuites de mémoire dans les versions de débogage.</string>

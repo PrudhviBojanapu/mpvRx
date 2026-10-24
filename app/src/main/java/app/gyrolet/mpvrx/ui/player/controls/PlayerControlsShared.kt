@@ -69,7 +69,6 @@ import app.gyrolet.mpvrx.preferences.PlayerPreferences
 import app.gyrolet.mpvrx.preferences.preference.collectAsState
 import app.gyrolet.mpvrx.ui.liquidglass.LiquidIconButton
 import app.gyrolet.mpvrx.ui.liquidglass.LiquidPillButton
-import app.gyrolet.mpvrx.ui.cast.CastPlayerButton
 import app.gyrolet.mpvrx.ui.icons.Icons
 import app.gyrolet.mpvrx.ui.player.Panels
 import app.gyrolet.mpvrx.ui.player.PlayerActivity
@@ -873,13 +872,21 @@ fun RenderPlayerButton(
       }
     }
 
-    PlayerButton.CAST -> {
-      CastPlayerButton(
-        hideBackground = hideBackground,
-        buttonSize = buttonSize,
-        onInvoked = clickEvent,
-        contentColor = if (hideBackground) controlColor else null,
+    PlayerButton.DOWNLOAD -> {
+      ControlsButton(
+        icon = Icons.RoundedFilled.Download,
+        onClick = {
+          clickEvent()
+          activity.downloadCurrentMediaWithKetch()
+        },
+        title = stringResource(R.string.ui_download),
+        color = if (hideBackground) controlColor else MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier.size(buttonSize),
       )
+    }
+
+    PlayerButton.CAST, PlayerButton.CLIP -> {
+      // Debloated features - do nothing
     }
 
     PlayerButton.ASPECT_RATIO -> {

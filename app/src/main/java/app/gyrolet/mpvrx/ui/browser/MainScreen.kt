@@ -120,12 +120,8 @@ import app.gyrolet.mpvrx.preferences.MediaServerPreferences
 import app.gyrolet.mpvrx.preferences.MusicSourceProvider
 import app.gyrolet.mpvrx.preferences.PlayerPreferences
 import app.gyrolet.mpvrx.preferences.preference.collectAsState
-import com.kyant.backdrop.backdrops.rememberLayerBackdrop
-import com.kyant.backdrop.backdrops.rememberCombinedBackdrop
-import com.kyant.backdrop.backdrops.layerBackdrop
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.gyrolet.mpvrx.presentation.Screen
-import app.gyrolet.mpvrx.presentation.components.ProvideLiquidGlassBackdrop
 import app.gyrolet.mpvrx.ui.utils.LocalBackStack
 import app.gyrolet.mpvrx.ui.utils.navigateTo
 import app.gyrolet.mpvrx.ui.browser.folderlist.FolderListScreen
@@ -156,14 +152,6 @@ import kotlinx.coroutines.launch
 import app.gyrolet.mpvrx.ui.theme.AppMotion
 import app.gyrolet.mpvrx.ui.theme.LocalAppBackgroundBackdrop
 import app.gyrolet.mpvrx.ui.theme.wallpaperAwareBackgroundColor
-import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.drawBackdrop
-import app.gyrolet.mpvrx.ui.liquidglass.drawCapsuleTint
-import app.gyrolet.mpvrx.ui.liquidglass.liquidGlassEffects
-import app.gyrolet.mpvrx.ui.liquidglass.rememberLiquidGlassSettings
-import com.kyant.backdrop.highlight.Highlight
-import com.kyant.backdrop.shadow.Shadow
-import com.kyant.shapes.Capsule
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
 
@@ -233,21 +221,8 @@ object MainScreen : Screen {
     val liquidGlassEnabled by appearancePreferences.liquidGlassEnabled.collectAsState()
     val legacyNavigationBar by appearancePreferences.legacyNavigationBar.collectAsState()
     val progressiveNavigationBlur by appearancePreferences.progressiveNavigationBlur.collectAsState()
-    val appBackgroundBackdrop = LocalAppBackgroundBackdrop.current
-    val backdropBackgroundColor = MaterialTheme.colorScheme.background
-    val liquidLayerBackdrop = rememberLayerBackdrop {
-      // Previews or other hosts without a background capture still need an opaque source.
-      if (appBackgroundBackdrop == null) drawRect(backdropBackgroundColor)
-      drawContent()
-    }
     // Transparent pages contain text without the wallpaper behind it. Composite the real
     // background before blur/refraction so the original sharp text cannot show through.
-    val liquidNavigationBackdrop =
-      if (appBackgroundBackdrop != null) {
-        rememberCombinedBackdrop(appBackgroundBackdrop, liquidLayerBackdrop)
-      } else {
-        liquidLayerBackdrop
-      }
     val hideNavigationBar = NavigationBarState.shouldHideNavigationBar
     val isPermissionDenied = NavigationBarState.isPermissionDenied
     val isDualPaneFolderSelected = NavigationBarState.isDualPaneFolderSelected
@@ -468,7 +443,7 @@ object MainScreen : Screen {
           onTabSelected = onTabSelected,
           pagerState = pagerState,
           hazeBackdrop = navigationBackdrop.takeIf { progressiveNavigationBlur },
-          kyantBackdrop = liquidNavigationBackdrop,
+          
           liquidGlassEnabled = liquidGlassEnabled,
           modifier = modifier,
         )
@@ -516,8 +491,7 @@ object MainScreen : Screen {
                 .padding(start = tvContentStartPadding)
                 .then(
                     when {
-                      liquidGlassEnabled -> Modifier.layerBackdrop(liquidLayerBackdrop)
-                      !legacyNavigationBar && progressiveNavigationBlur -> Modifier.hazeSource(navigationBackdrop)
+                                            !legacyNavigationBar && progressiveNavigationBlur -> Modifier.hazeSource(navigationBackdrop)
                       else -> Modifier
                     },
                   ),
@@ -547,8 +521,7 @@ object MainScreen : Screen {
                   .nestedScroll(NavigationBarState.navScrollConnection)
                   .then(
                     when {
-                      liquidGlassEnabled -> Modifier.layerBackdrop(liquidLayerBackdrop)
-                      !legacyNavigationBar && progressiveNavigationBlur -> Modifier.hazeSource(navigationBackdrop)
+                                            !legacyNavigationBar && progressiveNavigationBlur -> Modifier.hazeSource(navigationBackdrop)
                       else -> Modifier
                     },
                   ),
@@ -765,10 +738,6 @@ object MainScreen : Screen {
         }
 
         // Animated bottom navigation bar with slide animations
-        ProvideLiquidGlassBackdrop(
-          backdrop = liquidLayerBackdrop,
-          enabled = liquidGlassEnabled,
-        ) {
           AnimatedVisibility(
             visible = !isTelevision && !hideNavigationBar && navigationTabs.isNotEmpty() && !isPermissionDenied,
             enter = if (navStyle == NavigationAnimStyle.None) EnterTransition.None else
@@ -877,7 +846,7 @@ object MainScreen : Screen {
                     onTabSelected = onTabSelected,
                     pagerState = pagerState,
                     hazeBackdrop = navigationBackdrop.takeIf { progressiveNavigationBlur },
-                    kyantBackdrop = liquidNavigationBackdrop,
+                    
                     liquidGlassEnabled = liquidGlassEnabled,
                     modifier = navModifier,
                   )
@@ -889,7 +858,6 @@ object MainScreen : Screen {
       }
     }
   }
-}
 
 @Composable
 private fun ProgressiveNavigationBackdrop(
@@ -929,12 +897,10 @@ internal fun ExpressivePillNavigationBar(
   modifier: Modifier = Modifier,
   pagerState: PagerState? = null,
   hazeBackdrop: HazeState? = null,
-  kyantBackdrop: Backdrop? = null,
+  
   liquidGlassEnabled: Boolean = false,
 ) {
   if (visibleTabs.isEmpty()) return
-
-  val glassSettings = rememberLiquidGlassSettings()
   val initialFocusRequester = rememberTvInitialFocusRequester(visibleTabs.isNotEmpty())
   val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
   val selectedIndex = pagerState?.targetPage?.takeIf { it in visibleTabs.indices }
@@ -1104,46 +1070,15 @@ internal fun ExpressivePillNavigationBar(
         translationX = motion.frame.panelOffset * density.density
       },
     ) {
-      if (liquidGlassEnabled && kyantBackdrop != null) {
-        Box(
-          modifier =
-            Modifier
-              .matchParentSize()
-              .drawBackdrop(
-                backdrop = kyantBackdrop,
-                shape = { Capsule() },
-                effects = {
-                  liquidGlassEffects(glassSettings, 8.dp.toPx(), 24.dp.toPx(), 24.dp.toPx(), vibrant = true)
-                },
-                highlight = {
-                  glassSettings.highlight(Highlight.Ambient.copy(alpha = 0.58f * glowStrength))
-                },
-                shadow = {
-                  Shadow(
-                    radius = 8.dp,
-                    color = Color.Black.copy(alpha = 0.14f * glowStrength),
-                  )
-                },
-                onDrawSurface = {
-                  drawCapsuleTint(glassSettings.surfaceColor(surfaceColor.copy(alpha = 0.34f)))
-                },
-              ).navigationGlassRim(glowStrength * glassSettings.highlightStrength.coerceAtMost(1f))
-              .drawWithContent {
-                drawContent()
-                drawNavigationJellyGlow(motion.frame, accentColor.copy(alpha = glowStrength))
-              },
-        )
-      } else {
-        Box(
-          modifier = Modifier.matchParentSize()
-            .clip(CircleShape)
-            .drawWithContent {
-              drawContent()
-              drawNavigationJellyGlow(motion.frame, accentColor.copy(alpha = glowStrength))
-            },
-        ) {
-          NavigationGlassSurface(hazeBackdrop, surfaceColor, glowStrength, Modifier.matchParentSize())
-        }
+      Box(
+        modifier = Modifier.matchParentSize()
+          .clip(CircleShape)
+          .drawWithContent {
+            drawContent()
+            drawNavigationJellyGlow(motion.frame, accentColor.copy(alpha = glowStrength))
+          },
+      ) {
+        NavigationGlassSurface(hazeBackdrop, surfaceColor, glowStrength, Modifier.matchParentSize())
       }
       Box(Modifier.matchParentSize().drawWithContent {
         clipPath(navigationJellyPath(motion.frame, visibleTabs.size), ClipOp.Difference) {

@@ -2337,7 +2337,6 @@
   <string name="playlist_zip_import_failed">تعذرت إضافة أرشيف ZIP. اختر ملف ZIP قابلًا للقراءة ويدعم الوصول العشوائي ويحتوي على ملفات صوت أو فيديو.</string>
   <string name="playlist_zip_read_only">ZIP (للقراءة فقط)</string>
   <string name="oss_haze_description">تمويه تدريجي لأسطح التنقل الشفافة.</string>
-  <string name="oss_backdrop_description">تمويه وانكسار في Compose لأسطح Liquid Glass.</string>
   <string name="oss_telephoto_description">إيماءات التكبير والتحريك لعارض الصور.</string>
   <string name="oss_androidx_lifecycle_description">حالة واعية بدورة الحياة ودعم ViewModel لشاشات Compose.</string>
   <string name="oss_leakcanary_description">اكتشاف تسربات الذاكرة في إصدارات التصحيح.</string>

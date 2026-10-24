@@ -53,18 +53,21 @@ enum class PlayerButton(
   TIME_NETWORK(Icons.RoundedFilled.AccessTime),
   EQUALIZER(Icons.RoundedFilled.Equalizer),
   SCOPES(Icons.RoundedFilled.Mystery),
+  DOWNLOAD(Icons.RoundedFilled.Download),
   NONE(Icons.RoundedFilled.Bookmarks),
 }
 
 /**
  * A list of all buttons that the user can choose from in the customization menu.
- * Excludes NONE (placeholder) and constant buttons (BACK_ARROW, VIDEO_TITLE).
+ * Excludes NONE (placeholder), constant buttons (BACK_ARROW, VIDEO_TITLE), and debloated buttons (CAST, CLIP).
  */
 val allPlayerButtons =
   PlayerButton.values().filter {
     it != PlayerButton.NONE &&
       it != PlayerButton.BACK_ARROW &&
-      it != PlayerButton.VIDEO_TITLE
+      it != PlayerButton.VIDEO_TITLE &&
+      it != PlayerButton.CAST &&
+      it != PlayerButton.CLIP
   }
 
 /**
@@ -73,6 +76,7 @@ val allPlayerButtons =
 @Composable
 fun getPlayerButtonLabel(button: PlayerButton): String =
   when (button) {
+    PlayerButton.DOWNLOAD -> stringResource(R.string.ui_download)
     PlayerButton.BACK_ARROW -> stringResource(R.string.btn_label_back)
     PlayerButton.VIDEO_TITLE -> stringResource(R.string.btn_label_title)
     PlayerButton.BOOKMARKS_CHAPTERS -> stringResource(R.string.btn_label_bookmarks)

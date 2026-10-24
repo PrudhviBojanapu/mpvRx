@@ -96,13 +96,6 @@
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
-        <meta-data
-            android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
-            android:value="app.gyrolet.mpvrx.ui.cast.MpvRxCastOptionsProvider" />
-
-        <receiver
-            android:name="androidx.mediarouter.media.MediaTransferReceiver"
-            android:exported="true" />
 
         <receiver
             android:name=".ui.player.MediaPlayerWidget"
@@ -1299,7 +1292,7 @@
             android:excludeFromRecents="false"
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
             android:exported="true"
-            android:launchMode="singleTask"
+            android:launchMode="singleTop"
             android:documentLaunchMode="never"
             android:resizeableActivity="true"
             android:supportsPictureInPicture="true"
@@ -1633,16 +1626,6 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".ui.cast.CastRemoteControllerActivity"
-            android:exported="false"
-            android:launchMode="singleTask"
-            android:theme="@style/Theme.mpvrx" />
-        <activity
-            android:name=".ui.cast.CastExpandedControlsActivity"
-            android:exported="false"
-            android:launchMode="singleTask"
-            android:theme="@style/Theme.mpvrx" />
         <activity
             android:name=".presentation.crash.CrashActivity"
             android:process=":crash"

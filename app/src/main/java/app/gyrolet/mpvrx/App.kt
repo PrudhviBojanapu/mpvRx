@@ -79,7 +79,9 @@ class App :
   private val imageCacheCleanupStarted = AtomicBoolean(false)
   private val settingsAutoBackupRunning = AtomicBoolean(false)
   private var startedActivityCount = 0
-  private val mediaStoreLiveMonitor by lazy { app.gyrolet.mpvrx.utils.media.MediaStoreLiveMonitor(this, applicationScope) }
+  private lateinit var hostApp: Application
+  private val hostContext: Application get() = if (::hostApp.isInitialized) hostApp else this
+  private val mediaStoreLiveMonitor by lazy { app.gyrolet.mpvrx.utils.media.MediaStoreLiveMonitor(hostContext, applicationScope) }
 
   private data class WidgetAppearanceState(
     val darkMode: DarkMode,
@@ -101,6 +103,24 @@ class App :
   companion object {
     @Volatile var isInForeground: Boolean = false
       private set
+    @Volatile private var instance: App? = null
+
+    fun initialize(application: Application) {
+      if (instance == null) {
+        synchronized(this) {
+          if (instance == null) {
+            val app = if (application is App) application else App()
+            instance = app
+            app.initApp(application)
+          }
+        }
+      }
+    }
+
+    fun autoConnectNetworksOnce() {
+      instance?.autoConnectNetworksOnce()
+    }
+
     private const val TAG = "App"
     private const val POST_START_MAINTENANCE_DELAY_MS = 10_000L
     private const val THUMBNAIL_WARMUP_DELAY_MS = 1_500L
@@ -118,9 +138,12 @@ class App :
   }
 
   @OptIn(ExperimentalComposeUiApi::class)
-  override fun onCreate() {
-    super.onCreate()
-    app.gyrolet.mpvrx.utils.device.DevicePerformance.init(this)
+  fun initApp(application: Application) {
+    if (application !is App) {
+      runCatching { attachBaseContext(application) }
+    }
+    hostApp = application
+    app.gyrolet.mpvrx.utils.device.DevicePerformance.init(application)
 
     // Material3 alpha29 brings Compose UI 1.13.0-alpha01, which re-enables out-of-frame
     // IME dispatch. Batch StopInput/StartInput on the next frame so focus transfers don't
@@ -131,13 +154,15 @@ class App :
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
         Application.getProcessName()
       } else {
-        getSystemService(ActivityManager::class.java).runningAppProcesses
+        application.getSystemService(ActivityManager::class.java).runningAppProcesses
           ?.firstOrNull { it.pid == Process.myPid() }?.processName
       }
-    if (processName == "$packageName:crash") {
-      startKoin {
-        androidContext(this@App)
-        modules(PreferencesModule)
+    if (processName == "${application.packageName}:crash") {
+      if (GlobalContext.getOrNull() == null) {
+        startKoin {
+          androidContext(application)
+          modules(PreferencesModule)
+        }
       }
       return
     }
@@ -145,38 +170,40 @@ class App :
     configureDebugStrictMode()
 
     // Before anything reads them: restored settings that kept the app from starting are reverted.
-    runCatching { SettingsRestoreGuard.onProcessStart(this) }
+    runCatching { SettingsRestoreGuard.onProcessStart(application) }
       .onFailure { Log.w(TAG, "Could not check restored settings", it) }
 
     // Initialize Koin
-    startKoin {
-      androidContext(this@App)
-      modules(
-        PreferencesModule,
-        DatabaseModule,
-        FileManagerModule,
-        app.gyrolet.mpvrx.di.domainModule,
-        app.gyrolet.mpvrx.di.DownloadModule,
-      )
+    if (GlobalContext.getOrNull() == null) {
+      startKoin {
+        androidContext(application)
+        modules(
+          PreferencesModule,
+          DatabaseModule,
+          FileManagerModule,
+          app.gyrolet.mpvrx.di.domainModule,
+          app.gyrolet.mpvrx.di.DownloadModule,
+        )
+      }
     }
     if (!BuildConfig.MPV_SUPPORTS_VULKAN) {
       getKoin().get<DecoderPreferences>().useVulkan.set(false)
     }
-    registerActivityLifecycleCallbacks(this)
+    application.registerActivityLifecycleCallbacks(this)
     if (BuildConfig.ENABLE_UPDATE_FEATURE) {
       applicationScope.launch(Dispatchers.IO) {
         delay(1_500L)
-        runCatching { app.gyrolet.mpvrx.domain.update.UpdateWork.monitor(this@App) }
+        runCatching { app.gyrolet.mpvrx.domain.update.UpdateWork.monitor(application) }
           .onFailure { Log.w(TAG, "Update work monitoring stopped", it) }
       }
     }
     PlaybackSession.addObserver(PlaybackPerformanceTrace)
     startPlaybackPerformanceTracing()
     // A library initialized during startup may have replaced the handler; keep ours on top.
-    CrashMonitor.ensureInstalled(this)
-    CrashMonitor.recordPreviousExits(this)
-    SettingsRestoreGuard.consumeRevertedSource(this)?.let { source ->
-      Toast.makeText(this, getString(R.string.settings_restore_reverted, source), Toast.LENGTH_LONG).show()
+    CrashMonitor.ensureInstalled(application)
+    CrashMonitor.recordPreviousExits(application)
+    SettingsRestoreGuard.consumeRevertedSource(application)?.let { source ->
+      Toast.makeText(application, application.getString(R.string.settings_restore_reverted, source), Toast.LENGTH_LONG).show()
     }
     startIdleMpvCoreReaper()
     startWidgetUpdates()
@@ -186,14 +213,14 @@ class App :
       runCatching {
         val preferences: PlayerPreferences = getKoin().get()
         val enableMediaInfo = preferences.enableMediaInfoIntent.get()
-        val componentName = ComponentName(this@App, "app.gyrolet.mpvrx.ui.mediainfo.MediaInfoActivityAlias")
+        val componentName = ComponentName(application, "app.gyrolet.mpvrx.ui.mediainfo.MediaInfoActivityAlias")
         val newState =
           if (enableMediaInfo) {
             PackageManager.COMPONENT_ENABLED_STATE_ENABLED
           } else {
             PackageManager.COMPONENT_ENABLED_STATE_DISABLED
           }
-        packageManager.setComponentEnabledSetting(
+        application.packageManager.setComponentEnabledSetting(
           componentName,
           newState,
           PackageManager.DONT_KILL_APP,
@@ -204,14 +231,14 @@ class App :
       runCatching {
         val preferences: PlayerPreferences = getKoin().get()
         val enableWebLinks = preferences.enableWebStreamLinkIntents.get()
-        val componentName = ComponentName(this@App, "app.gyrolet.mpvrx.ui.player.WebStreamLinksActivityAlias")
+        val componentName = ComponentName(application, "app.gyrolet.mpvrx.ui.player.WebStreamLinksActivityAlias")
         val newState =
           if (enableWebLinks) {
             PackageManager.COMPONENT_ENABLED_STATE_ENABLED
           } else {
             PackageManager.COMPONENT_ENABLED_STATE_DISABLED
           }
-        packageManager.setComponentEnabledSetting(
+        application.packageManager.setComponentEnabledSetting(
           componentName,
           newState,
           PackageManager.DONT_KILL_APP,
@@ -220,7 +247,6 @@ class App :
         Log.e(TAG, "Failed to initialize WebStreamLinksActivityAlias setting on launch", error)
       }
     }
-
     // TextMate grammar/theme assets for the script editor are initialized lazily on first use.
     // Metadata cache maintenance and native thumbnail startup are intentionally kept out of the
     // Application cold-start path so they cannot compete with first composition / first frame.
@@ -231,9 +257,16 @@ class App :
     // Explicit library refreshes and normal MediaStore notifications still invalidate app caches.
   }
 
+  @OptIn(ExperimentalComposeUiApi::class)
+  override fun onCreate() {
+    super.onCreate()
+    instance = this
+    initApp(this)
+  }
+
   override fun onConfigurationChanged(newConfig: Configuration) {
     super.onConfigurationChanged(newConfig)
-    MediaPlayerWidget.requestUpdate(this)
+    MediaPlayerWidget.requestUpdate(hostContext)
   }
 
   private fun startWidgetUpdates() {
@@ -248,13 +281,13 @@ class App :
       ) { darkMode, appTheme, customTheme, selectedCustomThemeName, amoledMode ->
         WidgetAppearanceState(darkMode, appTheme, customTheme, selectedCustomThemeName, amoledMode)
       }.distinctUntilChanged().collect {
-        MediaPlayerWidget.requestUpdate(this@App)
+        MediaPlayerWidget.requestUpdate(hostContext)
       }
     }
     applicationScope.launch {
       combine(PlaybackSession.state, PlaybackSession.queue) { state, queue -> state to queue }
         .distinctUntilChanged()
-        .collect { MediaPlayerWidget.requestUpdate(this@App) }
+        .collect { MediaPlayerWidget.requestUpdate(hostContext) }
     }
   }
 
@@ -399,7 +432,7 @@ class App :
     SettingsRestoreGuard.onScreenShown(activity)
     if (BuildConfig.ENABLE_UPDATE_FEATURE) {
       applicationScope.launch(Dispatchers.IO) {
-        runCatching { app.gyrolet.mpvrx.domain.update.UpdateInstaller.onForeground(this@App) }
+        runCatching { app.gyrolet.mpvrx.domain.update.UpdateInstaller.onForeground(hostContext) }
           .onFailure { Log.w(TAG, "Could not resume update installation", it) }
       }
     }
@@ -527,7 +560,7 @@ class App :
     applicationScope.launch(Dispatchers.Default) {
       try {
         delay(THUMBNAIL_WARMUP_DELAY_MS)
-        FastThumbnails.initialize(this@App)
+        FastThumbnails.initialize(hostContext)
       } catch (cancellation: CancellationException) {
         fastThumbnailsStarted.set(false)
         throw cancellation
@@ -561,7 +594,7 @@ class App :
       try {
         delay(POST_START_MAINTENANCE_DELAY_MS)
         app.gyrolet.mpvrx.domain.archive.ZipArchiveMedia.clearLegacyCache(
-          this@App,
+          hostContext,
           PlaybackSession.state.value.currentItem?.originalUri,
         )
         val imageRepository: NetworkImageRepository = getKoin().get()

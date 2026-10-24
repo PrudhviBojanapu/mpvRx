@@ -173,7 +173,7 @@ object YtdlpOptionsBuilder {
     settings.javascriptRuntime.ifNotBlank { add("js-runtimes", it) }
     settings.proxy.ifNotBlank { add("proxy", it) }
     settings.extractorArgs.ifNotBlank { add("extractor-args", it) }
-    settings.formatSort.ifNotBlank { add("format-sort", it) }
+    add("format-sort", if (settings.formatSort.isNotBlank()) settings.formatSort else "res,fps")
     settings.mergeOutputFormat.ifNotBlank { add("merge-output-format", it) }
     if (settings.geoBypass) add("geo-bypass")
     if (settings.liveFromStart) add("live-from-start")

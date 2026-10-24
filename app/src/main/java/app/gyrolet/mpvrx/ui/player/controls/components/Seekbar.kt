@@ -80,19 +80,6 @@ import androidx.compose.ui.util.fastCoerceIn
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.graphics.drawscope.scale
 import app.gyrolet.mpvrx.ui.liquidglass.DampedDragAnimation
-import app.gyrolet.mpvrx.ui.liquidglass.LocalKyantPlayerBackdrop
-import app.gyrolet.mpvrx.ui.liquidglass.drawCapsuleTint
-import app.gyrolet.mpvrx.ui.liquidglass.liquidGlassEffects
-import app.gyrolet.mpvrx.ui.liquidglass.rememberLiquidGlassSettings
-import com.kyant.backdrop.backdrops.layerBackdrop
-import com.kyant.backdrop.backdrops.rememberBackdrop
-import com.kyant.backdrop.backdrops.rememberCombinedBackdrop
-import com.kyant.backdrop.backdrops.rememberLayerBackdrop
-import com.kyant.backdrop.drawBackdrop
-import com.kyant.backdrop.highlight.Highlight
-import com.kyant.backdrop.shadow.InnerShadow
-import com.kyant.backdrop.shadow.Shadow
-import com.kyant.shapes.Capsule
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -759,12 +746,13 @@ private fun SeekbarContent(
           )
         }
         SeekbarStyle.Liquid -> {
-          LiquidSeekbar(
+          StandardSeekbar(
             positionProvider = positionProvider,
             duration = duration,
             chapters = chapters,
             isPaused = paused,
             isScrubbing = isVisuallyInteracting,
+            seekbarStyle = SeekbarStyle.Standard,
             interactionSource = seekerInteractionSource,
             loopStart = loopStart,
             loopEnd = loopEnd,
@@ -1623,238 +1611,7 @@ private fun SlimSeekbar(
   }
 }
 
-@Composable
-private fun LiquidSeekbar(
-  positionProvider: () -> Float,
-  duration: Float,
-  chapters: ImmutableList<Segment>,
-  isPaused: Boolean,
-  isScrubbing: Boolean,
-  interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-  loopStart: Float? = null,
-  loopEnd: Float? = null,
-  bufferDuration: Float? = null,
-  modifier: Modifier = Modifier,
-) {
-  val glassSettings = rememberLiquidGlassSettings()
-  val accentColor = MaterialTheme.colorScheme.primary
-  // Scoped only to the playback Liquid seekbar; preference sliders keep their own colors.
-  val liquidThumbFilm = androidx.compose.ui.graphics.lerp(
-    MaterialTheme.colorScheme.surfaceContainerHigh,
-    accentColor,
-    0.18f,
-  )
-  val (readAheadAlpha, emptyAlpha) = rememberSeekbarTrackAlphas()
-  val isPressed by interactionSource.collectIsPressedAsState()
-  val isDragged by interactionSource.collectIsDraggedAsState()
-  val isThumbInteracting = isPressed || isDragged || isScrubbing
-  val trackHeight by animateDpAsState(
-    targetValue = liquidSeekbarTrackHeight(isPaused),
-    animationSpec = spring(
-      dampingRatio = AppMotion.Spatial.Expressive.dampingRatio,
-      stiffness = AppMotion.Spatial.Expressive.stiffness,
-    ),
-    label = "liquid_seekbar_height",
-  )
-  val chapterGapHalfDp by animateDpAsState(
-    targetValue = if (isThumbInteracting) 2.dp else 1.5.dp,
-    animationSpec = spring(
-      dampingRatio = AppMotion.Spatial.Standard.dampingRatio,
-      stiffness = AppMotion.Spatial.Standard.stiffness,
-    ),
-    label = "liquid_seekbar_chapter_gap",
-  )
 
-  val chapterStarts = remember(chapters) { chapters.map(Segment::start) }
-  val playerBackdrop = LocalKyantPlayerBackdrop.current ?: rememberLayerBackdrop()
-  val trackBackdrop = rememberLayerBackdrop()
-  val density = LocalDensity.current
-  val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
-  val animationScope = rememberCoroutineScope()
-  val safeDuration = duration.takeIf { it.isFinite() && it > 0f } ?: 0f
-  val animationRange = 0f..safeDuration.coerceAtLeast(0.1f)
-  val initialPosition =
-    positionProvider()
-      .takeIf { it.isFinite() }
-      ?.coerceIn(animationRange)
-      ?: animationRange.start
-  val dampedDragAnimation =
-    remember(animationScope, animationRange.endInclusive) {
-      DampedDragAnimation(
-        animationScope = animationScope,
-        initialValue = initialPosition,
-        valueRange = animationRange,
-        visibilityThreshold = 0.01f,
-        initialScale = 1f,
-        pressedScale = 1.5f,
-        onDragStarted = {},
-        onDragStopped = {},
-        onDrag = { _, _ -> },
-      )
-    }
-  val currentPosition = positionProvider()
-  LaunchedEffect(currentPosition) {
-    if (currentPosition.isFinite()) {
-      dampedDragAnimation.updateValue(currentPosition)
-    }
-  }
-  LaunchedEffect(isThumbInteracting) {
-    if (isThumbInteracting) {
-      dampedDragAnimation.press()
-    } else {
-      dampedDragAnimation.release()
-    }
-  }
-
-  BoxWithConstraints(
-    modifier = modifier.fillMaxWidth().height(48.dp),
-    contentAlignment = Alignment.CenterStart,
-  ) {
-    val trackWidthPx = constraints.maxWidth.toFloat()
-    val playedFraction =
-      if (safeDuration > 0f) {
-        dampedDragAnimation.progress.coerceIn(0f, 1f)
-      } else {
-        0f
-      }
-
-    // 1. The Track Layer with its own LayerBackdrop for refraction sampling
-    Box(
-      modifier = Modifier
-        .fillMaxWidth()
-        .height(48.dp)
-        .layerBackdrop(trackBackdrop),
-      contentAlignment = Alignment.Center,
-    ) {
-      Canvas(modifier = Modifier.fillMaxWidth().height(48.dp)) {
-        val playedPx = size.width * playedFraction
-        val bufferPx = bufferedEndPx(bufferDuration, safeDuration, size.width, playedPx)
-        val centerY = size.height / 2f
-        val heightPx = trackHeight.toPx()
-        val radiusPx = heightPx / 2f
-
-        val segments = seekbarTrackSegments(
-          chapterStarts = chapterStarts,
-          duration = safeDuration,
-          trackWidth = size.width,
-          chapterGapHalf = chapterGapHalfDp.toPx(),
-        )
-
-        drawSeekbarTrackSegments(
-          segments = segments,
-          playedPx = playedPx,
-          bufferedPx = bufferPx,
-          centerY = centerY,
-          trackHeight = heightPx,
-          playedColor = accentColor,
-          bufferedColor = accentColor.copy(alpha = readAheadAlpha),
-          unplayedColor = accentColor.copy(alpha = emptyAlpha),
-        )
-
-        // Loop markers
-        if ((loopStart != null || loopEnd != null) && safeDuration > 0f) {
-          val loopColor = Color(0xFFFFB300)
-          val markerWidth = 2.dp.toPx()
-          val trackTop = centerY - radiusPx
-          val trackBottom = centerY + radiusPx
-
-          loopStart?.let { start ->
-            val startPx = (start / safeDuration).coerceIn(0f, 1f) * size.width
-            drawLine(loopColor, Offset(startPx, trackTop), Offset(startPx, trackBottom), markerWidth)
-          }
-          loopEnd?.let { end ->
-            val endPx = (end / safeDuration).coerceIn(0f, 1f) * size.width
-            drawLine(loopColor, Offset(endPx, trackTop), Offset(endPx, trackBottom), markerWidth)
-          }
-          if (loopStart != null && loopEnd != null) {
-            val minPx = (minOf(loopStart, loopEnd) / safeDuration).coerceIn(0f, 1f) * size.width
-            val maxPx = (maxOf(loopStart, loopEnd) / safeDuration).coerceIn(0f, 1f) * size.width
-            drawRect(
-              color = loopColor.copy(alpha = 0.2f),
-              topLeft = Offset(minPx, trackTop),
-              size = Size(maxPx - minPx, heightPx),
-            )
-          }
-        }
-      }
-    }
-
-    // Kyant's liquid thumb, driven by the existing Seeker interaction layer.
-    val thumbWidthDp = 40.dp
-    Box(
-      modifier = Modifier
-        .align(Alignment.CenterStart)
-        .graphicsLayer {
-          val thumbWidthPx = with(density) { thumbWidthDp.toPx() }
-          val minCenterPx = (thumbWidthPx / 2f).coerceAtMost(trackWidthPx / 2f)
-          val safeCenterPx = (trackWidthPx * playedFraction)
-            .coerceIn(minCenterPx, trackWidthPx - minCenterPx)
-          translationX = (safeCenterPx - thumbWidthPx / 2f) * if (isLtr) 1f else -1f
-        }
-        .drawBackdrop(
-          backdrop = rememberCombinedBackdrop(
-            playerBackdrop,
-            rememberBackdrop(trackBackdrop) { drawBackdrop ->
-              val progress = dampedDragAnimation.pressProgress
-              val scaleX = lerp(2f / 3f, 1f, progress)
-              val scaleY = lerp(0f, 1f, progress)
-              scale(scaleX, scaleY) {
-                drawBackdrop()
-              }
-            }
-          ),
-          shape = { Capsule() },
-          effects = {
-            val progress = dampedDragAnimation.pressProgress
-            liquidGlassEffects(
-              glassSettings,
-              with(density) { 8.dp.toPx() * (1f - progress) },
-              with(density) { 10.dp.toPx() * progress },
-              with(density) { 14.dp.toPx() * progress },
-            )
-          },
-          highlight = {
-            val progress = dampedDragAnimation.pressProgress
-            glassSettings.highlight(Highlight.Ambient.copy(
-              width = Highlight.Ambient.width / 1.5f,
-              blurRadius = Highlight.Ambient.blurRadius / 1.5f,
-              alpha = progress,
-            ))
-          },
-          shadow = {
-            Shadow(
-              radius = 4.dp,
-              color = Color.Black.copy(alpha = 0.05f),
-            )
-          },
-          innerShadow = {
-            val progress = dampedDragAnimation.pressProgress
-            InnerShadow(
-              radius = 4.dp * progress,
-              alpha = progress,
-            )
-          },
-          layerBlock = {
-            scaleX = dampedDragAnimation.scaleX
-            scaleY = dampedDragAnimation.scaleY
-            val velocity = dampedDragAnimation.velocity / 10f
-            scaleX /= 1f - (velocity * 0.75f).fastCoerceIn(-0.2f, 0.2f)
-            scaleY *= 1f - (velocity * 0.25f).fastCoerceIn(-0.2f, 0.2f)
-          },
-          onDrawSurface = {
-            val progress = dampedDragAnimation.pressProgress
-            val film = androidx.compose.ui.graphics.lerp(
-              Color.White,
-              liquidThumbFilm.copy(alpha = 0.72f - 0.28f * progress),
-              progress.coerceIn(0f, 1f),
-            )
-            drawCapsuleTint(glassSettings.surfaceColor(film))
-          },
-        )
-        .size(thumbWidthDp, 24.dp),
-    )
-  }
-}
 
 @Composable
 fun SeekbarStylePreview(
@@ -1880,15 +1637,6 @@ fun SeekbarStylePreview(
       seekbarStyle = SeekbarStyle.Wavy,
       onSeek = {},
       onSeekFinished = {},
-      modifier = modifier,
-    )
-  } else if (style == SeekbarStyle.Liquid) {
-    LiquidSeekbar(
-      positionProvider = { previewProgress * 100f },
-      duration = 100f,
-      chapters = persistentListOf(),
-      isPaused = false,
-      isScrubbing = false,
       modifier = modifier,
     )
   } else {

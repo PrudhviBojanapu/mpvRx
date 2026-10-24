@@ -2311,7 +2311,6 @@ Bitte starten Sie die App neu, damit alle Änderungen wirksam werden.</string>
   <string name="playlist_zip_import_failed">ZIP-Archiv konnte nicht hinzugefügt werden. Wähle ein lesbares, seekfähiges ZIP mit Audio- oder Videodateien.</string>
   <string name="playlist_zip_read_only">ZIP (schreibgeschützt)</string>
   <string name="oss_haze_description">Progressiver Weichzeichner für transparente Navigationsflächen.</string>
-  <string name="oss_backdrop_description">Compose-Weichzeichnung und -Lichtbrechung für Liquid-Glass-Flächen.</string>
   <string name="oss_telephoto_description">Zoom- und Schwenkgesten für den Bildbetrachter.</string>
   <string name="oss_androidx_lifecycle_description">Lebenszyklusabhängiger Zustand und ViewModel-Unterstützung für Compose.</string>
   <string name="oss_leakcanary_description">Erkennt Speicherlecks in Debug-Builds.</string>

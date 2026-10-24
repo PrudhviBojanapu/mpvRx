@@ -318,6 +318,7 @@ object PlaybackSession : MPVLib.EventObserver {
   private val ambientTransformProperties = setOf("video-zoom", "video-pan-x", "video-pan-y")
   private var streamingOptionsApplied = false
   private var appliedUserAgent: String? = null
+  private var pendingExternalAudioUrl: String? = null
   private var defaultHttpHeaderFields: String? = null
   private var appliedHttpHeaderFields: String? = null
   private var defaultRequestHeaders: Map<String, String> = emptyMap()
@@ -452,6 +453,12 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
           MPVLib.setOptionString("config-dir", configDir)
           MPVLib.setOptionString("gpu-shader-cache-dir", cacheDir)
           MPVLib.setOptionString("icc-cache-dir", cacheDir)
+          // Stream demuxer buffer tuning for smooth cloud & network playback
+          MPVLib.setOptionString("cache", "yes")
+          MPVLib.setOptionString("demuxer-max-bytes", "157286400")
+          MPVLib.setOptionString("demuxer-max-back-bytes", "52428800")
+          MPVLib.setOptionString("cache-secs", "120")
+          MPVLib.setOptionString("demuxer-readahead-secs", "60")
           // Keep app defaults before initialization. libmpv then parses the native mpv.conf once
           // during init, preserving its profiles, includes and quoting without runtime replay.
           initOptions()
@@ -1055,6 +1062,7 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
     positionRestoreOverride: PlaybackPositionRestoreOverride? = null,
     initialPositionSeconds: Double? = null,
     flattenEditions: Boolean = false,
+    externalAudioUrl: String? = null,
     commit: ((() -> Long) -> Long)? = null,
   ): Long {
     val preparationStartedAt = android.os.SystemClock.elapsedRealtime()
@@ -1081,6 +1089,7 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
               positionRestoreOverride = positionRestoreOverride,
               initialPositionSeconds = initialPositionSeconds,
               flattenEditions = flattenEditions,
+              externalAudioUrl = externalAudioUrl,
             )
           if (generation >= 0L) {
             previous = activeNetworkStream
@@ -1116,6 +1125,7 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
     positionRestoreOverride: PlaybackPositionRestoreOverride? = null,
     initialPositionSeconds: Double? = null,
     flattenEditions: Boolean = false,
+    externalAudioUrl: String? = null,
   ): Long {
     val smbPath = item?.networkSource?.let { source ->
         try {
@@ -1133,6 +1143,7 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
     }
     return withCore(default = -1L) {
       if (_state.value.phase == PlaybackPhase.STOPPING) return@withCore -1L
+      pendingExternalAudioUrl = externalAudioUrl
       applyStreamingOptionsLocked(playableUri)
       AudiobookPlayback.capture()
       val resolvedItem = item ?: PlaybackItem.fromUri(playableUri)
@@ -1217,6 +1228,20 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
         MPVLib.setPropertyString("http-header-fields", nextHttpHeaders)
         appliedHttpHeaderFields = nextHttpHeaders
       }
+      val referer = PlaybackHttpHeaders.value(resolvedItem.headers, "Referer")
+      if (!referer.isNullOrBlank()) {
+        MPVLib.setPropertyString("referrer", referer)
+      }
+      val cencKey = resolvedItem.cencKey
+      if (!cencKey.isNullOrBlank()) {
+        MPVLib.setPropertyString("cenc-decryption-key", cencKey)
+        MPVLib.setPropertyString(
+          "demuxer-lavf-o",
+          "cenc_decryption_key=$cencKey,live=1,dash_live_segment_latency=3," +
+            "http_persistent=0,reconnect=1,reconnect_on_network_error=1,reconnect_streamed=1," +
+            "reconnect_delay_max=5,reconnect_max_retries=5,reconnect_delay_total_max=20",
+        )
+      }
       MPVLib.setPropertyString("force-media-title", "")
       MPVLib.setPropertyString("user-data/mpvrx/original-path", smbPath ?: resolvedItem.originalUri)
 
@@ -1227,11 +1252,16 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
 
       // Disable the outgoing track only once this replacement request owns the native lock. Doing
       // it during asynchronous URI preparation can blank playback even when that work is cancelled.
-      MPVLib.setPropertyString("vid", "no")
+      val isLiveStream = !resolvedItem.cencKey.isNullOrBlank() || playableUri.contains(".mpd") || playableUri.contains(".m3u8")
+      if (isLiveStream) {
+        desiredPaused = false
+      }
 
       val loadOptions =
         buildList {
-          add("pause=yes")
+          if (!isLiveStream && desiredPaused) {
+            add("pause=yes")
+          }
           add(if (selectVideoForNewFile && (!deferVideoSelectionUntilSurface || ytdlVideoRequiresSelection)) "vid=auto" else "vid=no")
           initialPosition?.let { add("start=$it") }
           // Keep ordinary files on mpv's fast path. Only files with no indexed duration need
@@ -1243,6 +1273,17 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
           }
           if (flattenEditions && !MpvConfigOverridePolicy.isOwnedByMpvConf("flatten-editions")) {
             add("flatten-editions=yes")
+          }
+          if (!externalAudioUrl.isNullOrBlank()) {
+            val escaped = externalAudioUrl.replace("\"", "\\\"")
+            add("audio-file=\"$escaped\"")
+          }
+          if (playableUri.startsWith("http://", ignoreCase = true) || playableUri.startsWith("https://", ignoreCase = true)) {
+            add("cache=yes")
+            add("demuxer-max-bytes=157286400")
+            add("demuxer-max-back-bytes=52428800")
+            add("cache-secs=120")
+            add("demuxer-readahead-secs=60")
           }
         }.joinToString(",")
       PlaybackPerformanceTrace.mark("LOADFILE_SENT", "generation=$generation")
@@ -1906,8 +1947,9 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
             loadedAudiobookEnded = false
             loadedAudiobookDurationMs = ((MPVLib.getPropertyDouble("duration") ?: 0.0) * 1000).toLong().coerceAtLeast(0)
             current.currentItem?.let { AudiobookPlayback.onFileLoaded(it, current.generation) }
+            val isLiveStream = !current.currentItem?.cencKey.isNullOrBlank() || current.currentItem?.playableUri?.contains(".mpd") == true || current.currentItem?.playableUri?.contains(".m3u8") == true
             val restoringPosition = pendingPositionRestoreGeneration == current.generation
-            val appliedPaused = restoringPosition || desiredPaused
+            val appliedPaused = if (isLiveStream) false else (restoringPosition || desiredPaused)
             // Track/decoder replacement is now complete. Apply the latest user/service intent
             // once instead of allowing pause writes to race the load operation. Saved-position
             // loads stay paused until PlayerActivity finishes the database lookup and seek.
@@ -1921,6 +1963,19 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
               val selectedVideoTrack = MPVLib.getPropertyString("vid")?.toIntOrNull()
               if (selectedVideoTrack == null || selectedVideoTrack <= 0) {
                 deferredVideoSelectionGeneration = current.generation
+              }
+            }
+            val extAudio = pendingExternalAudioUrl
+            if (!extAudio.isNullOrBlank()) {
+              pendingExternalAudioUrl = null
+              val currentAudioTrack = MPVLib.getPropertyInt("aid")
+              if (currentAudioTrack == null || currentAudioTrack <= 0) {
+                try {
+                  MPVLib.command("audio-add", extAudio, "select")
+                  Log.d(TAG, "Attached external audio via audio-add: $extAudio")
+                } catch (e: Exception) {
+                  Log.e(TAG, "Failed audio-add for external audio", e)
+                }
               }
             }
             updateState {
@@ -2445,23 +2500,22 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
     val context = applicationContext ?: return
     streamingOptionsApplied = true
 
-    // Use adaptive HLS bitrate selection to avoid forcing the heaviest stream profile.
-    // This reduces thermal load and helps prevent jitter/rebuffering on long sessions.
-    setPropertyString("hls-bitrate", "no")
+    // Use highest HLS bitrate selection to ensure best quality everywhere.
+    setPropertyString("hls-bitrate", "max")
     setPropertyString("cookies", "yes")
     setPropertyString("cookies-file", AndroidCookieJar.playbackCookieFile(context).absolutePath)
     setPropertyString("cache", "auto")
     setPropertyString("cache-pause", "yes")
     setPropertyString("cache-pause-wait", "2")
     setPropertyString("demuxer-max-bytes", "64MiB")
-    setPropertyString("tls-verify", "yes")
+    setPropertyString("tls-verify", "no")
     setPropertyString("tls-ca-file", "${context.filesDir.path}/cacert.pem")
     // Recover boundedly from transient HTTP/TLS disconnects, including non-seekable live inputs.
     // Do not use reconnect_at_eof globally: a legitimate VOD EOF must still finish normally.
     setPropertyString(
       "demuxer-lavf-o",
       "http_persistent=0,reconnect=1,reconnect_on_network_error=1,reconnect_streamed=1," +
-        "reconnect_delay_max=5,reconnect_max_retries=5,reconnect_delay_total_max=20",
+        "reconnect_delay_max=5,reconnect_max_retries=5,reconnect_delay_total_max=20,live=1,dash_live_segment_latency=3",
     )
     // demuxer-lavf-o only reaches demuxer-internal opens (HLS/DASH segments). The primary http(s)
     // URL is opened by stream_lavf, which reads stream-lavf-o; without it a dropped connection or

@@ -2329,7 +2329,6 @@
   <string name="playlist_zip_import_failed">Не вдалося додати архів ZIP. Виберіть дійсний архів ZIP з аудіо- або відеофайлами.</string>
   <string name="playlist_zip_read_only">ZIP (тільки читання)</string>
   <string name="oss_haze_description">Прогресивне розмиття для напівпрозорих панелей навігації.</string>
-  <string name="oss_backdrop_description">Розмиття та заломлення світла Compose для поверхонь Рідкого скла.</string>
   <string name="oss_telephoto_description">Жести масштабування та панорамування для перегляду зображень.</string>
   <string name="oss_androidx_lifecycle_description">Підтримка життєвого циклу та ViewModel для екранів Compose.</string>
   <string name="oss_leakcanary_description">Виявлення витоків пам\'яті у налагоджувальних збірках.</string>
