@@ -42,11 +42,7 @@ internal fun shouldUseTextureRendering(
   liquidGlass: Boolean,
   hdrOutput: Boolean,
   liquidGlassInHdr: Boolean,
-): Boolean {
-  if (!liquidGlass) return false
-  if (liquidGlassInHdr) return true
-  return !hdrOutput && !MpvConfigOverridePolicy.ownsAny(MpvConfigControlledFeatures.HDR_OUTPUT)
-}
+): Boolean = false
 
 /** Keeps one MPV surface owner while choosing a native or Compose-recordable renderer. */
 abstract class MpvSurfaceHost(context: Context, attributes: AttributeSet) : FrameLayout(context, attributes) {

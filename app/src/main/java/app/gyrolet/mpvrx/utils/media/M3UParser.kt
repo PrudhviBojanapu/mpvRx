@@ -125,7 +125,12 @@ object M3UParser {
     val request =
       runCatching {
         val builder = Request.Builder().url(safeUrl)
-        headers.forEach { (name, value) -> builder.header(name, value) }
+        headers.forEach { (name, value) ->
+          val lower = name.lowercase()
+          if (lower != "accept-encoding" && lower != "connection" && lower != "host" && lower != "content-length" && !lower.startsWith("sec-")) {
+            builder.header(name, value)
+          }
+        }
         if (headers.keys.none { it.equals("User-Agent", ignoreCase = true) }) {
           builder.header("User-Agent", userAgent?.takeIf(String::isNotBlank) ?: DEFAULT_USER_AGENT)
         }
@@ -200,7 +205,17 @@ object M3UParser {
     val context = currentCoroutineContext()
     return try {
       runInterruptible(Dispatchers.IO) {
-        inputStream.use { stream ->
+        inputStream.use { rawStream ->
+          val buffered = rawStream.buffered()
+          buffered.mark(4)
+          val b1 = buffered.read()
+          val b2 = buffered.read()
+          buffered.reset()
+          val stream = if (b1 == 0x1f && b2 == 0x8b) {
+            java.util.zip.GZIPInputStream(buffered)
+          } else {
+            buffered
+          }
           LimitedInputStream(stream, limits.maxBytes)
             .bufferedReader(StandardCharsets.UTF_8)
             .use { reader -> parseReader(reader, sourceUrl, overridePlaylistName, limits) { context.ensureActive() } }

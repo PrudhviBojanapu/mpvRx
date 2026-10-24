@@ -127,6 +127,16 @@ object DownloadsScreen : Screen {
     val ytdlpJobs by ytdlpEngine.jobs.collectAsState()
     val activeSnapshot by downloadManager.activeSnapshot.collectAsState()
 
+    LaunchedEffect(Unit) {
+      runCatching {
+        val intent = Intent(context, Class.forName("com.linroid.ketch.app.android.MainActivity")).apply {
+          addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
+        backStack.popSafely()
+      }
+    }
+
     // Progress notifications need POST_NOTIFICATIONS on Android 13+.
     val notificationPermissionLauncher =
       rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }

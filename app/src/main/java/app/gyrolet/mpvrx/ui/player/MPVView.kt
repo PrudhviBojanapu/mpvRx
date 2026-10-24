@@ -479,10 +479,12 @@ class MPVView(
       val hardwareDecoderCodecs = inputs.hardwareDecoderCodecs
       PlaybackSession.setOptionString(
         "hwdec",
-        if (hardwareDecoderCodecs.isEmpty()) "no" else hwdecMode,
+        if (decoderPreferences.tryHWDecoding.get()) hwdecMode else "no",
       )
       if (hardwareDecoderCodecs.isNotEmpty()) {
         PlaybackSession.setOptionString("hwdec-codecs", hardwareDecoderCodecs.joinToString(","))
+      } else {
+        PlaybackSession.setOptionString("hwdec-codecs", "all")
       }
     }
 

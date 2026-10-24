@@ -17,8 +17,6 @@ import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 import java.util.Locale
 import java.util.zip.ZipInputStream
-import me.zhanghai.android.libarchive.Archive
-import me.zhanghai.android.libarchive.ArchiveEntry
 
 object SubtitleArchiveExtractor {
   private val subtitleExtensions = setOf("srt", "vtt", "ass", "ssa", "sub")
@@ -83,118 +81,12 @@ object SubtitleArchiveExtractor {
     return selectBest(candidates, preferredEpisode)?.subtitle
   }
 
+  @Suppress("UNUSED_PARAMETER")
   private fun extractBestRar(
     bytes: ByteArray,
     preferredName: String?,
     preferredEpisode: Int?,
-  ): ExtractedSubtitle? =
-    runCatching {
-      val preferredFileName = preferredName.normalizedFileName()
-      val candidates =
-        withRarArchive(bytes) { archive ->
-          buildList {
-            var entryIndex = 0
-            while (true) {
-              val entry = Archive.readNextHeader(archive).takeIf { it != 0L } ?: break
-              val currentIndex = entryIndex++
-              val fileName = archiveEntryName(entry)
-              val extension = extensionFromName(fileName)?.takeIf { it in subtitleExtensions }
-              val unpackedSize = ArchiveEntry.size(entry).takeIf { ArchiveEntry.sizeIsSet(entry) } ?: -1L
-              if (
-                fileName != null &&
-                extension != null &&
-                !ArchiveEntry.isEncrypted(entry) &&
-                !fileName.isJunkArchiveEntry() &&
-                unpackedSize in 1..MAX_SUBTITLE_BYTES.toLong()
-              ) {
-                add(
-                  RarCandidate(
-                    entryIndex = currentIndex,
-                    fileName = fileName.archiveFileName(),
-                    extension = extension,
-                    score =
-                      archiveEntryScore(
-                        fileName,
-                        extension,
-                        unpackedSize,
-                        preferredFileName,
-                        preferredEpisode,
-                      ),
-                  ),
-                )
-              }
-              Archive.readDataSkip(archive)
-            }
-          }
-        }
-      val eligible =
-        if (preferredEpisode != null) {
-          candidates.filter { it.score.preferredEpisodeMatch }
-        } else {
-          candidates
-        }
-
-      eligible.sortedWith(archiveEntryComparator { it.score }).firstNotNullOfOrNull { candidate ->
-        runCatching { extractRarCandidate(bytes, candidate) }.getOrNull()
-      }
-    }.getOrNull()
-
-  private fun extractRarCandidate(
-    bytes: ByteArray,
-    candidate: RarCandidate,
-  ): ExtractedSubtitle? =
-    withRarArchive<ExtractedSubtitle?>(bytes) { archive ->
-      var entryIndex = 0
-      var entry = Archive.readNextHeader(archive)
-      while (entry != 0L) {
-        if (entryIndex++ != candidate.entryIndex) {
-          Archive.readDataSkip(archive)
-          entry = Archive.readNextHeader(archive)
-          continue
-        }
-        val payload = readCurrentArchiveEntry(archive)
-        return@withRarArchive payload.takeIf { it.isNotEmpty() }?.let {
-          ExtractedSubtitle(it, candidate.extension, candidate.fileName)
-        }
-      }
-      null
-    }
-
-  private fun <T> withRarArchive(
-    bytes: ByteArray,
-    operation: (Long) -> T,
-  ): T {
-    val archive = Archive.readNew()
-    try {
-      Archive.setCharset(archive, StandardCharsets.UTF_8.name().toByteArray(StandardCharsets.UTF_8))
-      Archive.readSupportFormatRar(archive)
-      Archive.readSupportFormatRar5(archive)
-      Archive.readOpenMemory(archive, ByteBuffer.wrap(bytes))
-      return operation(archive)
-    } finally {
-      runCatching { Archive.free(archive) }
-    }
-  }
-
-  private fun archiveEntryName(entry: Long): String? =
-    ArchiveEntry.pathnameUtf8(entry)
-      ?: ArchiveEntry.pathname(entry)?.toString(StandardCharsets.UTF_8)
-
-  private fun readCurrentArchiveEntry(archive: Long): ByteArray {
-    val output = BoundedByteArrayOutputStream(MAX_SUBTITLE_BYTES)
-    val buffer = ByteBuffer.allocateDirect(ARCHIVE_READ_BUFFER_BYTES)
-    while (true) {
-      buffer.clear()
-      Archive.readData(archive, buffer)
-      val readCount = buffer.position()
-      if (readCount <= 0) break
-      buffer.flip()
-      val chunk = ByteArray(readCount)
-      buffer.get(chunk)
-      output.write(chunk)
-    }
-    return output.toByteArray()
-  }
+  ): ExtractedSubtitle? = null
 
   fun extensionFromName(value: String?): String? =
     value

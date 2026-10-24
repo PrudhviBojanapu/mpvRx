@@ -95,50 +95,6 @@ object SearchablePreferences {
       )
       add(
         SearchablePreference(
-          titleRes = R.string.pref_appearance_liquid_glass_title,
-          summaryRes = R.string.pref_appearance_liquid_glass_summary,
-          keywords = listOf("liquid glass", "glass", "blur", "translucent", "navigation", "seekbar", "switch"),
-          category = "Appearance",
-          screen = LiquidGlassPreferencesScreen,
-        ),
-      )
-      add(
-        SearchablePreference(
-          titleRes = R.string.pref_liquid_glass_in_hdr_title,
-          summaryRes = R.string.pref_liquid_glass_in_hdr_summary,
-          keywords = listOf("hdr", "liquid glass", "textureview", "surfaceview", "player controls", "sdr"),
-          category = "Appearance",
-          screen = LiquidGlassPreferencesScreen,
-        ),
-      )
-      listOf(
-        R.string.pref_liquid_glass_opacity to listOf("opacity", "transparency", "backdrop"),
-        R.string.pref_liquid_glass_frost to listOf("frost", "blur", "frosted"),
-        R.string.pref_liquid_glass_refraction_height to listOf("refraction", "lens", "edge", "width"),
-        R.string.pref_liquid_glass_refraction_amount to listOf("refraction", "lens", "strength"),
-        R.string.pref_liquid_glass_depth to listOf("depth", "lens"),
-        R.string.pref_liquid_glass_chromatic to listOf("chromatic", "aberration", "dispersion", "rainbow"),
-        R.string.pref_liquid_glass_vibrancy to listOf("vibrancy", "color"),
-        R.string.player_sheets_filters_Saturation to listOf("saturation", "color"),
-        R.string.player_sheets_filters_brightness to listOf("brightness", "color"),
-        R.string.player_sheets_filters_contrast to listOf("contrast", "color"),
-        R.string.pref_liquid_glass_highlight_style to listOf("highlight", "style", "ambient", "plain"),
-        R.string.pref_liquid_glass_highlight_strength to listOf("highlight", "strength"),
-        R.string.pref_liquid_glass_highlight_width to listOf("highlight", "width", "rim"),
-        R.string.pref_liquid_glass_highlight_blur to listOf("highlight", "blur", "softness"),
-      ).forEach { (titleRes, keywords) ->
-        add(
-          SearchablePreference(
-            titleRes = titleRes,
-            keywords = listOf("liquid glass", "kyant") + keywords,
-            category = "Appearance",
-            screen = LiquidGlassPreferencesScreen,
-            targetRes = titleRes,
-          ),
-        )
-      }
-      add(
-        SearchablePreference(
           titleRes = R.string.pref_appearance_app_font_title,
           summaryRes = R.string.pref_appearance_app_font_summary_search,
           keywords = listOf("font", "system", "typeface", "google sans", "google fonts", "download", "ui", "appearance"),

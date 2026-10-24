@@ -245,7 +245,7 @@ open class MainActivity : AppCompatActivity() {
       // See issue 1.6 in the startup audit.
       LaunchedEffect(networkStreamingEnabled) {
         if (networkStreamingEnabled) {
-          (application as? App)?.autoConnectNetworksOnce()
+          (application as? App)?.autoConnectNetworksOnce() ?: App.autoConnectNetworksOnce()
         }
       }
 

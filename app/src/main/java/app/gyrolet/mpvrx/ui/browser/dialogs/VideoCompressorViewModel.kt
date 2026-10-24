@@ -31,29 +31,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
 import androidx.media3.common.ColorInfo
-import androidx.media3.common.Effect
-import androidx.media3.common.Format
-import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
-import androidx.media3.common.audio.GainProcessor
-import androidx.media3.common.util.Clock
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.effect.FrameDropEffect
-import androidx.media3.effect.Presentation
-import androidx.media3.transformer.AudioEncoderSettings
-import androidx.media3.transformer.Codec
-import androidx.media3.transformer.Composition
-import androidx.media3.transformer.DefaultAssetLoaderFactory
-import androidx.media3.transformer.DefaultDecoderFactory
-import androidx.media3.transformer.DefaultEncoderFactory
-import androidx.media3.transformer.EditedMediaItem
-import androidx.media3.transformer.EditedMediaItemSequence
-import androidx.media3.transformer.Effects
-import androidx.media3.transformer.ExportException
-import androidx.media3.transformer.ExportResult
-import androidx.media3.transformer.ProgressHolder
-import androidx.media3.transformer.Transformer
-import androidx.media3.transformer.VideoEncoderSettings
 import app.gyrolet.mpvrx.BuildConfig
 import app.gyrolet.mpvrx.domain.media.model.Video
 import app.gyrolet.mpvrx.utils.media.CopyPasteOps
@@ -388,7 +367,6 @@ class VideoCompressorViewModel(
   val uiState = _uiState.asStateFlow()
 
   private var compressionJob: Job? = null
-  private var activeTransformer: Transformer? = null
   private var queuedVideos: List<Video> = emptyList()
 
   init {
@@ -941,9 +919,7 @@ class VideoCompressorViewModel(
   }
 
   fun cancelCompression() {
-    activeTransformer?.cancel()
     compressionJob?.cancel()
-    activeTransformer = null
     _uiState.update {
       it.copy(
         isCompressing = false,
@@ -1125,355 +1101,16 @@ class VideoCompressorViewModel(
     queueSize: Int,
     forceRemoveAudio: Boolean = false,
   ): File? {
-    val inputUri = state.sourceUri ?: return null
-    val outputDir = File(context.cacheDir, "compressed_videos")
-    val outputFile = File(outputDir, "compress_${UUID.randomUUID()}.mp4")
-    outputDir.mkdirs()
-
-    val targetBitrate = state.targetBitrate.toLong()
-    val audioBitrateToUse =
-      if (state.audioBitrate == 0) {
-        val original = getAudioBitrate(context, inputUri)
-        if (original > 0) original else 256_000
-      } else {
-        state.audioBitrate
-      }
-
-    val plan =
-      buildCompressionPlan(
-        inputUri = inputUri,
-        videoCodec = state.videoCodec,
-        targetResolution = state.targetResolutionHeight,
-        targetFps = state.targetFps,
-        removeAudio = state.removeAudio || forceRemoveAudio,
-        sourceWidth = state.originalWidth,
-        sourceHeight = state.originalHeight,
-        sourceFps = state.originalFps,
+    _uiState.update {
+      it.copy(
+        isCompressing = false,
+        error = "Video compression is disabled in this debloated build.",
+        progressAvailable = false,
       )
-    val videoMimeType = plan.outputVideoMimeType
-
-    _uiState.update { it.copy(warnings = plan.warnings) }
-    plan.blockingError?.let { error ->
-      _uiState.update {
-        it.copy(
-          isCompressing = false,
-          error = error,
-          errorLog = null,
-          progressAvailable = false,
-        )
-      }
-      return null
     }
-
-    val decoderFactory =
-      DefaultDecoderFactory
-        .Builder(context)
-        .setEnableDecoderFallback(true)
-        .build()
-
-    val cbrEncoderFactory =
-      DefaultEncoderFactory
-        .Builder(context)
-        .setEnableFallback(true)
-        .setRequestedVideoEncoderSettings(
-          VideoEncoderSettings
-            .Builder()
-            .setBitrate(targetBitrate.toInt())
-            .setBitrateMode(MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR)
-            .build(),
-        ).setRequestedAudioEncoderSettings(
-          AudioEncoderSettings
-            .Builder()
-            .setBitrate(audioBitrateToUse)
-            .build(),
-        ).build()
-
-    val vbrEncoderFactory =
-      DefaultEncoderFactory
-        .Builder(context)
-        .setEnableFallback(true)
-        .setRequestedVideoEncoderSettings(
-          VideoEncoderSettings
-            .Builder()
-            .setBitrate(targetBitrate.toInt())
-            .setBitrateMode(MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR)
-            .build(),
-        ).setRequestedAudioEncoderSettings(
-          AudioEncoderSettings
-            .Builder()
-            .setBitrate(audioBitrateToUse)
-            .build(),
-        ).build()
-
-    val isMediaTek = isMediaTekDeviceOrEncoder(videoMimeType)
-    val primaryEncoderFactory = if (isMediaTek) vbrEncoderFactory else cbrEncoderFactory
-    val fallbackEncoderFactory = if (isMediaTek) cbrEncoderFactory else vbrEncoderFactory
-
-    val encoderFactory =
-      object : Codec.EncoderFactory {
-        override fun createForAudioEncoding(format: Format, logSessionId: LogSessionId?): Codec =
-          primaryEncoderFactory.createForAudioEncoding(format, logSessionId)
-
-        override fun createForVideoEncoding(format: Format, logSessionId: LogSessionId?): Codec {
-          val targetFps = if (plan.outputFps > 0) plan.outputFps.toFloat() else state.originalFps
-          var modifiedFormatBuilder = format.buildUpon()
-          if (targetFps > 0f) {
-            modifiedFormatBuilder.setFrameRate(targetFps)
-          }
-          if (format.colorInfo == null || !ColorInfo.isTransferHdr(format.colorInfo)) {
-            modifiedFormatBuilder.setColorInfo(null)
-          }
-          val modifiedFormat = modifiedFormatBuilder.build()
-          return try {
-            primaryEncoderFactory.createForVideoEncoding(modifiedFormat, logSessionId)
-          } catch (error: Exception) {
-            fallbackEncoderFactory.createForVideoEncoding(modifiedFormat, logSessionId)
-          }
-        }
-
-        override fun audioNeedsEncoding(): Boolean = primaryEncoderFactory.audioNeedsEncoding()
-        override fun videoNeedsEncoding(): Boolean = primaryEncoderFactory.videoNeedsEncoding()
-      }
-
-    val videoEffects = mutableListOf<Effect>()
-    if (plan.outputHeight > 0 && plan.outputHeight != state.originalHeight) {
-      val aspectRatio =
-        if (state.originalHeight > 0) {
-          state.originalWidth.toFloat() / state.originalHeight
-        } else {
-          16f / 9f
-        }
-      var targetWidth = (plan.outputHeight * aspectRatio).toInt()
-      var targetHeight = plan.outputHeight
-      if (targetWidth % 2 != 0) targetWidth -= 1
-      if (targetHeight % 2 != 0) targetHeight -= 1
-      if (targetWidth > 0 && targetHeight > 0) {
-        videoEffects +=
-          Presentation.createForWidthAndHeight(targetWidth, targetHeight, Presentation.LAYOUT_SCALE_TO_FIT)
-      }
-    }
-
-    if (plan.outputFps > 0 && state.originalFps > 0f && plan.outputFps != state.originalFps.toInt()) {
-      videoEffects += FrameDropEffect.createSimpleFrameDropEffect(state.originalFps, plan.outputFps.toFloat())
-    }
-
-    val audioEffects =
-      if (!plan.removeAudio && state.audioVolume != 1.0f) {
-        listOf(GainProcessor(ConstantGainProvider(state.audioVolume)))
-      } else {
-        emptyList()
-      }
-
-    val editedMediaItem =
-      EditedMediaItem
-        .Builder(MediaItem.fromUri(inputUri))
-        .setEffects(Effects(audioEffects, videoEffects))
-        .setRemoveAudio(plan.removeAudio)
-        .build()
-
-    var hdrMode = Composition.HDR_MODE_KEEP_HDR
-    if (Build.MANUFACTURER.equals("Google", ignoreCase = true) && Build.MODEL.contains("Pixel 10", ignoreCase = true)) {
-      if (videoMimeType == MimeTypes.VIDEO_H265 || videoMimeType == MimeTypes.VIDEO_H264) {
-        val hdrVideo = isHdr(context, inputUri)
-        if (hdrVideo) {
-          hdrMode = Composition.HDR_MODE_TONE_MAP_HDR_TO_SDR_USING_OPEN_GL
-          _uiState.update {
-            it.copy(
-              warnings =
-                it.warnings + listOf("HDR video was tone-mapped to SDR to avoid encoder issues on this device."),
-            )
-          }
-        }
-      }
-    }
-
-    val composition =
-      Composition
-        .Builder(listOf(EditedMediaItemSequence.withAudioAndVideoFrom(listOf(editedMediaItem))))
-        .setHdrMode(hdrMode)
-        .build()
-
-    return kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
-      val transformer =
-        Transformer
-          .Builder(context)
-          .setVideoMimeType(videoMimeType)
-          .setAudioMimeType(MimeTypes.AUDIO_AAC)
-          .setAssetLoaderFactory(DefaultAssetLoaderFactory(context, decoderFactory, Clock.DEFAULT, null))
-          .setEncoderFactory(encoderFactory)
-          .addListener(
-            object : Transformer.Listener {
-              override fun onCompleted(
-                composition: Composition,
-                exportResult: ExportResult,
-              ) {
-                activeTransformer = null
-                if (continuation.isActive) {
-                  continuation.resume(outputFile)
-                }
-              }
-
-              override fun onError(
-                composition: Composition,
-                exportResult: ExportResult,
-                exportException: ExportException,
-              ) {
-                activeTransformer = null
-                val logStr = exportException.stackTraceToString()
-                val isAudioDecoderError =
-                  exportException.codecInfo?.isVideo == false ||
-                    logStr.contains("AudioDecoder", ignoreCase = true) ||
-                    logStr.contains("audio/eac3", ignoreCase = true) ||
-                    logStr.contains("audio/ac3", ignoreCase = true) ||
-                    logStr.contains("audio/dts", ignoreCase = true) ||
-                    (exportException.message?.contains("AudioDecoder", ignoreCase = true) == true)
-
-                if (!plan.removeAudio && isAudioDecoderError && !forceRemoveAudio) {
-                  _uiState.update {
-                    it.copy(
-                      warnings = it.warnings + listOf("Audio decoding is not supported on this device. Retried compression with audio muted."),
-                    )
-                  }
-                  if (continuation.isActive) {
-                    viewModelScope.launch {
-                      val retryResult = compressSingleVideo(
-                        context = context,
-                        state = state,
-                        queueIndex = queueIndex,
-                        queueSize = queueSize,
-                        forceRemoveAudio = true,
-                      )
-                      continuation.resume(retryResult)
-                    }
-                  }
-                  return
-                }
-
-                _uiState.update {
-                  val isCodecError =
-                    exportException.errorCode == ExportException.ERROR_CODE_DECODER_INIT_FAILED ||
-                      exportException.errorCode == ExportException.ERROR_CODE_ENCODER_INIT_FAILED
-                  val isMuxerError = exportException.errorCode == ExportException.ERROR_CODE_MUXING_FAILED
-                  val errorMessage =
-                    when {
-                      isMuxerError && Build.MANUFACTURER.equals("HUAWEI", ignoreCase = true) ->
-                        "This issue may be caused by your specific device. Try restarting the device."
-                      isAudioDecoderError ->
-                        "The audio codec of this video is not supported by your device hardware. Enable 'Remove Audio' to compress."
-                      isCodecError ->
-                        "This video codec is not supported by your device hardware."
-                      else ->
-                        exportException.localizedMessage ?: "Compression failed."
-                    }
-                  it.copy(
-                    isCompressing = false,
-                    error = errorMessage,
-                    errorLog = exportException.stackTraceToString(),
-                    progressAvailable = false,
-                  )
-                }
-                if (continuation.isActive) {
-                  continuation.resume(null)
-                }
-              }
-            },
-          ).build()
-
-      activeTransformer = transformer
-      val progressJob =
-        viewModelScope.launch(Dispatchers.IO) {
-          while (continuation.isActive) {
-            val progressHolder = ProgressHolder()
-            val progressState =
-              runCatching {
-                transformer.getProgress(progressHolder)
-              }.getOrDefault(Transformer.PROGRESS_STATE_NOT_STARTED)
-            val isAvailable = progressState == Transformer.PROGRESS_STATE_AVAILABLE
-            val itemProgress =
-              if (isAvailable) {
-                (progressHolder.progress / 100f).coerceIn(
-                  0f,
-                  1f,
-                )
-              } else {
-                _uiState.value.currentItemProgress
-              }
-            val overallProgress = ((queueIndex + itemProgress) / queueSize.toFloat()).coerceIn(0f, 0.999f)
-            val currentSize = if (outputFile.exists()) outputFile.length() else 0L
-            _uiState.update {
-              it.copy(
-                progress = overallProgress,
-                currentItemProgress = itemProgress,
-                progressAvailable = isAvailable,
-                currentOutputSize = currentSize,
-                currentQueueIndex = queueIndex,
-              )
-            }
-            delay(200)
-          }
-        }
-
-      continuation.invokeOnCancellation {
-        progressJob.cancel()
-        runCatching { transformer.cancel() }
-        activeTransformer = null
-      }
-
-      runCatching {
-        transformer.start(composition, outputFile.absolutePath)
-      }.onFailure { error ->
-        progressJob.cancel()
-        activeTransformer = null
-        val logStr = error.stackTraceToString()
-        val isAudioDecoderError =
-          logStr.contains("AudioDecoder", ignoreCase = true) ||
-            logStr.contains("audio/eac3", ignoreCase = true) ||
-            logStr.contains("audio/ac3", ignoreCase = true) ||
-            logStr.contains("audio/dts", ignoreCase = true) ||
-            (error.message?.contains("AudioDecoder", ignoreCase = true) == true)
-
-        if (!plan.removeAudio && isAudioDecoderError && !forceRemoveAudio) {
-          _uiState.update {
-            it.copy(
-              warnings = it.warnings + listOf("Audio decoding is not supported on this device. Retried compression with audio muted."),
-            )
-          }
-          if (continuation.isActive) {
-            viewModelScope.launch {
-              val retryResult = compressSingleVideo(
-                context = context,
-                state = state,
-                queueIndex = queueIndex,
-                queueSize = queueSize,
-                forceRemoveAudio = true,
-              )
-              continuation.resume(retryResult)
-            }
-          }
-          return@suspendCancellableCoroutine
-        }
-
-        _uiState.update {
-          it.copy(
-            isCompressing = false,
-            error = error.message ?: "Compression failed.",
-            errorLog = error.stackTraceToString(),
-            progressAvailable = false,
-          )
-        }
-        if (continuation.isActive) {
-          continuation.resume(null)
-        }
-      }
-    }
+    return null
   }
 
-  private class ConstantGainProvider(private val gain: Float) : GainProcessor.GainProvider {
-    override fun getGainFactorAtSamplePosition(samplePosition: Long, channelCount: Int): Float = gain
-
-    override fun isUnityUntil(samplePosition: Long, channelCount: Int): Long =
-      if (gain == 1f) C.TIME_END_OF_SOURCE else C.TIME_UNSET
-  }
 
   private data class VideoTrackInfo(
     val mimeType: String,

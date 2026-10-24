@@ -13,13 +13,61 @@ package app.gyrolet.mpvrx.ui.player
 internal object PlaybackHttpHeaders {
   private val headerNamePattern = Regex("^[!#$%&'*+.^_`|~0-9A-Za-z-]+$")
 
+  fun fromIntent(intent: android.content.Intent?): Map<String, String> {
+    if (intent == null) return emptyMap()
+    val headers = linkedMapOf<String, String>()
+
+    // 1. Direct extras
+    val directUa = intent.getStringExtra("user_agent") ?: intent.getStringExtra("User-Agent")
+    if (!directUa.isNullOrBlank()) {
+      put(headers, "User-Agent", directUa)
+    }
+    val directRef = intent.getStringExtra("referrer") ?: intent.getStringExtra("Referer") ?: intent.getStringExtra("referer")
+    if (!directRef.isNullOrBlank()) {
+      put(headers, "Referer", directRef)
+    }
+
+    // 2. android.media.intent.extra.HTTP_HEADERS Bundle
+    val headersBundle = intent.getBundleExtra("android.media.intent.extra.HTTP_HEADERS")
+    headersBundle?.keySet()?.forEach { key ->
+      val v = headersBundle.getString(key)
+      if (!v.isNullOrBlank()) {
+        put(headers, key, v)
+      }
+    }
+
+    // 3. "headers" array or string list
+    val rawArray = intent.getStringArrayExtra("headers")
+      ?: intent.getStringArrayListExtra("headers")?.toTypedArray()
+    if (rawArray != null) {
+      parseHeadersArray(rawArray, headers)
+    }
+
+    return headers
+  }
+
+  fun parseHeadersArray(values: Array<String>?, target: MutableMap<String, String> = linkedMapOf()): Map<String, String> {
+    if (values == null) return target
+    val hasColon = values.any { it.contains(":") }
+    if (hasColon) {
+      for (item in values) {
+        val colonIdx = item.indexOf(':')
+        if (colonIdx > 0) {
+          put(target, item.substring(0, colonIdx), item.substring(colonIdx + 1))
+        }
+      }
+    } else {
+      values.asList().chunked(2).forEach { pair ->
+        if (pair.size == 2) put(target, pair[0], pair[1])
+      }
+    }
+    return target
+  }
+
   fun fromFlatPairs(values: Array<String>?): Map<String, String> {
     if (values == null) return emptyMap()
     val headers = linkedMapOf<String, String>()
-    values.asList().chunked(2).forEach { pair ->
-      if (pair.size == 2) put(headers, pair[0], pair[1])
-    }
-    return headers
+    return parseHeadersArray(values, headers)
   }
 
   /** Values already parsed by mpv, so commas in a header value are not list separators. */

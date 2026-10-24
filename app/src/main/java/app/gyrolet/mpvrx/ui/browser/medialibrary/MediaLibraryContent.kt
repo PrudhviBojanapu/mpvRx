@@ -464,8 +464,8 @@ fun MediaLibraryContent(forceAudio: Boolean = false) {
           onSettingsClick = {
             backstack.navigateTo(app.gyrolet.mpvrx.ui.preferences.PreferencesScreen)
           },
-          onTitleDoubleTap = { backstack.navigateTo(SecureFolderGateScreen) },
-          onTitleLongPress = { backstack.navigateTo(SecureFolderGateScreen) },
+          onTitleDoubleTap = null,
+          onTitleLongPress = null,
           isSingleSelection = selectionManager.isSingleSelection,
           onInfoClick = showSelectionInfo,
           onShareClick = { selectionManager.shareSelected() },
@@ -473,15 +473,7 @@ fun MediaLibraryContent(forceAudio: Boolean = false) {
           onSelectAll = { selectionManager.selectAll() },
           onInvertSelection = { selectionManager.invertSelection() },
           onDeselectAll = { selectionManager.clear() },
-          onMoveToSecureClick = {
-            if (!secureFolderPreferences.isPinSet()) {
-              backstack.navigateTo(SecureFolderGateScreen)
-            } else if (secureFolderPreferences.dontAskBeforeMove.get()) {
-              moveSelectedToSecureFolder()
-            } else {
-              moveToSecureConfirmOpen.value = true
-            }
-          },
+          onMoveToSecureClick = null,
         )
       }
     },

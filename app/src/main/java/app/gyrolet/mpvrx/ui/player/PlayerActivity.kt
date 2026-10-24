@@ -113,8 +113,6 @@ import app.gyrolet.mpvrx.preferences.VideoSortType
 import app.gyrolet.mpvrx.ui.browser.playlist.ALL_VIDEOS_PLAYLIST_ID
 import app.gyrolet.mpvrx.ui.browser.playlist.buildAllVideosPlaylistEntity
 import app.gyrolet.mpvrx.ui.browser.playlist.isAllVideosPlaylist
-import app.gyrolet.mpvrx.ui.cast.CastMediaSnapshot
-import app.gyrolet.mpvrx.ui.cast.CastPlaybackController
 import app.gyrolet.mpvrx.ui.player.controls.PlayerControls
 import app.gyrolet.mpvrx.ui.player.controls.components.panels.toColorHexString
 import app.gyrolet.mpvrx.ui.player.components.VideoAmbientBackground
@@ -235,6 +233,25 @@ class PlayerActivity :
    * `intent` isn't safely readable this early (before `onCreate`/`attach`).
    */
   private var isSecureFolderLaunch = false
+
+  init {
+    if (org.koin.core.context.GlobalContext.getOrNull() == null) {
+      runCatching {
+        val hostApp = runCatching {
+          val appCls = Class.forName("com.aio.app.AioApplication")
+          val companionField = appCls.getField("Companion").get(null)
+          companionField.javaClass.getMethod("getInstance").invoke(companionField) as? android.app.Application
+        }.getOrNull() ?: runCatching {
+          val threadCls = Class.forName("android.app.ActivityThread")
+          threadCls.getMethod("currentApplication").invoke(null) as? android.app.Application
+        }.getOrNull()
+
+        if (hostApp != null) {
+          app.gyrolet.mpvrx.App.initialize(hostApp)
+        }
+      }
+    }
+  }
 
   // ==================== Dependency Injection ====================
 
@@ -439,7 +456,6 @@ class PlayerActivity :
    * Helper for managing Picture-in-Picture mode.
    */
   private lateinit var pipHelper: MPVPipHelper
-  private lateinit var castPlaybackController: CastPlaybackController
   private var externalDisplayManager: ExternalDisplayManager? = null
 
   private var isReady = false // Single flag: true when video loaded and ready
@@ -913,7 +929,6 @@ class PlayerActivity :
     }
     observePlaybackSessionQueue()
     observeTorrentStreamingState()
-    setupCastPlayback()
 
     // Video mode waits for mpv geometry; every other preference is decidable now. Audio launches
     // always decide now. In the waiting case applyInitialVideoOrientation already ran before
@@ -1581,54 +1596,103 @@ class PlayerActivity :
     )
   }
 
-  private fun setupCastPlayback() {
-    // Use WeakReferences for all ViewModel-capturing lambdas to prevent
-    // CastPlaybackController.instance (static) from keeping PlayerViewModel alive
-    // after onCleared() — fixes 21.5 kB LeakCanary-reported retain chain.
-    val vmRef = java.lang.ref.WeakReference(viewModel)
-    castPlaybackController =
-      CastPlaybackController(
-        activity = this,
-        currentMedia = ::currentCastMediaSnapshot,
-        pauseLocal = { vmRef.get()?.pause() },
-        restoreLocal = { positionMs, play ->
-          if (!isFinishing && !isDestroyed) {
-            vmRef.get()?.seekTo((positionMs / 1000L).toInt().coerceAtLeast(0))
-            if (play) vmRef.get()?.unpause() else vmRef.get()?.pause()
-          }
-        },
-        notifyUser = { msg -> vmRef.get()?.showToast(msg) },
-      )
-    castPlaybackController.start()
+  fun isCurrentMediaOnline(): Boolean {
+    val currentItem = PlaybackSession.queue.value.currentItem
+    val urlCandidate = sequenceOf(
+      currentItem?.originalUri,
+      currentItem?.playableUri,
+      currentPlayableUri,
+      intent?.getStringExtra("fallback_url"),
+      intent?.getStringExtra("web_page_url"),
+      intent?.dataString,
+    ).mapNotNull { it?.trim() }
+      .firstOrNull { it.startsWith("http://", ignoreCase = true) || it.startsWith("https://", ignoreCase = true) || it.startsWith("magnet:", ignoreCase = true) }
+
+    return !urlCandidate.isNullOrBlank()
   }
 
-  private fun currentCastMediaSnapshot(): CastMediaSnapshot? {
-    if (!isReady || fileName.isBlank()) return null
-    val source =
-      sequenceOf(
-        currentPlayableUri,
-        runCatching { PlaybackSession.getPropertyString("path") }.getOrNull(),
-        intent?.dataString,
-      ).filterNotNull()
-        .filter { it.isNotBlank() }
-        .map { sourceText ->
-          val parsed = Uri.parse(sourceText)
-          if (parsed.scheme.isNullOrBlank()) Uri.fromFile(File(sourceText)) else parsed
-        }.firstOrNull { uri ->
-          when (uri.scheme?.lowercase()) {
-            "content", "file" -> true
-            "http", "https" -> uri.host !in setOf("127.0.0.1", "localhost", "0.0.0.0")
-            else -> false
+  fun downloadCurrentMediaWithKetch() {
+    val currentItem = PlaybackSession.queue.value.currentItem
+    val urlCandidate = sequenceOf(
+      currentItem?.originalUri,
+      currentItem?.playableUri,
+      currentPlayableUri,
+      intent?.getStringExtra("fallback_url"),
+      intent?.getStringExtra("web_page_url"),
+      intent?.dataString,
+    ).mapNotNull { it?.trim() }
+      .firstOrNull { it.startsWith("http://", ignoreCase = true) || it.startsWith("https://", ignoreCase = true) || it.startsWith("magnet:", ignoreCase = true) }
+
+    if (urlCandidate.isNullOrBlank()) {
+      android.widget.Toast.makeText(this, "No downloadable online video URL found", android.widget.Toast.LENGTH_SHORT).show()
+      return
+    }
+
+    val rawFileName = currentItem?.title?.takeIf { it.isNotBlank() }
+      ?: (intent?.getStringExtra("title") ?: intent?.getStringExtra("extra_file_name"))
+
+    val fileName = rawFileName?.let { raw ->
+      val sanitized = raw.replace(Regex("""[/\\:*?"<>|\u0000-\u001F\u007F]"""), "_").trim()
+      if (sanitized.matches(Regex(""".*\.[a-zA-Z0-9]{2,5}$"""))) {
+        sanitized
+      } else {
+        "$sanitized.mp4"
+      }
+    }
+
+    val cookies = currentItem?.headers?.get("Cookie")
+      ?: intent?.getStringExtra("extra_cookies")
+      ?: intent?.getStringExtra("cookie")
+
+    val userAgent = currentItem?.headers?.get("User-Agent")
+      ?: intent?.getStringExtra("extra_user_agent")
+      ?: intent?.getStringExtra("user_agent")
+
+    val referrer = currentItem?.headers?.get("Referer")
+      ?: intent?.getStringExtra("extra_referrer")
+      ?: intent?.getStringExtra("referrer")
+
+    val launchKetch = { targetUrl: String ->
+      try {
+        val ketchIntent = Intent().apply {
+          setClassName(packageName, "com.linroid.ketch.app.android.QuickAddActivity")
+          action = Intent.ACTION_SEND
+          type = "text/plain"
+          putExtra(Intent.EXTRA_TEXT, targetUrl)
+          putExtra("extra_url", targetUrl)
+          if (!fileName.isNullOrBlank()) {
+            putExtra("extra_file_name", fileName)
           }
-        } ?: return null
-    return CastMediaSnapshot(
-      source = source,
-      title = getPreferredCurrentTitle().ifBlank { fileName },
-      mimeType = intent?.type ?: runCatching { contentResolver.getType(source) }.getOrNull(),
-      durationMs = ((PlaybackSession.getPropertyDouble("duration") ?: 0.0) * 1000.0).toLong(),
-      positionMs = ((PlaybackSession.getPropertyDouble("time-pos") ?: 0.0) * 1000.0).toLong(),
-      isPlaying = PlaybackSession.getPropertyBoolean("pause") == false,
-    )
+          if (!cookies.isNullOrBlank()) {
+            putExtra("extra_cookies", cookies)
+          }
+          if (!userAgent.isNullOrBlank()) {
+            putExtra("extra_user_agent", userAgent)
+          }
+          if (!referrer.isNullOrBlank()) {
+            putExtra("extra_referrer", referrer)
+          }
+        }
+        startActivity(ketchIntent)
+      } catch (e: Exception) {
+        android.widget.Toast.makeText(this@PlayerActivity, "Failed to launch Ketch: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+      }
+    }
+
+    if (YtdlpManager.requiresYtdlp(urlCandidate)) {
+      android.widget.Toast.makeText(this, "Resolving video stream...", android.widget.Toast.LENGTH_SHORT).show()
+      lifecycleScope.launch {
+        val streamResult = withContext(Dispatchers.IO) {
+          runCatching {
+            YtdlpManager.extractStream(this@PlayerActivity, urlCandidate, format = "best[ext=mp4]/best").getOrNull()
+          }.getOrNull()
+        }
+        val targetUrl = streamResult?.url?.takeIf { it.isNotBlank() } ?: urlCandidate
+        launchKetch(targetUrl)
+      }
+    } else {
+      launchKetch(urlCandidate)
+    }
   }
 
   private fun setupAudio() {
@@ -1801,7 +1865,6 @@ class PlayerActivity :
       externalDisplayManager = null
       mediaLoadJob?.cancel()
       cancelPlaybackLoadRecovery()
-      if (::castPlaybackController.isInitialized) castPlaybackController.release()
       cancelSystemBarsAutoHide()
       if (playbackWasInitialized && ownsPlaybackSession && !scriptRuntimeRestartPending) saveVideoPlaybackState(fileName, immediate = true)
       if (playbackWasInitialized && ownsPlaybackSession && !keepBackgroundPlaybackAlive) {
@@ -4059,8 +4122,81 @@ class PlayerActivity :
    */
   private fun setHttpHeadersFromExtras(extras: Bundle?) {
     val uri = extractUriFromIntent(intent)
-    val headers = buildPlaybackHeaders(uri, PlaybackHttpHeaders.fromFlatPairs(extras?.getStringArray("headers")))
+    val intentHeaders = PlaybackHttpHeaders.fromIntent(intent)
+    val headers = buildPlaybackHeaders(uri, intentHeaders)
     applyHttpHeaders(headers)
+
+    // Pre-apply DRM/ClearKey decryption key and DASH parameters if present in intent
+    val hexKey = extractDrmKey(intent)
+    if (!hexKey.isNullOrBlank()) {
+      PlaybackSession.setPropertyString("cenc-decryption-key", hexKey)
+      PlaybackSession.setPropertyString("demuxer-lavf-o", "cenc_decryption_key=$hexKey,live=1,dash_live_segment_latency=3")
+    }
+    val ref = extractReferrer(intent) ?: PlaybackHttpHeaders.value(headers, "Referer")
+    if (!ref.isNullOrBlank()) {
+      PlaybackSession.setPropertyString("referrer", ref)
+    }
+    val ua = extractUserAgent(intent) ?: PlaybackHttpHeaders.userAgent(headers)
+    if (!ua.isNullOrBlank()) {
+      PlaybackSession.setPropertyString("user-agent", ua)
+    }
+  }
+
+  private fun extractDrmKey(intent: Intent?): String? {
+    if (intent == null) return null
+    val raw = intent.getStringExtra("cenc-decryption-key")
+      ?: intent.getStringExtra("cenc_decryption_key")
+      ?: intent.getStringExtra("drm_key")
+      ?: intent.getStringExtra("clearkey")
+      ?: intent.getStringExtra("clear_key")
+      ?: intent.getStringExtra("drm_license_key")
+      ?: intent.getStringExtra("key")
+    if (raw.isNullOrBlank()) return null
+    return parseDrmHexKey(raw)
+  }
+
+  private fun parseDrmHexKey(rawInput: String): String? {
+    val trimmed = rawInput.trim().removeSurrounding("\"", "\"").trim()
+    if (trimmed.isEmpty()) return null
+
+    // 1. If format is kid:key
+    if (trimmed.contains(":")) {
+      val candidate = trimmed.substringAfter(":").trim().removePrefix("0x").trim()
+      if (candidate.isNotEmpty()) return candidate
+    }
+
+    // 2. If it's a JSON string (e.g. Clearkey JWK {"keys":[{"k":"...","kid":"..."}]})
+    if (trimmed.startsWith("{") && trimmed.contains("\"k\"")) {
+      try {
+        val kMatch = Regex("\"k\"\\s*:\\s*\"([^\"]+)\"").find(trimmed)
+        if (kMatch != null) {
+          val b64 = kMatch.groupValues[1]
+          val bytes = android.util.Base64.decode(b64, android.util.Base64.URL_SAFE or android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP)
+          return bytes.joinToString("") { "%02x".format(it) }
+        }
+      } catch (_: Exception) {}
+    }
+
+    // 3. Raw hex string
+    val clean = trimmed.removePrefix("0x").trim()
+    return clean.takeIf { it.isNotEmpty() }
+  }
+
+  private fun extractUserAgent(intent: Intent?): String? {
+    if (intent == null) return null
+    return intent.getStringExtra("user_agent")
+      ?: intent.getStringExtra("User-Agent")
+      ?: intent.getBundleExtra("android.media.intent.extra.HTTP_HEADERS")?.getString("User-Agent")
+      ?: intent.getBundleExtra("android.media.intent.extra.HTTP_HEADERS")?.getString("user-agent")
+  }
+
+  private fun extractReferrer(intent: Intent?): String? {
+    if (intent == null) return null
+    return intent.getStringExtra("referrer")
+      ?: intent.getStringExtra("Referer")
+      ?: intent.getStringExtra("referer")
+      ?: intent.getBundleExtra("android.media.intent.extra.HTTP_HEADERS")?.getString("Referer")
+      ?: intent.getBundleExtra("android.media.intent.extra.HTTP_HEADERS")?.getString("referrer")
   }
 
   /**
@@ -4745,6 +4881,7 @@ class PlayerActivity :
         isReady = true
         if (playWhenFileLoaded) {
           playWhenFileLoaded = false
+          PlaybackSession.setPropertyBoolean("pause", false)
         }
         viewModel.onVideoLoadCompleted()
         handleFileLoaded(loadGeneration)
@@ -6009,7 +6146,7 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
     val requestedHeaders =
       buildMediaHeaders(
         Uri.parse(requestedSource),
-        PlaybackHttpHeaders.fromFlatPairs(sourceIntent.extras?.getStringArray("headers")),
+        PlaybackHttpHeaders.fromIntent(sourceIntent),
         requestedQueueItem?.headers.orEmpty(),
       )
     val requestedTorrentFileIndex = sourceIntent.getIntExtra("torrent_file_index", -1).takeIf { it >= 0 }
@@ -6139,9 +6276,14 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
             } else {
               null
             }
+          val drmHexKey = extractDrmKey(sourceIntent)
           val item =
             if (!isTorrentRequest) {
-              requestedQueueItem?.copy(playableUri = resolvedPlayableUri, headers = requestedHeaders)
+              requestedQueueItem?.copy(
+                playableUri = resolvedPlayableUri,
+                headers = requestedHeaders,
+                cencKey = drmHexKey ?: requestedQueueItem.cencKey,
+              )
             } else {
               null
             }
@@ -6158,6 +6300,7 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
                   ?.getIntExtra("duration", 0)
                   ?.takeIf { it > 0 },
                 torrentFileIndex = torrentResult?.selectedFile?.index,
+                cencKey = drmHexKey,
               )
 
           // Prepare YouTube artwork and the cookie jar in load order, before invoking mpv.
@@ -6297,7 +6440,9 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
         null
       }
     ensureCurrentMediaRequest(requestGeneration)
+    val isExplicitDirect = intent.getBooleanExtra("direct_media", false) || intent.getStringExtra("ytdl") == "no"
     val ytdlpSource =
+      if (isExplicitDirect) null else
       sequenceOf(item.originalUri, item.playableUri)
         .firstOrNull(YtdlpManager::requiresYtdlp)
     val requiresYtdlp = ytdlpSource != null
@@ -6329,6 +6474,7 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
       }
       ensureCurrentMediaRequest(requestGeneration)
     }
+    val externalAudio = intent.getStringExtra("audio_url")
     val generation =
       PlaybackSession.load(
           item = item,
@@ -6336,11 +6482,29 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
           positionRestoreOverride = effectivePositionOverride,
           initialPositionSeconds = initialPositionSeconds,
           flattenEditions = requiresYtdlp && !MpvConfigOverridePolicy.isOwnedByMpvConf("flatten-editions"),
+          externalAudioUrl = externalAudio,
           commit = { nativeLoad ->
             PlaybackActivityOwner.runIfOwner(playbackOwnerToken, -1L) {
               if (requestGeneration != mediaRequestGeneration) {
                 -1L
               } else {
+                PlaybackSession.setPropertyBoolean("pause", false)
+                val hexKey = item.cencKey ?: extractDrmKey(intent)
+                if (!hexKey.isNullOrBlank()) {
+                  PlaybackSession.setPropertyString("cenc-decryption-key", hexKey)
+                  PlaybackSession.setPropertyString(
+                    "demuxer-lavf-o",
+                    "cenc_decryption_key=$hexKey,live=1,dash_live_segment_latency=3"
+                  )
+                }
+                val ref = item.headers["Referer"] ?: item.headers["referer"] ?: extractReferrer(intent)
+                if (!ref.isNullOrBlank()) {
+                  PlaybackSession.setPropertyString("referrer", ref)
+                }
+                val ua = PlaybackHttpHeaders.userAgent(item.headers) ?: extractUserAgent(intent)
+                if (!ua.isNullOrBlank()) {
+                  PlaybackSession.setPropertyString("user-agent", ua)
+                }
                 // A null per-video override means "use the user-selected yt-dlp settings";
                 // don't erase the format already applied by setupYtdlpOptions().
                 if (requiresYtdlp && ytdlFormat != null) {
@@ -6484,7 +6648,43 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
     pendingMediaLoadRecovery = null
     playWhenFileLoaded = false
     isAdvancingAtEof = false
-    isReady = false
+    val fallbackUrl = intent.getStringExtra("fallback_url")
+    val wasExplicitDirect = intent.getBooleanExtra("direct_media", false) || intent.getStringExtra("ytdl") == "no"
+    if (wasExplicitDirect && !fallbackUrl.isNullOrBlank() && fallbackUrl != request.item.playableUri) {
+      Log.i(TAG, "Explicit direct playback failed; retrying with fallback_url and yt-dlp: $fallbackUrl")
+      intent.removeExtra("direct_media")
+      intent.putExtra("ytdl", "yes")
+      val fallbackItem = request.item.copy(
+        playableUri = fallbackUrl,
+        originalUri = fallbackUrl,
+        stableId = fallbackUrl,
+      )
+      isReady = false
+      playWhenFileLoaded = true
+      viewModel.onVideoLoadStarted()
+      playbackLoadRetryJob?.cancel()
+      playbackLoadRetryJob =
+        lifecycleScope.launch(mediaLoadDispatcher) {
+          try {
+            issuePlaybackLoad(
+              item = fallbackItem,
+              attempt = 0,
+              requestGeneration = request.requestGeneration,
+              legacyMediaIdentifier = request.legacyMediaIdentifier,
+            )
+          } catch (e: Exception) {
+            Log.e(TAG, "Fallback playback load failed", e)
+            withContext(Dispatchers.Main) {
+              val msg = e.message?.takeIf { it.isNotBlank() } ?: error ?: "Media did not become ready"
+              PlaybackSession.reportLoadTimeout(request.generation, msg)
+              viewModel.onVideoLoadCompleted()
+              viewModel.showToast(getString(R.string.toast_playback_load_failed))
+            }
+          }
+        }
+      return
+    }
+
     val message = error?.takeIf { it.isNotBlank() } ?: "Media did not become ready"
     PlaybackSession.reportLoadTimeout(request.generation, message)
     viewModel.onVideoLoadCompleted()
@@ -8386,7 +8586,13 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?, loadGen
             ?.takeIf { it.isNotBlank() }
             ?.let { userAgent -> mapOf("User-Agent" to userAgent) }
             .orEmpty()
-        val headers = buildMediaHeaders(uri, networkPlaylistHeaders.getOrNull(index).orEmpty(), storedHeaders)
+        val intentHeaders = PlaybackHttpHeaders.fromIntent(intent)
+        val headers = buildMediaHeaders(
+          uri,
+          networkPlaylistHeaders.getOrNull(index).orEmpty(),
+          storedHeaders,
+          intentHeaders,
+        )
         val existingItem =
           existingQueueItems.firstOrNull { it.originalUri == uri.toString() || it.playableUri == uri.toString() }
 

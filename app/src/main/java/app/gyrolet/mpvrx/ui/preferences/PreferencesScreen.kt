@@ -233,18 +233,6 @@ object PreferencesScreen : Screen {
               icon = Icons.RoundedFilled.Palette,
               screen = AppearancePreferencesScreen,
             ),
-            SettingsDestination(
-              title = stringResource(R.string.pref_appearance_category_liquid_glass),
-              summary =
-                listOf(
-                  stringResource(R.string.pref_liquid_glass_optics),
-                  stringResource(R.string.pref_liquid_glass_colors),
-                  stringResource(R.string.pref_liquid_glass_highlights),
-                ).joinToString(", "),
-              icon = Icons.RoundedFilled.BlurOn,
-              screen = LiquidGlassPreferencesScreen,
-              experimental = true,
-            ),
           ),
       ),
       SettingsSection(

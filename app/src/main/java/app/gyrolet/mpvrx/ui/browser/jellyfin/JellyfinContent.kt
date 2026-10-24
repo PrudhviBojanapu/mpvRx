@@ -9,6 +9,7 @@
 
 package app.gyrolet.mpvrx.ui.browser.jellyfin
 
+import android.content.Intent
 import app.gyrolet.mpvrx.ui.utils.NavigationBackHandler as BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -1045,7 +1046,16 @@ fun JellyfinContent(
           postSearchActions = {
             if (!selectionManager.isInSelectionMode && !isMusicOnlyMode) {
               IconButton(
-                onClick = { backstack.navigateTo(app.gyrolet.mpvrx.ui.downloads.DownloadsScreen) },
+                onClick = {
+                  runCatching {
+                    val intent = Intent(context, Class.forName("com.linroid.ketch.app.android.MainActivity")).apply {
+                      addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    context.startActivity(intent)
+                  }.onFailure {
+                    backstack.navigateTo(app.gyrolet.mpvrx.ui.downloads.DownloadsScreen)
+                  }
+                },
                 modifier = Modifier.padding(horizontal = 2.dp),
               ) {
                 Icon(

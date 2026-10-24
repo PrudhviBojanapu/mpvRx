@@ -83,10 +83,7 @@ internal val LocalPlayerLiquidGlassActive = staticCompositionLocalOf<Boolean?> {
  * so they fall back to their regular, non-glass form whenever the player turns glass off.
  */
 @Composable
-fun liquidGlassActive(): Boolean {
-    val enabled by koinInject<AppearancePreferences>().liquidGlassEnabled.collectAsState()
-    return enabled && LocalPlayerLiquidGlassActive.current != false
-}
+fun liquidGlassActive(): Boolean = false
 
 object LiquidControlColors {
     val accent: Color

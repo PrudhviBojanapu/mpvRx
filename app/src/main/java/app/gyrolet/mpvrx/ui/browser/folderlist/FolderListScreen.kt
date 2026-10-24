@@ -721,8 +721,8 @@ object FolderListScreen : Screen {
               onSettingsClick = {
                 backstack.navigateTo(app.gyrolet.mpvrx.ui.preferences.PreferencesScreen)
               },
-              onTitleDoubleTap = { backstack.navigateTo(SecureFolderGateScreen) },
-              onTitleLongPress = { backstack.navigateTo(SecureFolderGateScreen) },
+              onTitleDoubleTap = null,
+              onTitleLongPress = null,
               showBetaBadge = BuildConfig.IS_PREVIEW_BUILD,
               onRenameClick = null,
               isSingleSelection = selectionManager.isSingleSelection,
@@ -774,15 +774,7 @@ object FolderListScreen : Screen {
               onSelectAll = { selectionManager.selectAll() },
               onInvertSelection = { selectionManager.invertSelection() },
               onDeselectAll = { selectionManager.clear() },
-              onMoveToSecureClick = {
-                if (!secureFolderPreferences.isPinSet()) {
-                  backstack.navigateTo(SecureFolderGateScreen)
-                } else if (secureFolderPreferences.dontAskBeforeMove.get()) {
-                  moveSelectedFoldersToSecureFolder()
-                } else {
-                  moveToSecureConfirmOpen.value = true
-                }
-              },
+              onMoveToSecureClick = null,
             )
           }
         },

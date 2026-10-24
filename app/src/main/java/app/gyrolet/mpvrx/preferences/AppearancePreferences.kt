@@ -72,8 +72,8 @@ class AppearancePreferences(
   val customWallpaperUseColors = preferenceStore.getBoolean("custom_wallpaper_use_colors", false)
   val amoledMode = preferenceStore.getBoolean("amoled_mode", false)
   // Glass records the whole screen behind it every frame and moves player video to a TextureView;
-  // low-end devices start without it (and without the progressive blur) unless the user opts in.
-  val liquidGlassEnabled = preferenceStore.getBoolean("liquid_glass_enabled", !DevicePerformance.isLowEnd)
+  // disabled for debloated clean Material 3 UI and optimal 60/120fps hardware rendering.
+  val liquidGlassEnabled = preferenceStore.getBoolean("liquid_glass_enabled", false)
   val liquidGlassInHdr = preferenceStore.getBoolean("liquid_glass_in_hdr", false)
   val liquidGlassOpacity = preferenceStore.getFloat("liquid_glass_opacity", 1f)
   val liquidGlassBlur = preferenceStore.getFloat("liquid_glass_blur", 1f)
@@ -188,11 +188,8 @@ class AppearancePreferences(
     preferenceStore.getBoolean("clip_button_migration_complete", false)
 
   init {
-    // The advanced Liquid Glass optics rely on modern Android rendering primitives. A restored
-    // preference must not re-enable the expensive glass path on Android 11 or below.
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S && liquidGlassEnabled.get()) {
-      liquidGlassEnabled.set(false)
-    }
+    // Liquid Glass is debloated: enforce disabled state across all devices
+    liquidGlassEnabled.set(false)
 
     if (selectedCustomThemeName.get().isBlank()) {
       CustomThemeDefinition.parse(customTheme.get())?.let { legacyTheme ->
