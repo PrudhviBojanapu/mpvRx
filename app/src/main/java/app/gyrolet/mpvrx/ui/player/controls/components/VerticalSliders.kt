@@ -11,7 +11,6 @@ package app.gyrolet.mpvrx.ui.player.controls.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
-import app.gyrolet.mpvrx.ui.liquidglass.liquidGlassActive
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -36,13 +35,6 @@ import app.gyrolet.mpvrx.R
 import app.gyrolet.mpvrx.ui.icons.AppIcon
 import app.gyrolet.mpvrx.ui.icons.Icon
 import app.gyrolet.mpvrx.ui.icons.Icons
-import app.gyrolet.mpvrx.ui.liquidglass.LocalKyantPlayerBackdrop
-import app.gyrolet.mpvrx.ui.liquidglass.liquidGlassEffects
-import app.gyrolet.mpvrx.ui.liquidglass.rememberLiquidGlassSettings
-import com.kyant.backdrop.drawBackdrop
-import com.kyant.backdrop.highlight.Highlight
-import com.kyant.backdrop.shadow.InnerShadow
-import com.kyant.backdrop.shadow.Shadow
 
 fun percentage(
   value: Float,
@@ -69,11 +61,6 @@ private fun LevelPill(
   modifier: Modifier = Modifier,
 ) {
   val colors = MaterialTheme.colorScheme
-  val enableLiquidGlass = liquidGlassActive()
-  val glassSettings = rememberLiquidGlassSettings()
-  // Glass needs the player's sampled video layer. Until it exists (first frames, renderer switches)
-  // the pill keeps its regular darker form instead of drawing a glass rim around nothing.
-  val glassBackdrop = LocalKyantPlayerBackdrop.current?.takeIf { enableLiquidGlass }
   val density = LocalDensity.current
   val shape = CircleShape
   val fillSpring = spring<Float>(dampingRatio = 0.85f, stiffness = 380f)
@@ -111,28 +98,8 @@ private fun LevelPill(
     modifier =
       modifier
         .size(LevelPillWidth, LevelPillHeight)
-        .then(
-          if (glassBackdrop != null) {
-            Modifier.drawBackdrop(
-              backdrop = glassBackdrop,
-              shape = { shape },
-              effects = {
-                liquidGlassEffects(
-                  glassSettings,
-                  with(density) { 16.dp.toPx() },
-                  with(density) { 16.dp.toPx() },
-                  with(density) { 24.dp.toPx() },
-                )
-              },
-              highlight = { glassSettings.highlight(Highlight.Default) },
-              shadow = { Shadow(color = Color.Black.copy(alpha = 0.25f), radius = 12.dp) },
-              innerShadow = { InnerShadow(color = Color.White.copy(alpha = 0.15f), radius = 2.dp) },
-            )
-          } else {
-            Modifier
-          },
-        ).clip(shape)
-        .background(Color.Black.copy(alpha = if (glassBackdrop != null) 0.25f else 0.45f))
+        .clip(shape)
+        .background(Color.Black.copy(alpha = 0.45f))
         .border(1.dp, Color.White.copy(alpha = 0.12f), shape),
   ) {
     Box(

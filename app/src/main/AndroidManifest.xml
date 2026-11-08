@@ -82,9 +82,7 @@
         android:hardwareAccelerated="true"
         android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="35">
-        <!-- Manifest placeholder is supplied from MEASURE_API_KEY at build time. -->
-        <meta-data android:name="sh.measure.android.API_KEY" android:value="${measureApiKey}" />
-        <meta-data android:name="sh.measure.android.API_URL" android:value="https://ingest.measure.sh" />
+
         <!-- Initialize WorkManager on demand, outside the startup rendering path. -->
         <provider
             android:name="androidx.startup.InitializationProvider"
@@ -116,13 +114,7 @@
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
-        <meta-data
-            android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
-            android:value="app.gyrolet.mpvrx.ui.cast.MpvRxCastOptionsProvider" />
 
-        <receiver
-            android:name="androidx.mediarouter.media.MediaTransferReceiver"
-            android:exported="true" />
 
         <receiver
             android:name=".ui.player.MediaPlayerWidget"
@@ -1509,16 +1501,7 @@
             <!-- Extractor-site handlers are declared only by the sideload manifest. -->
         </activity>
 
-        <activity
-            android:name=".ui.cast.CastRemoteControllerActivity"
-            android:exported="false"
-            android:launchMode="singleTask"
-            android:theme="@style/Theme.mpvrx" />
-        <activity
-            android:name=".ui.cast.CastExpandedControlsActivity"
-            android:exported="false"
-            android:launchMode="singleTask"
-            android:theme="@style/Theme.mpvrx" />
+
         <activity
             android:name=".presentation.crash.CrashActivity"
             android:process=":crash"

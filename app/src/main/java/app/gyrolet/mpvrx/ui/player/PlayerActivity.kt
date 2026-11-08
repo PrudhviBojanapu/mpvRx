@@ -113,8 +113,6 @@ import app.gyrolet.mpvrx.preferences.VideoSortType
 import app.gyrolet.mpvrx.ui.browser.playlist.ALL_VIDEOS_PLAYLIST_ID
 import app.gyrolet.mpvrx.ui.browser.playlist.buildAllVideosPlaylistEntity
 import app.gyrolet.mpvrx.ui.browser.playlist.isAllVideosPlaylist
-import app.gyrolet.mpvrx.ui.cast.CastMediaSnapshot
-import app.gyrolet.mpvrx.ui.cast.CastPlaybackController
 import app.gyrolet.mpvrx.ui.player.controls.PlayerControls
 import app.gyrolet.mpvrx.ui.player.controls.components.panels.toColorHexString
 import app.gyrolet.mpvrx.ui.player.components.VideoAmbientBackground
@@ -236,6 +234,25 @@ class PlayerActivity :
    * `intent` isn't safely readable this early (before `onCreate`/`attach`).
    */
   private var isSecureFolderLaunch = false
+
+  init {
+    if (org.koin.core.context.GlobalContext.getOrNull() == null) {
+      runCatching {
+        val hostApp = runCatching {
+          val appCls = Class.forName("com.aio.app.AioApplication")
+          val companionField = appCls.getField("Companion").get(null)
+          companionField.javaClass.getMethod("getInstance").invoke(companionField) as? android.app.Application
+        }.getOrNull() ?: runCatching {
+          val threadCls = Class.forName("android.app.ActivityThread")
+          threadCls.getMethod("currentApplication").invoke(null) as? android.app.Application
+        }.getOrNull()
+
+        if (hostApp != null) {
+          app.gyrolet.mpvrx.App.initialize(hostApp)
+        }
+      }
+    }
+  }
 
   // ==================== Dependency Injection ====================
 
@@ -441,7 +458,6 @@ class PlayerActivity :
    * Helper for managing Picture-in-Picture mode.
    */
   private lateinit var pipHelper: MPVPipHelper
-  private lateinit var castPlaybackController: CastPlaybackController
   private var externalDisplayManager: ExternalDisplayManager? = null
 
   private var isReady = false // Single flag: true when video loaded and ready
@@ -933,7 +949,6 @@ class PlayerActivity :
     }
     observePlaybackSessionQueue()
     observeTorrentStreamingState()
-    setupCastPlayback()
 
     // Video mode waits for mpv geometry; every other preference is decidable now. Audio launches
     // always decide now. In the waiting case applyInitialVideoOrientation already ran before
@@ -1639,54 +1654,70 @@ class PlayerActivity :
     )
   }
 
-  private fun setupCastPlayback() {
-    // Use WeakReferences for all ViewModel-capturing lambdas to prevent
-    // CastPlaybackController.instance (static) from keeping PlayerViewModel alive
-    // after onCleared() — fixes 21.5 kB LeakCanary-reported retain chain.
-    val vmRef = java.lang.ref.WeakReference(viewModel)
-    castPlaybackController =
-      CastPlaybackController(
-        activity = this,
-        currentMedia = ::currentCastMediaSnapshot,
-        pauseLocal = { vmRef.get()?.pause() },
-        restoreLocal = { positionMs, play ->
-          if (!isFinishing && !isDestroyed) {
-            vmRef.get()?.seekTo((positionMs / 1000L).toInt().coerceAtLeast(0))
-            if (play) vmRef.get()?.unpause() else vmRef.get()?.pause()
-          }
-        },
-        notifyUser = { msg -> vmRef.get()?.showToast(msg) },
-      )
-    castPlaybackController.start()
+  fun isCurrentMediaOnline(): Boolean {
+    val currentItem = PlaybackSession.queue.value.currentItem
+    val urlCandidate = sequenceOf(
+      currentItem?.originalUri,
+      currentItem?.playableUri,
+      currentPlayableUri,
+      intent?.getStringExtra("fallback_url"),
+      intent?.getStringExtra("web_page_url"),
+      intent?.dataString,
+    ).mapNotNull { it?.trim() }
+      .firstOrNull { it.startsWith("http://", ignoreCase = true) || it.startsWith("https://", ignoreCase = true) || it.startsWith("magnet:", ignoreCase = true) }
+
+    return !urlCandidate.isNullOrBlank()
   }
 
-  private fun currentCastMediaSnapshot(): CastMediaSnapshot? {
-    if (!isReady || fileName.isBlank()) return null
-    val source =
-      sequenceOf(
-        currentPlayableUri,
-        runCatching { PlaybackSession.getPropertyString("path") }.getOrNull(),
-        intent?.dataString,
-      ).filterNotNull()
-        .filter { it.isNotBlank() }
-        .map { sourceText ->
-          val parsed = Uri.parse(sourceText)
-          if (parsed.scheme.isNullOrBlank()) Uri.fromFile(File(sourceText)) else parsed
-        }.firstOrNull { uri ->
-          when (uri.scheme?.lowercase()) {
-            "content", "file" -> true
-            "http", "https" -> uri.host !in setOf("127.0.0.1", "localhost", "0.0.0.0")
-            else -> false
-          }
-        } ?: return null
-    return CastMediaSnapshot(
-      source = source,
-      title = getPreferredCurrentTitle().ifBlank { fileName },
-      mimeType = intent?.type ?: runCatching { contentResolver.getType(source) }.getOrNull(),
-      durationMs = ((PlaybackSession.getPropertyDouble("duration") ?: 0.0) * 1000.0).toLong(),
-      positionMs = ((PlaybackSession.getPropertyDouble("time-pos") ?: 0.0) * 1000.0).toLong(),
-      isPlaying = PlaybackSession.getPropertyBoolean("pause") == false,
-    )
+  fun downloadCurrentMediaWithKetch() {
+    val currentItem = PlaybackSession.queue.value.currentItem
+    val urlCandidate = sequenceOf(
+      currentItem?.originalUri,
+      currentItem?.playableUri,
+      currentPlayableUri,
+      intent?.getStringExtra("fallback_url"),
+      intent?.getStringExtra("web_page_url"),
+      intent?.dataString,
+    ).mapNotNull { it?.trim() }
+      .firstOrNull { it.startsWith("http://", ignoreCase = true) || it.startsWith("https://", ignoreCase = true) || it.startsWith("magnet:", ignoreCase = true) }
+
+    if (urlCandidate.isNullOrBlank()) {
+      android.widget.Toast.makeText(this, "No downloadable online video URL found", android.widget.Toast.LENGTH_SHORT).show()
+      return
+    }
+
+    val rawFileName = currentItem?.title?.takeIf { it.isNotBlank() }
+      ?: (intent?.getStringExtra("title") ?: intent?.getStringExtra("extra_file_name"))
+
+    val fileName = rawFileName?.let {
+      if (!it.contains('.')) "$it.mp4" else it
+    } ?: "downloaded_video.mp4"
+
+    try {
+      val ketchIntent = Intent("com.linroid.ketch.action.CREATE_TASK").apply {
+        setClassName(packageName, "com.linroid.ketch.app.android.MainActivity")
+        putExtra("url", urlCandidate)
+        putExtra("name", fileName)
+        putExtra("user_agent", intent?.getStringExtra("user_agent"))
+        putExtra("referer", intent?.getStringExtra("referer") ?: intent?.getStringExtra("Referer"))
+        putExtra("cenc_key", intent?.getStringExtra("cenc_key"))
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+      }
+      startActivity(ketchIntent)
+    } catch (_: Exception) {
+      try {
+        val browserChooserIntent = Intent(Intent.ACTION_VIEW).apply {
+          data = Uri.parse(urlCandidate)
+          putExtra("extra_file_name", fileName)
+          putExtra("user_agent", intent?.getStringExtra("user_agent"))
+          putExtra("referer", intent?.getStringExtra("referer") ?: intent?.getStringExtra("Referer"))
+          addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        startActivity(browserChooserIntent)
+      } catch (e: Exception) {
+        android.widget.Toast.makeText(this, "Failed to launch download manager: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+      }
+    }
   }
 
   private fun setupAudio() {
@@ -1869,7 +1900,6 @@ class PlayerActivity :
       externalDisplayManager = null
       mediaLoadJob?.cancel()
       cancelPlaybackLoadRecovery()
-      if (::castPlaybackController.isInitialized) castPlaybackController.release()
       cancelSystemBarsAutoHide()
       if (playbackWasInitialized && ownsPlaybackSession && !scriptRuntimeRestartPending) saveVideoPlaybackState(fileName, immediate = true)
       if (playbackWasInitialized && ownsPlaybackSession && !keepBackgroundPlaybackAlive) {
@@ -4218,8 +4248,87 @@ class PlayerActivity :
    */
   private fun setHttpHeadersFromExtras(extras: Bundle?) {
     val uri = extractUriFromIntent(intent)
-    val headers = buildPlaybackHeaders(uri, PlaybackHttpHeaders.fromFlatPairs(extras?.getStringArray("headers")))
+    val intentHeaders = PlaybackHttpHeaders.fromIntent(intent)
+    val headers = buildPlaybackHeaders(
+      uri,
+      PlaybackHttpHeaders.fromFlatPairs(extras?.getStringArray("headers")),
+      intentHeaders,
+    )
     applyHttpHeaders(headers)
+
+    val hexKey = extractDrmKey(intent)
+    if (!hexKey.isNullOrBlank()) {
+      PlaybackSession.setPropertyString("cenc-decryption-key", hexKey)
+      PlaybackSession.setPropertyString(
+        "demuxer-lavf-o",
+        "cenc_decryption_key=$hexKey,live=1,dash_live_segment_latency=3"
+      )
+    }
+    val ref = extractReferrer(intent) ?: headers["Referer"] ?: headers["referer"]
+    if (!ref.isNullOrBlank()) {
+      PlaybackSession.setPropertyString("referrer", ref)
+    }
+    val ua = extractUserAgent(intent) ?: PlaybackHttpHeaders.userAgent(headers)
+    if (!ua.isNullOrBlank()) {
+      PlaybackSession.setPropertyString("user-agent", ua)
+    }
+  }
+
+  private fun extractDrmKey(intent: Intent?): String? {
+    if (intent == null) return null
+    val raw = intent.getStringExtra("cenc-decryption-key")
+      ?: intent.getStringExtra("cenc_decryption_key")
+      ?: intent.getStringExtra("drm_key")
+      ?: intent.getStringExtra("clearkey")
+      ?: intent.getStringExtra("clear_key")
+      ?: intent.getStringExtra("drm_license_key")
+      ?: intent.getStringExtra("key")
+    if (raw.isNullOrBlank()) return null
+    return parseDrmHexKey(raw)
+  }
+
+  private fun parseDrmHexKey(rawInput: String): String? {
+    val trimmed = rawInput.trim().removeSurrounding("\"", "\"").trim()
+    if (trimmed.isEmpty()) return null
+
+    // 1. If format is kid:key
+    if (trimmed.contains(":")) {
+      val candidate = trimmed.substringAfter(":").trim().removePrefix("0x").trim()
+      if (candidate.isNotEmpty()) return candidate
+    }
+
+    // 2. If it's a JSON string (e.g. Clearkey JWK {"keys":[{"k":"...","kid":"..."}]})
+    if (trimmed.startsWith("{") && trimmed.contains("\"k\"")) {
+      try {
+        val kMatch = Regex("\"k\"\\s*:\\s*\"([^\"]+)\"").find(trimmed)
+        if (kMatch != null) {
+          val b64 = kMatch.groupValues[1]
+          val bytes = android.util.Base64.decode(b64, android.util.Base64.URL_SAFE or android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP)
+          return bytes.joinToString("") { "%02x".format(it) }
+        }
+      } catch (_: Exception) {}
+    }
+
+    // 3. Raw hex string
+    val clean = trimmed.removePrefix("0x").trim()
+    return clean.takeIf { it.isNotEmpty() }
+  }
+
+  private fun extractUserAgent(intent: Intent?): String? {
+    if (intent == null) return null
+    return intent.getStringExtra("user_agent")
+      ?: intent.getStringExtra("User-Agent")
+      ?: intent.getBundleExtra("android.media.intent.extra.HTTP_HEADERS")?.getString("User-Agent")
+      ?: intent.getBundleExtra("android.media.intent.extra.HTTP_HEADERS")?.getString("user-agent")
+  }
+
+  private fun extractReferrer(intent: Intent?): String? {
+    if (intent == null) return null
+    return intent.getStringExtra("referrer")
+      ?: intent.getStringExtra("Referer")
+      ?: intent.getStringExtra("referer")
+      ?: intent.getBundleExtra("android.media.intent.extra.HTTP_HEADERS")?.getString("Referer")
+      ?: intent.getBundleExtra("android.media.intent.extra.HTTP_HEADERS")?.getString("referrer")
   }
 
   /**

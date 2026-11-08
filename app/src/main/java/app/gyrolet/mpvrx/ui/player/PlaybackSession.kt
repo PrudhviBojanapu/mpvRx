@@ -313,6 +313,7 @@ object PlaybackSession : MPVLib.EventObserver {
   private var pendingStopClearQueue = false
   private var supersededStopGeneration = 0L
   private var desiredPaused = true
+  private var pendingExternalAudioUrl: String? = null
   private var loadedGeneration = 0L
   private var loadedPlaybackItem: PlaybackItem? = null
   private var loadedAudiobookDurationMs = 0L
@@ -1134,6 +1135,7 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
     positionRestoreOverride: PlaybackPositionRestoreOverride? = null,
     initialPositionSeconds: Double? = null,
     flattenEditions: Boolean = false,
+    externalAudioUrl: String? = null,
     commit: ((() -> Long) -> Long)? = null,
   ): Long {
     val preparationStartedAt = android.os.SystemClock.elapsedRealtime()
@@ -1160,6 +1162,7 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
               positionRestoreOverride = positionRestoreOverride,
               initialPositionSeconds = initialPositionSeconds,
               flattenEditions = flattenEditions,
+              externalAudioUrl = externalAudioUrl,
             )
           if (generation >= 0L) {
             previous = activeNetworkStream
@@ -1195,6 +1198,7 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
     positionRestoreOverride: PlaybackPositionRestoreOverride? = null,
     initialPositionSeconds: Double? = null,
     flattenEditions: Boolean = false,
+    externalAudioUrl: String? = null,
   ): Long {
     val smbPath = item?.networkSource?.let { source ->
         try {
@@ -1212,6 +1216,7 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
     }
     return withCore(default = -1L) {
       if (_state.value.phase == PlaybackPhase.STOPPING) return@withCore -1L
+      pendingExternalAudioUrl = externalAudioUrl
       applyStreamingOptionsLocked(playableUri)
       AudiobookPlayback.capture()
       val resolvedItem = item ?: PlaybackItem.fromUri(playableUri)
@@ -1294,6 +1299,20 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
         MPVLib.setPropertyString("http-header-fields", nextHttpHeaders)
         appliedHttpHeaderFields = nextHttpHeaders
       }
+      val referer = PlaybackHttpHeaders.value(resolvedItem.headers, "Referer")
+      if (!referer.isNullOrBlank()) {
+        MPVLib.setPropertyString("referrer", referer)
+      }
+      val cencKey = resolvedItem.cencKey
+      if (!cencKey.isNullOrBlank()) {
+        MPVLib.setPropertyString("cenc-decryption-key", cencKey)
+        MPVLib.setPropertyString(
+          "demuxer-lavf-o",
+          "cenc_decryption_key=$cencKey,live=1,dash_live_segment_latency=3," +
+            "http_persistent=0,reconnect=1,reconnect_on_network_error=1,reconnect_streamed=1," +
+            "reconnect_delay_max=5,reconnect_max_retries=5,reconnect_delay_total_max=20",
+        )
+      }
       MPVLib.setPropertyString("force-media-title", "")
       MPVLib.setPropertyString("user-data/mpvrx/original-path", smbPath ?: resolvedItem.originalUri)
 
@@ -1320,6 +1339,17 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
           }
           if (flattenEditions && !MpvConfigOverridePolicy.isOwnedByMpvConf("flatten-editions")) {
             add("flatten-editions=yes")
+          }
+          if (!externalAudioUrl.isNullOrBlank()) {
+            val escaped = externalAudioUrl.replace("\"", "\\\"")
+            add("audio-file=\"$escaped\"")
+          }
+          if (playableUri.startsWith("http://", ignoreCase = true) || playableUri.startsWith("https://", ignoreCase = true)) {
+            add("cache=yes")
+            add("demuxer-max-bytes=157286400")
+            add("demuxer-max-back-bytes=52428800")
+            add("cache-secs=120")
+            add("demuxer-readahead-secs=60")
           }
         }.joinToString(",")
       PlaybackPerformanceTrace.mark("LOADFILE_SENT", "generation=$generation")
@@ -2062,6 +2092,19 @@ internal fun userScriptsNeedReload(currentKey: String): Boolean {
               val selectedVideoTrack = MPVLib.getPropertyString("vid")?.toIntOrNull()
               if (selectedVideoTrack == null || selectedVideoTrack <= 0) {
                 deferredVideoSelectionGeneration = current.generation
+              }
+            }
+            val extAudio = pendingExternalAudioUrl
+            if (!extAudio.isNullOrBlank()) {
+              pendingExternalAudioUrl = null
+              val currentAudioTrack = MPVLib.getPropertyInt("aid")
+              if (currentAudioTrack == null || currentAudioTrack <= 0) {
+                try {
+                  MPVLib.command("audio-add", extAudio, "select")
+                  Log.d(TAG, "Attached external audio via audio-add: $extAudio")
+                } catch (e: Exception) {
+                  Log.e(TAG, "Failed audio-add for external audio", e)
+                }
               }
             }
             updateState {

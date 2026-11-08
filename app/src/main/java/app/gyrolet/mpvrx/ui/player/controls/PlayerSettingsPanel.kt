@@ -65,7 +65,6 @@ import app.gyrolet.mpvrx.ui.preferences.ControlLayoutEditorScreen
 import app.gyrolet.mpvrx.ui.preferences.ControlRegion
 import app.gyrolet.mpvrx.ui.preferences.DecoderPreferencesScreen
 import app.gyrolet.mpvrx.ui.preferences.GesturePreferencesScreen
-import app.gyrolet.mpvrx.ui.preferences.LiquidGlassPreferencesScreen
 import app.gyrolet.mpvrx.ui.preferences.LocalPlayerSettingsPanel
 import app.gyrolet.mpvrx.ui.preferences.LocalPlayerSettingsConfigOptions
 import app.gyrolet.mpvrx.ui.preferences.PersistentStatusBarPreferencesScreen
@@ -106,7 +105,6 @@ private fun playerSettingsCategories() = listOf(
   SettingsCategory(R.string.pref_audio, Icons.RoundedFilled.Audiotrack, AudioPreferencesScreen),
   SettingsCategory(R.string.pref_subtitles, Icons.RoundedFilled.Subtitles, SubtitlesPreferencesScreen),
   SettingsCategory(R.string.pref_decoder, Icons.RoundedFilled.DeveloperBoard, DecoderPreferencesScreen),
-  SettingsCategory(R.string.pref_appearance_liquid_glass_title, Icons.RoundedFilled.Tune, LiquidGlassPreferencesScreen),
   SettingsCategory(R.string.pref_gesture, Icons.RoundedFilled.Gesture, GesturePreferencesScreen),
   SettingsCategory(R.string.pref_layout_title, Icons.RoundedFilled.GridView, PlayerControlsPreferencesScreen),
 )
@@ -135,8 +133,8 @@ internal fun PlayerSettingsPanel(
   val backStack = rememberNavBackStack(PlayerSettingsHome) as NavBackStack<Screen>
   val savedContent = rememberSaveableStateHolder()
   val glassActive = liquidGlassActive()
-  val categories = remember(glassActive) {
-    playerSettingsCategories().filter { it.screen != LiquidGlassPreferencesScreen || glassActive }
+  val categories = remember {
+    playerSettingsCategories()
   }
   LaunchedEffect(categories) {
     val supportedScreens = playerSettingsScreens(categories)

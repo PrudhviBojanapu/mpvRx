@@ -122,9 +122,7 @@ import app.gyrolet.mpvrx.repository.NavidromeRepository
 import app.gyrolet.mpvrx.domain.media.model.Video
 import app.gyrolet.mpvrx.ui.browser.dialogs.AddToPlaylistDialog
 import app.gyrolet.mpvrx.ui.browser.dialogs.toPlaylistCandidates
-import app.gyrolet.mpvrx.ui.liquidglass.LocalKyantPlayerBackdrop
 import app.gyrolet.mpvrx.ui.liquidglass.outsideShadow
-import com.kyant.backdrop.Backdrop
 import app.gyrolet.mpvrx.ui.player.resolveUri
 import app.gyrolet.mpvrx.ui.player.controls.components.MiniAudioVisualizer
 import app.gyrolet.mpvrx.ui.player.controls.components.stableNumericWidth
@@ -703,7 +701,7 @@ fun AudioPlayerControls(
   onOpenSheet: (Sheets) -> Unit,
   onOpenPanel: (Panels) -> Unit,
   modifier: Modifier = Modifier,
-  sheetBackdrop: Backdrop? = null,
+  sheetBackdrop: Any? = null,
   inAppSheet: InAppMusicSheetState? = null,
 ) {
   // The queue can move on while the app is in the background; catch the lyrics up on return.
@@ -2685,16 +2683,14 @@ fun AudioPlayerControls(
           mediaPath.contains("/rest/stream", ignoreCase = true))
     }
 
-    CompositionLocalProvider(LocalKyantPlayerBackdrop provides sheetBackdrop) {
-      AddToPlaylistDialog(
-        isOpen = true,
-        candidates = listOf(videoForPlaylist).toPlaylistCandidates(),
-        onDismiss = { addToPlaylistDialogOpen = false },
-        onSuccess = { addToPlaylistDialogOpen = false },
-        isJellyfin = isJellyfinMedia,
-        usePlayerSheet = true,
-      )
-    }
+    AddToPlaylistDialog(
+      isOpen = true,
+      candidates = listOf(videoForPlaylist).toPlaylistCandidates(),
+      onDismiss = { addToPlaylistDialogOpen = false },
+      onSuccess = { addToPlaylistDialogOpen = false },
+      isJellyfin = isJellyfinMedia,
+      usePlayerSheet = true,
+    )
   }
 }
 

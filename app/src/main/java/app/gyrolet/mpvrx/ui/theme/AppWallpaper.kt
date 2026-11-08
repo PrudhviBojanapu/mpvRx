@@ -50,9 +50,6 @@ import app.gyrolet.mpvrx.ui.background.BackdropGate
 import app.gyrolet.mpvrx.ui.background.BackgroundType
 import app.gyrolet.mpvrx.ui.background.rememberActiveBackground
 import app.gyrolet.mpvrx.utils.telemetry.withMeasureTelemetry
-import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.backdrops.layerBackdrop
-import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -65,7 +62,7 @@ import java.util.concurrent.TimeUnit
 val LocalAppWallpaperActive = compositionLocalOf { false }
 
 // Only the background is captured here; content and glass consumers remain outside this layer.
-internal val LocalAppBackgroundBackdrop = staticCompositionLocalOf<Backdrop?> { null }
+internal val LocalAppBackgroundBackdrop = staticCompositionLocalOf<Any?> { null }
 
 /** True when the light theme is showing a dark wallpaper, so text placed directly on it must be light. */
 val LocalLightTextOnWallpaper = compositionLocalOf { false }
@@ -97,7 +94,7 @@ fun AppWallpaperHost(content: @Composable () -> Unit) {
   val liquidGlassEnabled by preferences.liquidGlassEnabled.collectAsState()
   // The navigation pill, mini player and selection bars all refract this background, so it is
   // captured whenever glass is on, the legacy navigation bar included.
-  val backgroundBackdrop = if (liquidGlassEnabled) rememberLayerBackdrop() else null
+  val backgroundBackdrop: Any? = null
   // Hold the UI back until the first wallpaper load finishes, so the app doesn't flash a plain
   // background and then pop the wallpaper in on launch.
   var initialWallpaperResolved by remember { mutableStateOf(wallpaperUri.isBlank()) }
@@ -154,7 +151,6 @@ fun AppWallpaperHost(content: @Composable () -> Unit) {
       modifier =
         Modifier
           .matchParentSize()
-          .then(if (backgroundBackdrop != null) Modifier.layerBackdrop(backgroundBackdrop) else Modifier)
           .background(MaterialTheme.colorScheme.background),
     ) {
       wallpaper?.let { bitmap ->

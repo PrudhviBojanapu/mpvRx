@@ -22,7 +22,6 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.gyrolet.mpvrx.ui.theme.AppShapeScale
-import com.kyant.backdrop.Backdrop
 
 /**
  * Centralized state holder for browser navigation visibility.
@@ -55,7 +54,7 @@ object NavigationBarState {
   internal var miniPlayerConnectionEnabled: Boolean by mutableStateOf(false)
   internal var isMiniPlayerDocked: Boolean by mutableStateOf(false)
   internal var dockProgress: Float by mutableFloatStateOf(0f)
-  internal var dockBackdrop: Backdrop? by mutableStateOf(null)
+  internal var dockBackdrop: Any? by mutableStateOf(null)
 
   // Includes both navigation styles, but not bars belonging to a covered screen.
   var isNavBarVisible: Boolean by mutableStateOf(false)

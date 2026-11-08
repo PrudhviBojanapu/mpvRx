@@ -67,6 +67,7 @@ data class PlaybackItem(
   val audiobook: AudiobookPlaybackInfo? = null,
   /** UI identity for this queue entry; copies and moves retain it even for duplicate media. */
   val queueEntryId: Long = nextPlaybackQueueEntryId.getAndIncrement(),
+  val cencKey: String? = null,
 ) {
   /** True while this torrent episode still points at its magnet/torrent source instead of a live stream URL. */
   fun requiresTorrentResolution(): Boolean = torrentFileIndex != null && playableUri == originalUri
@@ -86,6 +87,7 @@ data class PlaybackItem(
       durationSeconds: Int? = null,
       videoWidth: Int = 0,
       videoHeight: Int = 0,
+      cencKey: String? = null,
     ): PlaybackItem =
       PlaybackItem(
         stableId =
@@ -104,6 +106,7 @@ data class PlaybackItem(
         durationSeconds = durationSeconds,
         videoWidth = videoWidth,
         videoHeight = videoHeight,
+        cencKey = cencKey,
       )
   }
 }

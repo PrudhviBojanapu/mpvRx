@@ -153,8 +153,6 @@ internal fun isLivePlayerSetting(screen: app.gyrolet.mpvrx.presentation.Screen?,
     AudioPreferencesScreen -> key in liveAudioSettings
     SubtitlesPreferencesScreen -> key in liveSubtitleSettings
     DecoderPreferencesScreen -> key in liveDecoderSettings
-    LiquidGlassPreferencesScreen ->
-      key !in setOf(R.string.pref_appearance_liquid_glass_title, R.string.pref_liquid_glass_in_hdr_title)
     else -> false
   }
 
@@ -168,8 +166,7 @@ internal fun playerSettingAvailability(modifier: Modifier): PlayerSettingAvailab
   if (key?.let(settingNativeOptions::get)?.any(configOwned::contains) == true) {
     return PlayerSettingAvailability(R.string.player_settings_config_owned)
   }
-  val reason =
-    if (screen == LiquidGlassPreferencesScreen && !liquidGlassActive()) R.string.player_settings_dependency else null
+  val reason: Int? = null
   return PlayerSettingAvailability(reason)
 }
 

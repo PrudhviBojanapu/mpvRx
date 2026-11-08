@@ -33,7 +33,6 @@ class AiService(
   private val anthropicClient: AiClient,
   private val openRouterClient: AiClient,
   private val togetherClient: AiClient,
-  private val customOpenAiClient: AiClient,
   private val json: Json,
 ) {
   companion object {
@@ -48,7 +47,6 @@ class AiService(
       AiProvider.ANTHROPIC to anthropicClient,
       AiProvider.OPENROUTER to openRouterClient,
       AiProvider.TOGETHER to togetherClient,
-      AiProvider.CUSTOM_OPENAI to customOpenAiClient,
     )
 
   @Serializable
@@ -75,17 +73,14 @@ class AiService(
     withContext(Dispatchers.IO) {
       val apiKey = getApiKey(provider)
 
-      if (apiKey.isBlank() && provider != AiProvider.CUSTOM_OPENAI) {
+      if (apiKey.isBlank()) {
         return@withContext Result.failure(Exception("API key not configured for $provider"))
       }
 
       val client = clients[provider] ?: return@withContext Result.failure(Exception("Unknown provider: $provider"))
       client.fetchModels(apiKey).mapCatching { fetched ->
         AiModelCapabilities
-          .normalize(
-            if (provider == AiProvider.CUSTOM_OPENAI) fetched else
-              fetched.filter { model -> AiModelCapabilities.isTextGenerationModel(model.id) },
-          )
+          .normalize(fetched.filter { model -> AiModelCapabilities.isTextGenerationModel(model.id) })
           .also { models -> check(models.isNotEmpty()) { "$provider returned no compatible text-generation models" } }
       }
     }
@@ -129,10 +124,12 @@ class AiService(
       else -> emptyList()
     }
 
-  suspend fun verifyKey(provider: AiProvider = preferences.provider.get()): Result<String> =
+  suspend fun verifyKey(): Result<String> =
     withContext(Dispatchers.IO) {
+      val provider = preferences.provider.get()
+
       val apiKey = getApiKey(provider)
-      if (apiKey.isBlank() && provider != AiProvider.CUSTOM_OPENAI) {
+      if (apiKey.isBlank()) {
         return@withContext Result.failure(Exception("API key not configured for $provider"))
       }
 
@@ -159,7 +156,7 @@ class AiService(
       val customSubtitleTranslationPrompt = preferences.customSubtitleTranslationPrompt.get()
       val customSubtitleFormatPrompt = preferences.customSubtitleFormatPrompt.get()
 
-      if (apiKey.isBlank() && provider != AiProvider.CUSTOM_OPENAI) {
+      if (apiKey.isBlank()) {
         return@withContext Result.failure(Exception("API key not configured for $provider"))
       }
       if (model.isBlank()) {
@@ -264,15 +261,15 @@ class AiService(
       }
     }
 
-  suspend fun verifyModel(provider: AiProvider = preferences.provider.get()): Result<String> =
+  suspend fun verifyModel(): Result<String> =
     withContext(Dispatchers.IO) {
+      val provider = preferences.provider.get()
+
       val model = preferences.selectedModelFor(provider).get()
       if (model.isBlank()) return@withContext Result.failure(Exception("No model selected"))
 
       val apiKey = getApiKey(provider)
-      if (apiKey.isBlank() && provider != AiProvider.CUSTOM_OPENAI) {
-        return@withContext Result.failure(Exception("API key not configured"))
-      }
+      if (apiKey.isBlank()) return@withContext Result.failure(Exception("API key not configured"))
 
       val stored = preferences.availableModelsFor(provider).get()
       val knownModels =
@@ -299,9 +296,6 @@ class AiService(
           "Connectivity check",
           AiGenerationOptions(maxTokens = 512, temperature = 0.0),
         )
-      if (provider == AiProvider.CUSTOM_OPENAI) {
-        return@withContext testResult.map { "API access working" }
-      }
       if (testResult.isSuccess) {
         sb.append("API access working")
       } else {
@@ -335,7 +329,6 @@ class AiService(
       AiProvider.ANTHROPIC -> preferences.anthropicApiKey.get()
       AiProvider.OPENROUTER -> preferences.openrouterApiKey.get()
       AiProvider.TOGETHER -> preferences.togetherApiKey.get()
-      AiProvider.CUSTOM_OPENAI -> preferences.customOpenAiApiKey.get()
     }
 
   suspend fun translateSubtitle(
@@ -537,11 +530,7 @@ class AiService(
   ): String {
     val provider = preferences.provider.get()
     val model = preferences.selectedModelFor(provider).get()
-    val parts = mutableListOf(content, targetLanguage, format.orEmpty(), provider.name, model)
-    if (provider == AiProvider.CUSTOM_OPENAI) {
-      parts.add(preferences.customOpenAiBaseUrl.get().trim().trimEnd('/'))
-    }
-    val input = parts.joinToString("\u001f")
+    val input = listOf(content, targetLanguage, format.orEmpty(), provider.name, model).joinToString("\u001f")
     val digest = MessageDigest.getInstance("SHA-256").digest(input.toByteArray())
     return digest.joinToString("") { "%02x".format(it) }
   }

@@ -16,22 +16,19 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.gyrolet.mpvrx.ui.icons.AppIcon
 import app.gyrolet.mpvrx.ui.icons.Icon
-import app.gyrolet.mpvrx.ui.player.controls.PlayerButtonAlpha
-import app.gyrolet.mpvrx.ui.player.controls.components.playerButtonContentColor
-import com.kyant.backdrop.Backdrop
 
 object PlayerLiquidTokens {
-  val ButtonSize: Dp = 44.dp
+  val ButtonSize: Dp = 40.dp
   val CenterButtonSize: Dp = 72.dp
-  val IconSize: Dp = 24.dp
+  val IconSize: Dp = 22.dp
   val CenterIconSize: Dp = 34.dp
   val PillHeight: Dp = 40.dp
 
   val contentColor: Color
-    @Composable get() = playerButtonContentColor()
+    @Composable get() = LiquidControlColors.content
 
   val disabledContentColor: Color
-    @Composable get() = contentColor.copy(alpha = PlayerButtonAlpha.DISABLED_CONTENT)
+    @Composable get() = LiquidControlColors.disabledContent
 
   val selectedContentColor: Color
     @Composable get() = LiquidControlColors.accent
@@ -56,7 +53,7 @@ fun LiquidIconButton(
   iconSize: Dp = PlayerLiquidTokens.IconSize,
   spacing: Dp = 8.dp,
   useGlass: Boolean = true,
-  backdrop: Backdrop? = LocalKyantPlayerBackdrop.current,
+  backdrop: Any? = null,
 ) {
   LiquidPillButton(
     onClick = onClick,
@@ -91,7 +88,7 @@ fun LiquidPillButton(
   spacing: Dp = 8.dp,
   horizontalPadding: Dp = 16.dp,
   useGlass: Boolean = true,
-  backdrop: Backdrop? = LocalKyantPlayerBackdrop.current,
+  backdrop: Any? = null,
   onLongClickLabel: String? = null,
   content: @Composable RowScope.() -> Unit,
 ) {

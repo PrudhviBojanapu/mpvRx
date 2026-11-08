@@ -73,7 +73,6 @@ import app.gyrolet.mpvrx.preferences.PlayerPreferences
 import app.gyrolet.mpvrx.preferences.preference.collectAsState
 import app.gyrolet.mpvrx.ui.liquidglass.LiquidIconButton
 import app.gyrolet.mpvrx.ui.liquidglass.LiquidPillButton
-import app.gyrolet.mpvrx.ui.cast.CastPlayerButton
 import app.gyrolet.mpvrx.ui.icons.Icons
 import app.gyrolet.mpvrx.ui.player.Panels
 import app.gyrolet.mpvrx.ui.player.PlayerActivity
@@ -907,12 +906,16 @@ fun RenderPlayerButton(
       }
     }
 
-    PlayerButton.CAST -> {
-      CastPlayerButton(
-        borderless = borderless,
-        buttonSize = buttonSize,
-        onInvoked = clickEvent,
-        contentColor = if (borderless) controlColor else null,
+    PlayerButton.DOWNLOAD -> {
+      ControlsButton(
+        icon = Icons.RoundedFilled.Download,
+        onClick = {
+          clickEvent()
+          activity.downloadCurrentMediaWithKetch()
+        },
+        title = stringResource(R.string.ui_download),
+        color = if (borderless) controlColor else buttonContentColor,
+        modifier = Modifier.size(buttonSize),
       )
     }
 

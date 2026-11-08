@@ -85,25 +85,7 @@ private val settingsSearchListAnchors: Map<Screen, List<SettingsSearchListAnchor
         SettingsSearchListAnchor(titleRes = R.string.pref_gesture_tap_thumbnail_to_select_title, itemIndex = 5),
         SettingsSearchListAnchor(titleRes = R.string.pref_appearance_show_network_thumbnails_title, itemIndex = 5),
       ),
-    LiquidGlassPreferencesScreen to
-      listOf(
-        SettingsSearchListAnchor(titleRes = R.string.pref_appearance_liquid_glass_title, itemIndex = 2),
-        SettingsSearchListAnchor(titleRes = R.string.pref_liquid_glass_in_hdr_title, itemIndex = 2),
-        SettingsSearchListAnchor(titleRes = R.string.pref_liquid_glass_frost, itemIndex = 4),
-        SettingsSearchListAnchor(titleRes = R.string.pref_liquid_glass_opacity, itemIndex = 6),
-        SettingsSearchListAnchor(titleRes = R.string.pref_liquid_glass_refraction_height, itemIndex = 6),
-        SettingsSearchListAnchor(titleRes = R.string.pref_liquid_glass_refraction_amount, itemIndex = 6),
-        SettingsSearchListAnchor(titleRes = R.string.pref_liquid_glass_depth, itemIndex = 6),
-        SettingsSearchListAnchor(titleRes = R.string.pref_liquid_glass_chromatic, itemIndex = 6),
-        SettingsSearchListAnchor(titleRes = R.string.pref_liquid_glass_vibrancy, itemIndex = 8),
-        SettingsSearchListAnchor(titleRes = R.string.player_sheets_filters_Saturation, itemIndex = 8),
-        SettingsSearchListAnchor(titleRes = R.string.player_sheets_filters_brightness, itemIndex = 8),
-        SettingsSearchListAnchor(titleRes = R.string.player_sheets_filters_contrast, itemIndex = 8),
-        SettingsSearchListAnchor(titleRes = R.string.pref_liquid_glass_highlight_style, itemIndex = 10),
-        SettingsSearchListAnchor(titleRes = R.string.pref_liquid_glass_highlight_strength, itemIndex = 10),
-        SettingsSearchListAnchor(titleRes = R.string.pref_liquid_glass_highlight_width, itemIndex = 10),
-        SettingsSearchListAnchor(titleRes = R.string.pref_liquid_glass_highlight_blur, itemIndex = 10),
-      ),
+
     PlayerControlsPreferencesScreen to
       listOf(
         SettingsSearchListAnchor(titleRes = R.string.pref_layout_title, itemIndex = 0),
@@ -235,10 +217,7 @@ private val settingsSearchListAnchors: Map<Screen, List<SettingsSearchListAnchor
         SettingsSearchListAnchor(titleRes = R.string.pref_ai_provider_title, itemIndex = 3),
         SettingsSearchListAnchor(titleRes = R.string.pref_ai_enabled_title, itemIndex = 1),
         SettingsSearchListAnchor(titleRes = R.string.search_api_key_config_title, itemIndex = 4),
-        SettingsSearchListAnchor(titleRes = R.string.pref_custom_openai_base_url_title, itemIndex = 5),
-        SettingsSearchListAnchor(titleRes = R.string.pref_custom_openai_key_title, itemIndex = 5),
         SettingsSearchListAnchor(titleRes = R.string.search_ai_model_selection_title, itemIndex = 6),
-        SettingsSearchListAnchor(titleRes = R.string.pref_custom_openai_model_title, itemIndex = 7),
         SettingsSearchListAnchor(titleRes = R.string.pref_ai_rename_title, itemIndex = 9),
         SettingsSearchListAnchor(titleRes = R.string.pref_ai_search_title, itemIndex = 9),
         SettingsSearchListAnchor(titleRes = R.string.search_stt_title, itemIndex = 10),

@@ -12,65 +12,32 @@ import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.TextureView
 import android.widget.FrameLayout
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.compose.ui.viewinterop.AndroidView
-import app.gyrolet.mpvrx.preferences.MpvConfigControlledFeatures
-import app.gyrolet.mpvrx.preferences.MpvConfigOverridePolicy
-import com.kyant.backdrop.backdrops.LayerBackdrop
-import com.kyant.backdrop.backdrops.layerBackdrop
-import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
- * HDR stays on a native SurfaceView: Android tone-maps TextureView content into the app window's
- * SDR buffer. [liquidGlassInHdr] is the user's explicit opt-in to that trade for live glass.
+ * Native hardware SurfaceView rendering for optimal performance and battery life.
  */
 internal fun shouldUseTextureRendering(
   liquidGlass: Boolean,
   hdrOutput: Boolean,
   liquidGlassInHdr: Boolean,
-): Boolean {
-  if (!liquidGlass) return false
-  if (liquidGlassInHdr) return true
-  return !hdrOutput && !MpvConfigOverridePolicy.ownsAny(MpvConfigControlledFeatures.HDR_OUTPUT)
-}
+): Boolean = false
 
 /** Keeps one MPV surface owner while choosing a native or Compose-recordable renderer. */
 abstract class MpvSurfaceHost(context: Context, attributes: AttributeSet) : FrameLayout(context, attributes) {
   internal var renderSurface: Surface? = null
     private set
-  internal var videoBackdrop: LayerBackdrop? by mutableStateOf(null)
-    private set
   private var ownsSurface = false
   private var rendererEpoch = 0
   private var textureRendering: Boolean? = null
 
-  // The new TextureView can be attached to mpv before it receives a drawable video frame.
-  // Expose its first real buffer update so the controls never sample a blank HDR/SDR layer.
   private val textureFrameReady = MutableStateFlow(false)
   internal val textureFrameReadyState: StateFlow<Boolean> = textureFrameReady
 
   internal val isTextureSurface: Boolean
     get() = textureRendering == true
 
-  /**
-   * HDR color-space/shader changes can replace the pixels behind an existing TextureView
-   * without replacing its Android Surface. Hide the old glass sample until that view posts
-   * another frame; changing the renderer itself resets this flag in setTextureRendering().
-   */
   internal fun invalidateTextureFrameReadiness() {
     if (textureRendering == true) textureFrameReady.value = false
   }
@@ -86,15 +53,10 @@ abstract class MpvSurfaceHost(context: Context, attributes: AttributeSet) : Fram
     textureRendering = enabled
     textureFrameReady.value = false
     val epoch = ++rendererEpoch
-    // A TextureView may clear its Surface before the preference collector switches renderers.
-    // Explicitly detach the old native VO on every real mode change, even when renderSurface
-    // is already null, so the replacement SurfaceView can bind without inheriting a stale wid.
     if (wasConfigured) onRenderSurfaceDestroyed()
     if (ownsSurface) renderSurface?.release()
     renderSurface = null
     ownsSurface = false
-    videoBackdrop = null
-    (getChildAt(0) as? ComposeView)?.disposeComposition()
     removeAllViews()
     descendantFocusability = FOCUS_BLOCK_DESCENDANTS
 
@@ -118,51 +80,29 @@ abstract class MpvSurfaceHost(context: Context, attributes: AttributeSet) : Fram
     }
 
     val child = if (enabled) {
-      ComposeView(context).apply {
-        setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-        consumeWindowInsets = false
-        setContent {
-          val scene = rememberLayerBackdrop()
-          DisposableEffect(scene) {
-            if (epoch == rendererEpoch) videoBackdrop = scene
-            onDispose { if (videoBackdrop === scene) videoBackdrop = null }
+      TextureView(context).apply {
+        isOpaque = true
+        isClickable = false
+        isFocusable = false
+        importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+        surfaceTextureListener = object : TextureView.SurfaceTextureListener {
+          override fun onSurfaceTextureAvailable(texture: SurfaceTexture, width: Int, height: Int) {
+            available(Surface(texture), width, height, owned = true)
           }
-          Box(Modifier.fillMaxSize().background(Color.Black).layerBackdrop(scene)) {
-            AndroidView(
-              modifier = Modifier.fillMaxSize().graphicsLayer {
-                // Issue #82's stable compositing path: record the actual TextureView GPU layer.
-                // No getBitmap, PixelCopy, timer, or second video decoder is involved.
-                alpha = 0.999f
-              },
-              factory = { viewContext ->
-                TextureView(viewContext).apply {
-                  isOpaque = true
-                  isClickable = false
-                  isFocusable = false
-                  importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
-                  surfaceTextureListener = object : TextureView.SurfaceTextureListener {
-                    override fun onSurfaceTextureAvailable(texture: SurfaceTexture, width: Int, height: Int) {
-                      available(Surface(texture), width, height, owned = true)
-                    }
 
-                    override fun onSurfaceTextureSizeChanged(texture: SurfaceTexture, width: Int, height: Int) {
-                      if (epoch == rendererEpoch) onRenderSurfaceSizeChanged(width, height)
-                    }
+          override fun onSurfaceTextureSizeChanged(texture: SurfaceTexture, width: Int, height: Int) {
+            if (epoch == rendererEpoch) onRenderSurfaceSizeChanged(width, height)
+          }
 
-                    override fun onSurfaceTextureDestroyed(texture: SurfaceTexture): Boolean {
-                      destroyed()
-                      return true // TextureView owns and releases the SurfaceTexture after MPV detaches.
-                    }
+          override fun onSurfaceTextureDestroyed(texture: SurfaceTexture): Boolean {
+            destroyed()
+            return true
+          }
 
-                    override fun onSurfaceTextureUpdated(texture: SurfaceTexture) {
-                      if (epoch == rendererEpoch && !textureFrameReady.value) {
-                        textureFrameReady.value = true
-                      }
-                    }
-                  }
-                }
-              },
-            )
+          override fun onSurfaceTextureUpdated(texture: SurfaceTexture) {
+            if (epoch == rendererEpoch && !textureFrameReady.value) {
+              textureFrameReady.value = true
+            }
           }
         }
       }

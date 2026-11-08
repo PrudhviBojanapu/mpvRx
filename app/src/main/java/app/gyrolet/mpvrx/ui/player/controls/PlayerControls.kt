@@ -136,7 +136,6 @@ import androidx.constraintlayout.compose.Dimension
 import app.gyrolet.mpvrx.R
 import app.gyrolet.mpvrx.ui.components.SwipeDismissibleToast
 import app.gyrolet.mpvrx.preferences.AdvancedPreferences
-import app.gyrolet.mpvrx.preferences.AiPreferences
 import app.gyrolet.mpvrx.preferences.AppearancePreferences
 import app.gyrolet.mpvrx.preferences.GesturePreferences
 import app.gyrolet.mpvrx.preferences.AudioPreferences
@@ -159,8 +158,6 @@ import app.gyrolet.mpvrx.ui.player.PlayerViewModel
 import app.gyrolet.mpvrx.ui.player.MPVView
 import app.gyrolet.mpvrx.ui.player.Sheets
 import app.gyrolet.mpvrx.ui.player.VideoOpenAnimationOverlay
-import app.gyrolet.mpvrx.ui.player.components.VideoGlassBackdropSource
-import app.gyrolet.mpvrx.ui.player.components.rememberVideoGlassSource
 import app.gyrolet.mpvrx.ui.player.buildControlsEnterH
 import app.gyrolet.mpvrx.ui.player.buildControlsEnterV
 import app.gyrolet.mpvrx.ui.player.buildControlsExitH
@@ -198,14 +195,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
 import app.gyrolet.mpvrx.ui.liquidglass.AdaptiveControlsContainer
-import app.gyrolet.mpvrx.ui.liquidglass.LiquidPillButton
-import app.gyrolet.mpvrx.ui.liquidglass.LocalKyantPlayerBackdrop
 import app.gyrolet.mpvrx.ui.liquidglass.LocalPlayerHdrOutputEnabled
 import app.gyrolet.mpvrx.ui.liquidglass.LocalPlayerLiquidGlassActive
-import app.gyrolet.mpvrx.ui.player.shouldUseTextureRendering
-import app.gyrolet.mpvrx.preferences.DecoderPreferences
-import com.kyant.backdrop.backdrops.layerBackdrop
-import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import app.gyrolet.mpvrx.ui.liquidglass.LiquidPillButton
+
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -307,8 +300,6 @@ internal fun AudioPlayerScreen(
     }
   }
 
-  // Only sheets and panels sample this layer; the controls would otherwise sample themselves.
-  val audioBackdrop = rememberLayerBackdrop()
   Box(modifier = modifier.fillMaxSize()) {
     AudioPlayerControls(
       viewModel = viewModel,
@@ -316,15 +307,12 @@ internal fun AudioPlayerScreen(
       onBackPress = onBackPress,
       onOpenSheet = onOpenSheet,
       onOpenPanel = onOpenPanel,
-      modifier = if (enableLiquidGlass) Modifier.layerBackdrop(audioBackdrop) else Modifier,
-      sheetBackdrop = audioBackdrop.takeIf { enableLiquidGlass },
+      modifier = Modifier,
+      sheetBackdrop = null,
       inAppSheet = inAppSheet,
     )
 
-    CompositionLocalProvider(
-      LocalKyantPlayerBackdrop provides audioBackdrop.takeIf { enableLiquidGlass },
-    ) {
-      PlayerSheets(
+    PlayerSheets(
         viewModel = viewModel,
         sheetShown = sheetShown,
         subtitles = subtitles.toImmutableList(),
@@ -369,7 +357,6 @@ internal fun AudioPlayerScreen(
         viewModel = viewModel,
         onDismissRequest = { onOpenPanel(Panels.None) },
       )
-    }
   }
 }
 
@@ -391,22 +378,8 @@ fun PlayerControls(
   val isTelevision = DeviceFormFactor.isTelevision(LocalContext.current)
   val advancedPreferences = koinInject<AdvancedPreferences>()
   val appearancePreferences = koinInject<AppearancePreferences>()
-  val aiPreferences = koinInject<AiPreferences>()
   val showMediaExtensions by koinInject<BrowserPreferences>().showExtensionField.collectAsState()
-  val aiEnabled by aiPreferences.enabled.collectAsState()
-  val realtimeSubsEnabled by aiPreferences.realtimeSubsEnabled.collectAsState()
-  val liquidGlassPreference by appearancePreferences.liquidGlassEnabled.collectAsState()
-  val liquidGlassInHdr by appearancePreferences.liquidGlassInHdr.collectAsState()
-  val hdrOutputPreference by koinInject<DecoderPreferences>().hdrScreenOutput.collectAsState()
-  // Glass needs the video on the Compose-recordable renderer, so this mirrors the renderer choice.
-  // When HDR output keeps the video on a native surface ("Liquid glass in HDR" off, or HDR owned by
-  // mpv.conf), every player control uses its regular form, exactly as with Liquid Glass off.
-  val enableLiquidGlass =
-    shouldUseTextureRendering(
-      liquidGlass = liquidGlassPreference,
-      hdrOutput = hdrOutputPreference,
-      liquidGlassInHdr = liquidGlassInHdr,
-    )
+  val enableLiquidGlass = false
   val forceDarkButtonBackground by appearancePreferences.forceDarkPlayerButtonsBackground.collectAsState()
   val portraitSeekbarPlacement by appearancePreferences.portraitSeekbarPlacement.collectAsState()
   val landscapeSeekbarPlacement by appearancePreferences.landscapeSeekbarPlacement.collectAsState()
@@ -975,29 +948,9 @@ fun PlayerControls(
     )
   }
 
-  val glassSource = rememberVideoGlassSource(videoSurface)
   val videoSurfaceReady = videoSurface?.surfaceReady?.collectAsState()?.value == true
   val videoFrameReady = videoSurface?.textureFrameReadyState?.collectAsState()?.value == true
-  // Recreate the recorder with the actual source scene. The old persistent recorder could
-  // keep painting a released TextureView's pixels after an HDR/native-surface handoff.
-  val videoBackdrop = key(glassSource, isHdrOutputEnabled, liquidGlassInHdr) {
-    // HDR output changes the captured colorspace even when the TextureView stays mounted.
-    // A new recorder must not replay pre-HDR pixels or filters over the new output.
-    rememberLayerBackdrop(onDraw = { with(glassSource) { drawVideo() } })
-  }
-  // Native HDR output is a separate SurfaceView: Kyaant cannot sample it from Compose.
-  // Hide the live sampler during mode changes and use the non-sampling frosted treatment.
-  val playerKyantBackdrop = videoBackdrop.takeIf {
-    enableLiquidGlass &&
-      (!isHdrOutputEnabled || liquidGlassInHdr) &&
-      videoSurface?.isTextureSurface == true &&
-      videoSurfaceReady &&
-      videoFrameReady &&
-      glassSource.scene != null
-  }
-
   CompositionLocalProvider(
-    LocalKyantPlayerBackdrop provides playerKyantBackdrop,
     LocalPlayerHdrOutputEnabled provides isHdrOutputEnabled,
     LocalPlayerLiquidGlassActive provides enableLiquidGlass,
     LocalForceDarkPlayerButtonsBackground provides forceDarkButtonBackground,
@@ -1035,9 +988,6 @@ fun PlayerControls(
       speedMultiplier = animSpeed,
       animationState = videoOpenAnimState,
     )
-    if (enableLiquidGlass && playerKyantBackdrop != null) {
-      VideoGlassBackdropSource(glassSource, videoBackdrop)
-    }
     if (brightness < 0) {
       Box(
         modifier =
@@ -1090,7 +1040,6 @@ fun PlayerControls(
         CompositionLocalProvider(
           LocalRippleConfiguration provides playerRippleConfiguration,
           LocalPlayerButtonsClickEvent provides { resetControlsTimestamp = System.currentTimeMillis() },
-          LocalKyantPlayerBackdrop provides playerKyantBackdrop,
           LocalForceDarkPlayerButtonsBackground provides forceDarkButtonBackground,
           LocalContentColor provides MaterialTheme.colorScheme.onSurface,
         ) {
@@ -2279,8 +2228,8 @@ fun PlayerControls(
                   }
                 },
           ) {
-            val showAiIndicators = aiEnabled
-            val showRealtimeSubs = aiEnabled && realtimeSubsEnabled
+            val showAiIndicators = false
+            val showRealtimeSubs = false
             if (isPortrait) {
               TopPlayerControlsPortrait(
                 mediaTitle = mediaTitle,
